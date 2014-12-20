@@ -1,0 +1,45 @@
+{
+  "name": "shift-scope",
+  "version": "1.0.0",
+  "description": "produce a scope tree for Shift format ASTs",
+  "author": "Shape Security Labs",
+  "homepage": "https://github.com/shapesecurity/shift-scope-js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/shapesecurity/shift-scope-js.git"
+  },
+  "main": "lib/index.js",
+  "files": [
+    "lib"
+  ],
+  "scripts": {
+    "test": "mocha --compilers js:6to5/lib/6to5/register --inline-diffs --check-leaks --ui tdd --reporter dot test",
+    "build": "6to5 --source-maps-inline --out-dir lib src"
+  },
+  "dependencies": {
+    "es6-map": "^0.1.1",
+    "multimap": "^0.1.0",
+    "shift-reducer": "^1.0.2"
+  },
+  "devDependencies": {
+    "6to5": "^1.14.14",
+    "mocha": "^2.0.1",
+    "shift-parser": "^1.0.0"
+  },
+  "keywords": [
+    "Shift",
+    "scope",
+    "static",
+    "analysis",
+    "analyser",
+    "analyzer",
+    "AST",
+    "abstract",
+    "syntax",
+    "tree"
+  ],
+  "bugs": {
+    "url": "https://github.com/shapesecurity/shift-scope-js/issues"
+  },
+  "license": "Apache-2.0"
+}
