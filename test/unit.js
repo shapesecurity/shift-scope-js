@@ -32,6 +32,7 @@ function entriesSize(multiMap) {
   return i;
 }
 
+// "variables" parameter is a mapping of variable names from this scope object to the list of their declarations and their references
 function checkScope(scope, scopeType, isDynamic, children, through, variables, referenceTypes) {
   assert.equal(scope.type, scopeType);
   assert.equal(scope.dynamic, isDynamic);
@@ -88,7 +89,6 @@ suite("unit", () => {
       let children = [];
       let through = [];
 
-      // mapping of variable names from this scope object to the list of their declarations and their references
       let variables = new Map;
       variables.set("v1", [[v1Node1], NO_REFERENCES]);
       variables.set("v2", [[v2Node1], [v2Node1]]);
@@ -112,7 +112,6 @@ suite("unit", () => {
       let children = [];
       let through = [];
 
-      // mapping of variable names from this scope object to the list of their declarations and their references
       let variables = new Map;
       variables.set("v1", [[v1Node1], NO_REFERENCES]);
       variables.set("v2", [[v2Node1], [v2Node1]]);
@@ -137,7 +136,6 @@ suite("unit", () => {
       let children = [];
       let through = ["v1"];
 
-      // mapping of variable names from this scope object to the list of their declarations and their references
       let variables = new Map;
       variables.set("v1", [NO_DECLARATIONS, [v1Node1, v1Node2]]);
       variables.set("v2", [[v2Node1], [v2Node1]]);
@@ -164,7 +162,6 @@ suite("unit", () => {
       let children = [];
       let through = [];
 
-      // mapping of variable names from this scope object to the list of their declarations and their references
       let variables = new Map;
       variables.set("v1", [[v1Node2], [v1Node1, v1Node2]]);
       variables.set("v2", [[v2Node1], [v2Node1]]);
@@ -192,7 +189,6 @@ suite("unit", () => {
       let children = [];
       let through = [];
 
-      // mapping of variable names from this scope object to the list of their declarations and their references
       let variables = new Map;
       variables.set("v1", [[v1Node1, v1Node2], [v1Node2, v1Node3]]);
       variables.set("v2", [[v2Node1], [v2Node1]]);
@@ -242,7 +238,6 @@ suite("unit", () => {
       let children = [f1Scope];
       let through = [];
 
-      // mapping of variable names from this scope object to the list of their declarations and their references
       let variables = new Map;
       variables.set("f1", [[f1Node1], [f1Node2]]);
       variables.set("r", [[rNode1], [rNode1]]);
@@ -257,7 +252,6 @@ suite("unit", () => {
       let children = [f2Scope];
       let through = [];
 
-      // mapping of variable names from this scope object to the list of their declarations and their references
       let variables = new Map;
       variables.set("v1", [[v1Node1], [v1Node1, v1Node2]]);
       variables.set("p1", [[p1Node1], NO_REFERENCES]);
@@ -277,7 +271,6 @@ suite("unit", () => {
       let children = [];
       let through = ["v1", "p2"];
 
-      // mapping of variable names from this scope object to the list of their declarations and their references
       let variables = new Map;
       variables.set("p1", [[p1Node2], [p1Node3]]);
       variables.set("v2", [[v2Node1], [v2Node1, v2Node2]]);
@@ -307,7 +300,6 @@ suite("unit", () => {
       let children = [fScope];
       let through = [];
 
-      // mapping of variable names from this scope object to the list of their declarations and their references
       let variables = new Map;
       variables.set("f", [[fNode1], [fNode2, fNode3]]);
 
@@ -321,7 +313,6 @@ suite("unit", () => {
       let children = [];
       let through = ["f"];
 
-      // mapping of variable names from this scope object to the list of their declarations and their references
       let variables = new Map;
       variables.set("arguments", [NO_DECLARATIONS, NO_REFERENCES]);
 
@@ -346,7 +337,6 @@ suite("unit", () => {
       let children = [fScope];
       let through = [];
 
-      // mapping of variable names from this scope object to the list of their declarations and their references
       let variables = new Map;
       variables.set("f", [[fNode1], [fNode1, fNode2, fNode3]]);
 
@@ -361,7 +351,6 @@ suite("unit", () => {
       let children = [];
       let through = ["f"];
 
-      // mapping of variable names from this scope object to the list of their declarations and their references
       let variables = new Map;
       variables.set("arguments", [NO_DECLARATIONS, NO_REFERENCES]);
 
@@ -389,7 +378,6 @@ suite("unit", () => {
       let children = [functionNameScope];
       let through = ["f1"];
 
-      // mapping of variable names from this scope object to the list of their declarations and their references
       let variables = new Map;
       variables.set("f2", [[f2Node1], [f2Node1, f2Node2]]);
       variables.set("f1", [NO_DECLARATIONS, [f1Node3]]);
@@ -405,7 +393,6 @@ suite("unit", () => {
       let children = [functionScope];
       let through = [];
 
-      // mapping of variable names from this scope object to the list of their declarations and their references
       let variables = new Map;
       variables.set("f1", [[f1Node1], [f1Node2]]);
 
@@ -418,7 +405,6 @@ suite("unit", () => {
       let children = [];
       let through = ["f1"];
 
-      // mapping of variable names from this scope object to the list of their declarations and their references
       let variables = new Map;
       variables.set("arguments", [NO_DECLARATIONS, NO_REFERENCES]);
 
@@ -454,7 +440,6 @@ suite("unit", () => {
       let children = [functionScope];
       let through = ["baz"];
 
-      // mapping of variable names from this scope object to the list of their declarations and their references
       let variables = new Map;
       variables.set("foo", [[fooNode1], [fooNode1]]);
       variables.set("bar", [[barNode1], NO_REFERENCES]);
@@ -470,7 +455,6 @@ suite("unit", () => {
       let children = [];
       let through = ["baz"];
 
-      // mapping of variable names from this scope object to the list of their declarations and their references
       let variables = new Map;
       variables.set("foo", [[fooNode3], [fooNode2, fooNode3, fooNode4]]);
       variables.set("arguments", [NO_DECLARATIONS, NO_REFERENCES]);
@@ -512,7 +496,6 @@ suite("unit", () => {
       let children = [bScope];
       let through = ["c"];
 
-      // mapping of variable names from this scope object to the list of their declarations and their references
       let variables = new Map;
       variables.set("a", [[aNode1], [aNode1, aNode4]]);
       variables.set("b", [[bNode1], [bNode2]]);
@@ -530,7 +513,6 @@ suite("unit", () => {
       let children = [aScope];
       let through = [];
 
-      // mapping of variable names from this scope object to the list of their declarations and their references
       let variables = new Map;
       variables.set("a", [[aNode3], [aNode2]]);
       variables.set("arguments", [NO_DECLARATIONS, NO_REFERENCES]);
@@ -544,7 +526,6 @@ suite("unit", () => {
       let children = [];
       let through = [];
 
-      // mapping of variable names from this scope object to the list of their declarations and their references
       let variables = new Map;
       variables.set("arguments", [NO_DECLARATIONS, NO_REFERENCES]);
 
@@ -581,7 +562,6 @@ suite("unit", () => {
       let children = [fooScope];
       let through = [];
 
-      // mapping of variable names from this scope object to the list of their declarations and their references
       let variables = new Map;
       variables.set("foo", [[fooNode1], NO_REFERENCES]);
 
@@ -593,7 +573,6 @@ suite("unit", () => {
       let children = [barScope1, barScope2];
       let through = [];
 
-      // mapping of variable names from this scope object to the list of their declarations and their references
       let variables = new Map;
       variables.set("bar", [[barNode1, barNode3], [barNode2]]);
       variables.set("arguments", [NO_DECLARATIONS, NO_REFERENCES]);
@@ -607,7 +586,6 @@ suite("unit", () => {
       let children = [];
       let through = [];
 
-      // mapping of variable names from this scope object to the list of their declarations and their references
       let variables = new Map;
       variables.set("arguments", [NO_DECLARATIONS, NO_REFERENCES]);
 
@@ -619,7 +597,6 @@ suite("unit", () => {
       let children = [];
       let through = [];
 
-      // mapping of variable names from this scope object to the list of their declarations and their references
       let variables = new Map;
       variables.set("arguments", [NO_DECLARATIONS, NO_REFERENCES]);
 
@@ -643,7 +620,6 @@ suite("unit", () => {
       let children = [fooScope];
       let through = [];
 
-      // mapping of variable names from this scope object to the list of their declarations and their references
       let variables = new Map;
       variables.set("foo", [[fooNode2], [fooNode1]]);
 
@@ -656,7 +632,6 @@ suite("unit", () => {
       let children = [];
       let through = [];
 
-      // mapping of variable names from this scope object to the list of their declarations and their references
       let variables = new Map;
       variables.set("arguments", [NO_DECLARATIONS, NO_REFERENCES]);
 
@@ -693,7 +668,6 @@ suite("unit", () => {
       let children = [fooScope];
       let through = [];
 
-      // mapping of variable names from this scope object to the list of their declarations and their references
       let variables = new Map;
       variables.set("foo", [[fooNode1], NO_REFERENCES]);
 
@@ -705,7 +679,6 @@ suite("unit", () => {
       let children = [barScope1, barScope2];
       let through = [];
 
-      // mapping of variable names from this scope object to the list of their declarations and their references
       let variables = new Map;
       variables.set("bar", [[barNode2, barNode3], [barNode1, barNode2, barNode3]]);
       variables.set("arguments", [NO_DECLARATIONS, NO_REFERENCES]);
@@ -721,7 +694,6 @@ suite("unit", () => {
       let children = [];
       let through = [];
 
-      // mapping of variable names from this scope object to the list of their declarations and their references
       let variables = new Map;
       variables.set("arguments", [NO_DECLARATIONS, NO_REFERENCES]);
 
@@ -733,7 +705,6 @@ suite("unit", () => {
       let children = [];
       let through = [];
 
-      // mapping of variable names from this scope object to the list of their declarations and their references
       let variables = new Map;
       variables.set("arguments", [NO_DECLARATIONS, NO_REFERENCES]);
 
@@ -758,7 +729,6 @@ suite("unit", () => {
       let children = [functionScope];
       let through = ["f1", "f2"];
 
-      // mapping of variable names from this scope object to the list of their declarations and their references
       let variables = new Map;
       variables.set("f1", [NO_DECLARATIONS, [f1Node1, f1Node2]]);
       variables.set("f2", [NO_DECLARATIONS, [f2Node1]]);
@@ -774,7 +744,6 @@ suite("unit", () => {
       let children = [];
       let through = ["f1", "f2"];
 
-      // mapping of variable names from this scope object to the list of their declarations and their references
       let variables = new Map;
       variables.set("arguments", [NO_DECLARATIONS, NO_REFERENCES]);
 
@@ -799,7 +768,6 @@ suite("unit", () => {
       let children = [functionScope];
       let through = ["f2"];
 
-      // mapping of variable names from this scope object to the list of their declarations and their references
       let variables = new Map;
       variables.set("f2", [NO_DECLARATIONS, [f2Node1]]);
 
@@ -812,7 +780,6 @@ suite("unit", () => {
       let children = [];
       let through = ["f2"];
 
-      // mapping of variable names from this scope object to the list of their declarations and their references
       let variables = new Map;
       variables.set("f1", [[f1Node1], [f1Node1, f1Node2]]);
       variables.set("arguments", [NO_DECLARATIONS, NO_REFERENCES]);
@@ -843,7 +810,6 @@ suite("unit", () => {
       let children = [fScope];
       let through = [];
 
-      // mapping of variable names from this scope object to the list of their declarations and their references
       let variables = new Map;
       variables.set("f", [[fNode1], NO_REFERENCES]);
 
@@ -855,7 +821,6 @@ suite("unit", () => {
       let children = [];
       let through = [];
 
-      // mapping of variable names from this scope object to the list of their declarations and their references
       let variables = new Map;
       variables.set("arg1", [[arg1Node1], [arg1Node2]]);
       variables.set("arg2", [[arg2Node1], [arg2Node2]]);
@@ -886,7 +851,6 @@ suite("unit", () => {
       let children = [fScope];
       let through = [];
 
-      // mapping of variable names from this scope object to the list of their declarations and their references
       let variables = new Map;
       variables.set("f", [[fNode1], NO_REFERENCES]);
 
@@ -898,7 +862,6 @@ suite("unit", () => {
       let children = [];
       let through = [];
 
-      // mapping of variable names from this scope object to the list of their declarations and their references
       let variables = new Map;
       variables.set("v1", [[v1Node1], [v1Node1]]);
       variables.set("arguments", [NO_DECLARATIONS, [argumentsNode1]]);
@@ -929,7 +892,6 @@ suite("unit", () => {
       let children = [withScope];
       let through = ["Math", "cos", "PI", "f"];
 
-      // mapping of variable names from this scope object to the list of their declarations and their references
       let variables = new Map;
       variables.set("Math", [NO_DECLARATIONS, [mathNode1]]);
       variables.set("cos", [NO_DECLARATIONS, [cosNode1]]);
@@ -951,7 +913,6 @@ suite("unit", () => {
       let children = [];
       let through = ["x", "cos", "PI", "f"];
 
-      // mapping of variable names from this scope object to the list of their declarations and their references
       let variables = new Map;
 
       let referenceTypes = new Map;
@@ -990,7 +951,6 @@ suite("unit", () => {
       let children = [withScope];
       let through = ["f", "p1", "p2"];
 
-      // mapping of variable names from this scope object to the list of their declarations and their references
       let variables = new Map;
       variables.set("f", [NO_DECLARATIONS, [fNode1, fNode2]]);
       variables.set("p1", [NO_DECLARATIONS, [p1Node1]]);
@@ -1011,7 +971,6 @@ suite("unit", () => {
       let children = [];
       let through = ["f", "p1", "p2"];
 
-      // mapping of variable names from this scope object to the list of their declarations and their references
       let variables = new Map;
 
       let referenceTypes = new Map;
@@ -1041,7 +1000,6 @@ suite("unit", () => {
       let children = [catchScope];
       let through = ["f"];
 
-      // mapping of variable names from this scope object to the list of their declarations and their references
       let variables = new Map;
       variables.set("f", [NO_DECLARATIONS, [fNode1, fNode2]]);
 
@@ -1055,7 +1013,6 @@ suite("unit", () => {
       let children = [];
       let through = ["f"];
 
-      // mapping of variable names from this scope object to the list of their declarations and their references
       let variables = new Map;
       variables.set("err", [[errNode1], [errNode2]]);
 
@@ -1097,7 +1054,6 @@ suite("unit", () => {
       let children = [catchScope1];
       let through = ["f"];
 
-      // mapping of variable names from this scope object to the list of their declarations and their references
       let variables = new Map;
       variables.set("f", [NO_DECLARATIONS, [fNode1, fNode2, fNode3]]);
 
@@ -1112,7 +1068,6 @@ suite("unit", () => {
       let children = [catchScope2];
       let through = ["f"];
 
-      // mapping of variable names from this scope object to the list of their declarations and their references
       let variables = new Map;
       variables.set("err1", [[err1Node1], [err1Node2, err1Node3]]);
 
@@ -1126,7 +1081,6 @@ suite("unit", () => {
       let children = [];
       let through = ["f", "err1"];
 
-      // mapping of variable names from this scope object to the list of their declarations and their references
       let variables = new Map;
       variables.set("err2", [[err2Node1], [err2Node2]]);
 
@@ -1157,7 +1111,6 @@ suite("unit", () => {
       let children = [catchScope];
       let through = ["f"];
 
-      // mapping of variable names from this scope object to the list of their declarations and their references
       let variables = new Map;
       variables.set("err", [[errNode2], NO_REFERENCES]);
       variables.set("f", [NO_DECLARATIONS, [fNode1]]);
@@ -1171,7 +1124,6 @@ suite("unit", () => {
       let children = [];
       let through = [];
 
-      // mapping of variable names from this scope object to the list of their declarations and their references
       let variables = new Map;
       variables.set("err", [[errNode1], [errNode2]]);
 
