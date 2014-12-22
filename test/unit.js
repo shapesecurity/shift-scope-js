@@ -1133,4 +1133,102 @@ suite("unit", () => {
       checkScope(catchScope, ScopeType.CATCH, false, children, through, variables, referenceTypes);
     }
   });
+
+  test("block-scoped declaration in ForInStatement", () => {
+    const js =
+      `for(let a in a) { a; }
+      for(let b in b) b;
+      for(let c in c) { let c; c; }`;
+    let script = parse(js);
+
+    let globalScope = analyze(script);
+    let forInScopes = globalScope.children.reduce((memo, s) => {
+      memo[s.astNode.left.declarators[0].binding.name] = s;
+      return memo;
+    }, {});
+    let forInScope0 = forInScopes.a;
+    let forInScope1 = forInScopes.b;
+    let forInScope2 = forInScopes.c;
+    let blockScope = forInScopes.c.children[0];
+
+    let aNode1 = script.body.statements[0].left.declarators[0].binding;
+    let aNode2 = script.body.statements[0].right.identifier;
+    let aNode3 = script.body.statements[0].body.block.statements[0].expression.identifier;
+
+    let bNode1 = script.body.statements[1].left.declarators[0].binding;
+    let bNode2 = script.body.statements[1].right.identifier;
+    let bNode3 = script.body.statements[1].body.expression.identifier;
+
+    let cNode1 = script.body.statements[2].left.declarators[0].binding;
+    let cNode2 = script.body.statements[2].right.identifier;
+    let cNode3 = script.body.statements[2].body.block.statements[0].declaration.declarators[0].binding;
+    let cNode4 = script.body.statements[2].body.block.statements[1].expression.identifier;
+
+    { // global scope
+      let children = [forInScope0, forInScope1, forInScope2];
+      let through = ["a", "b", "c"];
+
+      let variables = new Map;
+      variables.set("a", [NO_DECLARATIONS, [aNode2]]);
+      variables.set("b", [NO_DECLARATIONS, [bNode2]]);
+      variables.set("c", [NO_DECLARATIONS, [cNode2]]);
+
+      let referenceTypes = new Map;
+      referenceTypes.set(aNode2, Accessibility.READ);
+      referenceTypes.set(bNode2, Accessibility.READ);
+      referenceTypes.set(cNode2, Accessibility.READ);
+
+      checkScope(globalScope, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
+    }
+    { // first for-in scope
+      let children = [];
+      let through = [];
+
+      let variables = new Map;
+      variables.set("a", [[aNode1], [aNode1, aNode3]]);
+
+      let referenceTypes = new Map;
+      referenceTypes.set(aNode1, Accessibility.WRITE);
+      referenceTypes.set(aNode3, Accessibility.READ);
+
+      checkScope(forInScope0, ScopeType.BLOCK, false, children, through, variables, referenceTypes);
+    }
+    { // second for-in scope
+      let children = [];
+      let through = [];
+
+      let variables = new Map;
+      variables.set("b", [[bNode1], [bNode1, bNode3]]);
+
+      let referenceTypes = new Map;
+      referenceTypes.set(bNode1, Accessibility.WRITE);
+      referenceTypes.set(bNode3, Accessibility.READ);
+
+      checkScope(forInScope1, ScopeType.BLOCK, false, children, through, variables, referenceTypes);
+    }
+    { // third for-in scope
+      let children = [blockScope];
+      let through = [];
+
+      let variables = new Map;
+      variables.set("c", [[cNode1], [cNode1]]);
+
+      let referenceTypes = new Map;
+      referenceTypes.set(cNode1, Accessibility.WRITE);
+
+      checkScope(forInScope2, ScopeType.BLOCK, false, children, through, variables, referenceTypes);
+    }
+    { // third for-in scope's block
+      let children = [];
+      let through = [];
+
+      let variables = new Map;
+      variables.set("c", [[cNode3], [cNode4]]);
+
+      let referenceTypes = new Map;
+      referenceTypes.set(cNode4, Accessibility.READ);
+
+      checkScope(blockScope, ScopeType.BLOCK, false, children, through, variables, referenceTypes);
+    }
+  });
 });

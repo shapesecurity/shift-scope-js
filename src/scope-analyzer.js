@@ -61,13 +61,18 @@ export default class ScopeAnalyzer extends MonoidalReducer {
   }
 
   reduceForInStatement(node, left, right, body) {
-    let s = super.reduceForInStatement(node, left, right, body);
     if (node.left.type === "IdentifierExpression") {
       return this.append(right, body).addReference(new WriteReference(node.left.identifier));
-    } else if (node.left.type === "VariableDeclaration" && node.left.declarators[0].init == null) {
-      s = s.addReference(new WriteReference(node.left.declarators[0].binding));
+    } else { // node.left.type === "VariableDeclaration"
+      let declarator = node.left.declarators[0];
+      if (declarator.init == null) {
+        left = left.addReference(new WriteReference(declarator.binding));
+      }
+      if (left.blockScopedDeclarations.size > 0) {
+        return this.append(this.append(left, body).finish(node, ScopeType.BLOCK), right);
+      }
+      return super.reduceForInStatement(node, left, right, body);
     }
-    return s;
   }
 
   reduceFunctionDeclaration(node, name, parameters, functionBody) {
