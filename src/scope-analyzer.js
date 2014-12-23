@@ -75,6 +75,13 @@ export default class ScopeAnalyzer extends MonoidalReducer {
     }
   }
 
+  reduceForStatement(node, init, test, update, body) {
+    if (node.init.type === "VariableDeclaration" && init.blockScopedDeclarations.size > 0) {
+      return this.append3(this.append(init, body).finish(node, ScopeType.BLOCK), test, update);
+    }
+    return super.reduceForStatement(node, init, test, update, body);
+  }
+
   reduceFunctionDeclaration(node, name, parameters, functionBody) {
     return node.parameters.reduce((s, p) => s.addDeclaration(new ParameterDeclaration(p)), functionBody)
       .finish(node, ScopeType.FUNCTION)
