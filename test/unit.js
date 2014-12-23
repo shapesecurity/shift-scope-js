@@ -33,7 +33,10 @@ function entriesSize(multiMap) {
 }
 
 // "variables" parameter is a mapping of variable names from this scope object to the list of their declarations and their references
-function checkScope(scope, scopeType, isDynamic, children, through, variables, referenceTypes) {
+function checkScope(scope, scopeNode, scopeType, isDynamic, children, through, variables, referenceTypes) {
+  assert(scopeNode != null);
+  assert.equal(scope.astNode, scopeNode);
+
   assert.equal(scope.type, scopeType);
   assert.equal(scope.dynamic, isDynamic);
 
@@ -96,7 +99,7 @@ suite("unit", () => {
       let referenceTypes = new Map;
       referenceTypes.set(v2Node1, Accessibility.WRITE);
 
-      checkScope(globalScope, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
+      checkScope(globalScope, script, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
     }
   });
 
@@ -119,7 +122,7 @@ suite("unit", () => {
       let referenceTypes = new Map;
       referenceTypes.set(v2Node1, Accessibility.WRITE);
 
-      checkScope(globalScope, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
+      checkScope(globalScope, script, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
     }
   });
 
@@ -145,7 +148,7 @@ suite("unit", () => {
       referenceTypes.set(v1Node2, Accessibility.READ);
       referenceTypes.set(v2Node1, Accessibility.WRITE);
 
-      checkScope(globalScope, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
+      checkScope(globalScope, script, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
     }
   });
 
@@ -171,7 +174,7 @@ suite("unit", () => {
       referenceTypes.set(v1Node2, Accessibility.WRITE);
       referenceTypes.set(v2Node1, Accessibility.WRITE);
 
-      checkScope(globalScope, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
+      checkScope(globalScope, script, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
     }
   });
 
@@ -198,7 +201,7 @@ suite("unit", () => {
       referenceTypes.set(v1Node3, Accessibility.READ);
       referenceTypes.set(v2Node1, Accessibility.WRITE);
 
-      checkScope(globalScope, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
+      checkScope(globalScope, script, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
     }
   });
 
@@ -217,7 +220,9 @@ suite("unit", () => {
 
     let globalScope = analyze(script);
     let f1Scope = globalScope.children[0];
+    let f1ScopeNode = script.body.statements[0];
     let f2Scope = globalScope.children[0].children[0];
+    let f2ScopeNode = f1ScopeNode.body.statements[1];
 
     let f1Node1 = script.body.statements[0].name;
     let f1Node2 = script.body.statements[1].declaration.declarators[0].init.callee.identifier;
@@ -246,7 +251,7 @@ suite("unit", () => {
       referenceTypes.set(f1Node2, Accessibility.READ);
       referenceTypes.set(rNode1, Accessibility.WRITE);
 
-      checkScope(globalScope, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
+      checkScope(globalScope, script, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
     }
     { // f1 scope
       let children = [f2Scope];
@@ -265,7 +270,7 @@ suite("unit", () => {
       referenceTypes.set(p2Node2, Accessibility.READ);
       referenceTypes.set(f2Node2, Accessibility.READ);
 
-      checkScope(f1Scope, ScopeType.FUNCTION, false, children, through, variables, referenceTypes);
+      checkScope(f1Scope, f1ScopeNode, ScopeType.FUNCTION, false, children, through, variables, referenceTypes);
     }
     { // f2 scope
       let children = [];
@@ -281,7 +286,7 @@ suite("unit", () => {
       referenceTypes.set(v2Node1, Accessibility.WRITE);
       referenceTypes.set(v2Node2, Accessibility.READ);
 
-      checkScope(f2Scope, ScopeType.FUNCTION, false, children, through, variables, referenceTypes);
+      checkScope(f2Scope, f2ScopeNode, ScopeType.FUNCTION, false, children, through, variables, referenceTypes);
     }
   });
 
@@ -291,6 +296,7 @@ suite("unit", () => {
 
     let globalScope = analyze(script);
     let fScope = globalScope.children[0];
+    let fScopeNode = script.body.statements[0];
 
     let fNode1 = script.body.statements[0].name;
     let fNode2 = script.body.statements[0].body.statements[0].expression.binding.identifier;
@@ -307,7 +313,7 @@ suite("unit", () => {
       referenceTypes.set(fNode2, Accessibility.WRITE);
       referenceTypes.set(fNode3, Accessibility.READ);
 
-      checkScope(globalScope, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
+      checkScope(globalScope, script, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
     }
     { // f scope
       let children = [];
@@ -318,7 +324,7 @@ suite("unit", () => {
 
       let referenceTypes = new Map;
 
-      checkScope(fScope, ScopeType.FUNCTION, false, children, through, variables, referenceTypes);
+      checkScope(fScope, fScopeNode, ScopeType.FUNCTION, false, children, through, variables, referenceTypes);
     }
   });
 
@@ -328,6 +334,7 @@ suite("unit", () => {
 
     let globalScope = analyze(script);
     let fScope = globalScope.children[0];
+    let fScopeNode = script.body.statements[0].declaration.declarators[0].init;
 
     let fNode1 = script.body.statements[0].declaration.declarators[0].binding;
     let fNode2 = script.body.statements[0].declaration.declarators[0].init.body.statements[0].expression.binding.identifier;
@@ -345,7 +352,7 @@ suite("unit", () => {
       referenceTypes.set(fNode2, Accessibility.WRITE);
       referenceTypes.set(fNode3, Accessibility.READ);
 
-      checkScope(globalScope, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
+      checkScope(globalScope, script, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
     }
     { // f scope
       let children = [];
@@ -356,7 +363,7 @@ suite("unit", () => {
 
       let referenceTypes = new Map;
 
-      checkScope(fScope, ScopeType.FUNCTION, false, children, through, variables, referenceTypes);
+      checkScope(fScope, fScopeNode, ScopeType.FUNCTION, false, children, through, variables, referenceTypes);
     }
   });
 
@@ -366,7 +373,9 @@ suite("unit", () => {
 
     let globalScope = analyze(script);
     let functionNameScope = globalScope.children[0];
+    let functionNameScopeNode = script.body.statements[0].declaration.declarators[0].init;
     let functionScope = functionNameScope.children[0];
+    let functionScopeNode = functionNameScopeNode;
 
     let f1Node1 = script.body.statements[0].declaration.declarators[0].init.name;
     let f1Node2 = script.body.statements[0].declaration.declarators[0].init.body.statements[0].expression.binding.identifier;
@@ -387,7 +396,7 @@ suite("unit", () => {
       referenceTypes.set(f2Node2, Accessibility.READ);
       referenceTypes.set(f1Node3, Accessibility.READ);
 
-      checkScope(globalScope, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
+      checkScope(globalScope, script, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
     }
     { // function name scope
       let children = [functionScope];
@@ -399,7 +408,7 @@ suite("unit", () => {
       let referenceTypes = new Map;
       referenceTypes.set(f1Node2, Accessibility.WRITE);
 
-      checkScope(functionNameScope, ScopeType.FUNCTION_NAME, false, children, through, variables, referenceTypes);
+      checkScope(functionNameScope, functionNameScopeNode, ScopeType.FUNCTION_NAME, false, children, through, variables, referenceTypes);
     }
     { // function scope
       let children = [];
@@ -411,7 +420,7 @@ suite("unit", () => {
       let referenceTypes = new Map;
       referenceTypes.set(f1Node2, Accessibility.WRITE);
 
-      checkScope(functionScope, ScopeType.FUNCTION, false, children, through, variables, referenceTypes);
+      checkScope(functionScope, functionScopeNode, ScopeType.FUNCTION, false, children, through, variables, referenceTypes);
     }
   });
 
@@ -428,6 +437,7 @@ suite("unit", () => {
 
     let globalScope = analyze(script);
     let functionScope = globalScope.children[0];
+    let functionScopeNode = script.body.statements[1];
 
     let fooNode1 = script.body.statements[0].declaration.declarators[0].binding;
     let fooNode2 = script.body.statements[1].body.statements[0].test.operand.identifier;
@@ -449,7 +459,7 @@ suite("unit", () => {
       referenceTypes.set(fooNode1, Accessibility.WRITE);
       referenceTypes.set(bazNode1, Accessibility.READ);
 
-      checkScope(globalScope, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
+      checkScope(globalScope, script, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
     }
     { // function scope
       let children = [];
@@ -464,7 +474,7 @@ suite("unit", () => {
       referenceTypes.set(fooNode3, Accessibility.WRITE);
       referenceTypes.set(fooNode4, Accessibility.READ);
 
-      checkScope(functionScope, ScopeType.FUNCTION, false, children, through, variables, referenceTypes);
+      checkScope(functionScope, functionScopeNode, ScopeType.FUNCTION, false, children, through, variables, referenceTypes);
     }
   });
 
@@ -482,7 +492,9 @@ suite("unit", () => {
 
     let globalScope = analyze(script);
     let bScope = globalScope.children[0];
+    let bScopeNode = script.body.statements[1];
     let aScope = bScope.children[0];
+    let aScopeNode = bScopeNode.body.statements[2];
 
     let aNode1 = script.body.statements[0].declaration.declarators[0].binding;
     let bNode1 = script.body.statements[1].name;
@@ -507,7 +519,7 @@ suite("unit", () => {
       referenceTypes.set(bNode2, Accessibility.READ);
       referenceTypes.set(cNode1, Accessibility.READ);
 
-      checkScope(globalScope, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
+      checkScope(globalScope, script, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
     }
     { // b scope
       let children = [aScope];
@@ -520,7 +532,7 @@ suite("unit", () => {
       let referenceTypes = new Map;
       referenceTypes.set(aNode2, Accessibility.WRITE);
 
-      checkScope(bScope, ScopeType.FUNCTION, false, children, through, variables, referenceTypes);
+      checkScope(bScope, bScopeNode, ScopeType.FUNCTION, false, children, through, variables, referenceTypes);
     }
     { // a scope
       let children = [];
@@ -531,7 +543,7 @@ suite("unit", () => {
 
       let referenceTypes = new Map;
 
-      checkScope(aScope, ScopeType.FUNCTION, false, children, through, variables, referenceTypes);
+      checkScope(aScope, aScopeNode, ScopeType.FUNCTION, false, children, through, variables, referenceTypes);
     }
   });
 
@@ -550,8 +562,11 @@ suite("unit", () => {
 
     let globalScope = analyze(script);
     let fooScope = globalScope.children[0];
+    let fooScopeNode = script.body.statements[0];
     let barScope1 = fooScope.children[0];
+    let barScope1Node = barScope1.astNode;
     let barScope2 = fooScope.children[1];
+    let barScope2Node = barScope2.astNode;
 
     let fooNode1 = script.body.statements[0].name;
     let barNode1 = script.body.statements[0].body.statements[0].name;
@@ -567,7 +582,7 @@ suite("unit", () => {
 
       let referenceTypes = new Map;
 
-      checkScope(globalScope, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
+      checkScope(globalScope, script, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
     }
     { // foo scope
       let children = [barScope1, barScope2];
@@ -580,7 +595,7 @@ suite("unit", () => {
       let referenceTypes = new Map;
       referenceTypes.set(barNode2, Accessibility.READ);
 
-      checkScope(fooScope, ScopeType.FUNCTION, false, children, through, variables, referenceTypes);
+      checkScope(fooScope, fooScopeNode, ScopeType.FUNCTION, false, children, through, variables, referenceTypes);
     }
     { // bar1 scope
       let children = [];
@@ -591,7 +606,7 @@ suite("unit", () => {
 
       let referenceTypes = new Map;
 
-      checkScope(barScope1, ScopeType.FUNCTION, false, children, through, variables, referenceTypes);
+      checkScope(barScope1, barScope1Node, ScopeType.FUNCTION, false, children, through, variables, referenceTypes);
     }
     { // bar2 scope
       let children = [];
@@ -602,7 +617,7 @@ suite("unit", () => {
 
       let referenceTypes = new Map;
 
-      checkScope(barScope2, ScopeType.FUNCTION, false, children, through, variables, referenceTypes);
+      checkScope(barScope2, barScope2Node, ScopeType.FUNCTION, false, children, through, variables, referenceTypes);
     }
   });
 
@@ -612,6 +627,7 @@ suite("unit", () => {
 
     let globalScope = analyze(script);
     let fooScope = globalScope.children[0];
+    let fooScopeNode = script.body.statements[1];
 
     let fooNode1 = script.body.statements[0].expression.callee.identifier;
     let fooNode2 = script.body.statements[1].name;
@@ -626,7 +642,7 @@ suite("unit", () => {
       let referenceTypes = new Map;
       referenceTypes.set(fooNode1, Accessibility.READ);
 
-      checkScope(globalScope, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
+      checkScope(globalScope, script, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
     }
     { // foo scope
       let children = [];
@@ -637,7 +653,7 @@ suite("unit", () => {
 
       let referenceTypes = new Map;
 
-      checkScope(fooScope, ScopeType.FUNCTION, false, children, through, variables, referenceTypes);
+      checkScope(fooScope, fooScopeNode, ScopeType.FUNCTION, false, children, through, variables, referenceTypes);
     }
   });
 
@@ -656,8 +672,11 @@ suite("unit", () => {
 
     let globalScope = analyze(script);
     let fooScope = globalScope.children[0];
+    let fooScopeNode = script.body.statements[0];
     let barScope1 = fooScope.children[0];
+    let barScope1Node = barScope1.astNode;
     let barScope2 = fooScope.children[1];
+    let barScope2Node = barScope2.astNode;
 
     let fooNode1 = script.body.statements[0].name;
     let barNode1 = script.body.statements[0].body.statements[0].expression.callee.identifier;
@@ -673,7 +692,7 @@ suite("unit", () => {
 
       let referenceTypes = new Map;
 
-      checkScope(globalScope, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
+      checkScope(globalScope, script, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
     }
     { // foo scope
       let children = [barScope1, barScope2];
@@ -688,7 +707,7 @@ suite("unit", () => {
       referenceTypes.set(barNode2, Accessibility.WRITE);
       referenceTypes.set(barNode3, Accessibility.WRITE);
 
-      checkScope(fooScope, ScopeType.FUNCTION, false, children, through, variables, referenceTypes);
+      checkScope(fooScope, fooScopeNode, ScopeType.FUNCTION, false, children, through, variables, referenceTypes);
     }
     { // bar scope 1
       let children = [];
@@ -699,7 +718,7 @@ suite("unit", () => {
 
       let referenceTypes = new Map;
 
-      checkScope(barScope1, ScopeType.FUNCTION, false, children, through, variables, referenceTypes);
+      checkScope(barScope1, barScope1Node, ScopeType.FUNCTION, false, children, through, variables, referenceTypes);
     }
     { // bar scope 2
       let children = [];
@@ -710,7 +729,7 @@ suite("unit", () => {
 
       let referenceTypes = new Map;
 
-      checkScope(barScope2, ScopeType.FUNCTION, false, children, through, variables, referenceTypes);
+      checkScope(barScope2, barScope2Node, ScopeType.FUNCTION, false, children, through, variables, referenceTypes);
     }
   });
 
@@ -720,6 +739,7 @@ suite("unit", () => {
 
     let globalScope = analyze(script);
     let functionScope = globalScope.children[0];
+    let functionScopeNode = script.body.statements[0].expression;
 
     let f1Node1 = script.body.statements[0].expression.body.statements[0].expression.binding.identifier;
     let f2Node1 = script.body.statements[0].expression.body.statements[1].expression.callee.identifier;
@@ -738,7 +758,7 @@ suite("unit", () => {
       referenceTypes.set(f1Node2, Accessibility.READ);
       referenceTypes.set(f2Node1, Accessibility.READ);
 
-      checkScope(globalScope, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
+      checkScope(globalScope, script, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
     }
     { // function scope
       let children = [];
@@ -749,7 +769,7 @@ suite("unit", () => {
 
       let referenceTypes = new Map;
 
-      checkScope(functionScope, ScopeType.FUNCTION, false, children, through, variables, referenceTypes);
+      checkScope(functionScope, functionScopeNode, ScopeType.FUNCTION, false, children, through, variables, referenceTypes);
     }
   });
 
@@ -759,6 +779,7 @@ suite("unit", () => {
 
     let globalScope = analyze(script);
     let functionScope = globalScope.children[0];
+    let functionScopeNode = script.body.statements[0].expression;
 
     let f1Node1 = script.body.statements[0].expression.body.statements[0].declaration.declarators[0].binding;
     let f2Node1 = script.body.statements[0].expression.body.statements[1].expression.callee.identifier;
@@ -774,7 +795,7 @@ suite("unit", () => {
       let referenceTypes = new Map;
       referenceTypes.set(f2Node1, Accessibility.READ);
 
-      checkScope(globalScope, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
+      checkScope(globalScope, script, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
     }
     { // function scope
       let children = [];
@@ -788,7 +809,7 @@ suite("unit", () => {
       referenceTypes.set(f1Node1, Accessibility.WRITE);
       referenceTypes.set(f1Node2, Accessibility.READ);
 
-      checkScope(functionScope, ScopeType.FUNCTION, false, children, through, variables, referenceTypes);
+      checkScope(functionScope, functionScopeNode, ScopeType.FUNCTION, false, children, through, variables, referenceTypes);
     }
   });
 
@@ -798,6 +819,7 @@ suite("unit", () => {
 
     let globalScope = analyze(script);
     let fScope = globalScope.children[0];
+    let fScopeNode = script.body.statements[0];
 
     let fNode1 = script.body.statements[0].name;
     let arg1Node1 = script.body.statements[0].parameters[0];
@@ -815,7 +837,7 @@ suite("unit", () => {
 
       let referenceTypes = new Map;
 
-      checkScope(globalScope, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
+      checkScope(globalScope, script, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
     }
     { // function scope
       let children = [];
@@ -832,7 +854,7 @@ suite("unit", () => {
       referenceTypes.set(arg2Node2, Accessibility.READ);
       referenceTypes.set(v1Node1, Accessibility.WRITE);
 
-      checkScope(fScope, ScopeType.FUNCTION, false, children, through, variables, referenceTypes);
+      checkScope(fScope, fScopeNode, ScopeType.FUNCTION, false, children, through, variables, referenceTypes);
     }
   });
 
@@ -842,6 +864,7 @@ suite("unit", () => {
 
     let globalScope = analyze(script);
     let fScope = globalScope.children[0];
+    let fScopeNode = script.body.statements[0];
 
     let fNode1 = script.body.statements[0].name;
     let v1Node1 = script.body.statements[0].body.statements[0].declaration.declarators[0].binding;
@@ -856,7 +879,7 @@ suite("unit", () => {
 
       let referenceTypes = new Map;
 
-      checkScope(globalScope, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
+      checkScope(globalScope, script, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
     }
     { // function scope
       let children = [];
@@ -870,7 +893,7 @@ suite("unit", () => {
       referenceTypes.set(v1Node1, Accessibility.WRITE);
       referenceTypes.set(argumentsNode1, Accessibility.READ);
 
-      checkScope(fScope, ScopeType.FUNCTION, false, children, through, variables, referenceTypes);
+      checkScope(fScope, fScopeNode, ScopeType.FUNCTION, false, children, through, variables, referenceTypes);
     }
   });
 
@@ -880,6 +903,7 @@ suite("unit", () => {
 
     let globalScope = analyze(script);
     let withScope = globalScope.children[0];
+    let withScopeNode = script.body.statements[0];
 
     let mathNode1 = script.body.statements[0].object.identifier;
     let xNode1 = script.body.statements[0].body.block.statements[0].declaration.declarators[0].binding;
@@ -907,7 +931,7 @@ suite("unit", () => {
       referenceTypes.set(xNode1, Accessibility.WRITE);
       referenceTypes.set(xNode2, Accessibility.READ);
 
-      checkScope(globalScope, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
+      checkScope(globalScope, script, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
     }
     { // with scope
       let children = [];
@@ -917,7 +941,7 @@ suite("unit", () => {
 
       let referenceTypes = new Map;
 
-      checkScope(withScope, ScopeType.WITH, true, children, through, variables, referenceTypes);
+      checkScope(withScope, withScopeNode, ScopeType.WITH, true, children, through, variables, referenceTypes);
     }
   });
 
@@ -939,6 +963,7 @@ suite("unit", () => {
 
     let globalScope = analyze(script);
     let withScope = globalScope.children[0];
+    let withScopeNode = script.body.statements[1];
 
     let oNode1 = script.body.statements[0].declaration.declarators[0].binding;
     let oNode2 = script.body.statements[1].object.object.object.identifier;
@@ -965,7 +990,7 @@ suite("unit", () => {
       referenceTypes.set(oNode1, Accessibility.WRITE);
       referenceTypes.set(oNode2, Accessibility.READ);
 
-      checkScope(globalScope, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
+      checkScope(globalScope, script, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
     }
     { // with scope
       let children = [];
@@ -975,7 +1000,7 @@ suite("unit", () => {
 
       let referenceTypes = new Map;
 
-      checkScope(withScope, ScopeType.WITH, true, children, through, variables, referenceTypes);
+      checkScope(withScope, withScopeNode, ScopeType.WITH, true, children, through, variables, referenceTypes);
     }
   });
 
@@ -990,6 +1015,7 @@ suite("unit", () => {
 
     let globalScope = analyze(script);
     let catchScope = globalScope.children[0];
+    let catchScopeNode = script.body.statements[0].catchClause;
 
     let fNode1 = script.body.statements[0].body.statements[0].expression.callee.identifier;
     let errNode1 = script.body.statements[0].catchClause.binding;
@@ -1007,7 +1033,7 @@ suite("unit", () => {
       referenceTypes.set(fNode1, Accessibility.READ);
       referenceTypes.set(fNode2, Accessibility.READ);
 
-      checkScope(globalScope, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
+      checkScope(globalScope, script, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
     }
     { // catch scope
       let children = [];
@@ -1019,7 +1045,7 @@ suite("unit", () => {
       let referenceTypes = new Map;
       referenceTypes.set(errNode2, Accessibility.READ);
 
-      checkScope(catchScope, ScopeType.CATCH, false, children, through, variables, referenceTypes);
+      checkScope(catchScope, catchScopeNode, ScopeType.CATCH, false, children, through, variables, referenceTypes);
     }
   });
 
@@ -1039,7 +1065,9 @@ suite("unit", () => {
 
     let globalScope = analyze(script);
     let catchScope1 = globalScope.children[0];
+    let catchScope1Node = script.body.statements[0].catchClause;
     let catchScope2 = catchScope1.children[0];
+    let catchScope2Node = script.body.statements[0].catchClause.body.statements[0].catchClause;
 
     let fNode1 = script.body.statements[0].body.statements[0].expression.callee.identifier;
     let err1Node1 = script.body.statements[0].catchClause.binding;
@@ -1062,7 +1090,7 @@ suite("unit", () => {
       referenceTypes.set(fNode2, Accessibility.READ);
       referenceTypes.set(fNode3, Accessibility.READ);
 
-      checkScope(globalScope, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
+      checkScope(globalScope, script, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
     }
     { // catch scope 1
       let children = [catchScope2];
@@ -1075,7 +1103,7 @@ suite("unit", () => {
       referenceTypes.set(err1Node2, Accessibility.READ);
       referenceTypes.set(err1Node3, Accessibility.READ);
 
-      checkScope(catchScope1, ScopeType.CATCH, false, children, through, variables, referenceTypes);
+      checkScope(catchScope1, catchScope1Node, ScopeType.CATCH, false, children, through, variables, referenceTypes);
     }
     { // catch scope 2
       let children = [];
@@ -1087,7 +1115,7 @@ suite("unit", () => {
       let referenceTypes = new Map;
       referenceTypes.set(err2Node2, Accessibility.READ);
 
-      checkScope(catchScope2, ScopeType.CATCH, false, children, through, variables, referenceTypes);
+      checkScope(catchScope2, catchScope2Node, ScopeType.CATCH, false, children, through, variables, referenceTypes);
     }
   });
 
@@ -1102,6 +1130,7 @@ suite("unit", () => {
 
     let globalScope = analyze(script);
     let catchScope = globalScope.children[0];
+    let catchScopeNode = script.body.statements[0].catchClause;
 
     let fNode1 = script.body.statements[0].body.statements[0].expression.callee.identifier;
     let errNode1 = script.body.statements[0].catchClause.binding;
@@ -1118,7 +1147,7 @@ suite("unit", () => {
       let referenceTypes = new Map;
       referenceTypes.set(fNode1, Accessibility.READ);
 
-      checkScope(globalScope, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
+      checkScope(globalScope, script, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
     }
     { // catch scope
       let children = [];
@@ -1130,7 +1159,7 @@ suite("unit", () => {
       let referenceTypes = new Map;
       referenceTypes.set(errNode2, Accessibility.WRITE);
 
-      checkScope(catchScope, ScopeType.CATCH, false, children, through, variables, referenceTypes);
+      checkScope(catchScope, catchScopeNode, ScopeType.CATCH, false, children, through, variables, referenceTypes);
     }
   });
 
@@ -1147,9 +1176,13 @@ suite("unit", () => {
       return memo;
     }, {});
     let forInScope0 = forInScopes.a;
+    let forInScope0Node = script.body.statements[0];
     let forInScope1 = forInScopes.b;
+    let forInScope1Node = script.body.statements[1];
     let forInScope2 = forInScopes.c;
+    let forInScope2Node = script.body.statements[2];
     let blockScope = forInScopes.c.children[0];
+    let blockScopeNode = script.body.statements[2].body.block;
 
     let aNode1 = script.body.statements[0].left.declarators[0].binding;
     let aNode2 = script.body.statements[0].right.identifier;
@@ -1178,7 +1211,7 @@ suite("unit", () => {
       referenceTypes.set(bNode2, Accessibility.READ);
       referenceTypes.set(cNode2, Accessibility.READ);
 
-      checkScope(globalScope, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
+      checkScope(globalScope, script, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
     }
     { // first for-in scope
       let children = [];
@@ -1191,7 +1224,7 @@ suite("unit", () => {
       referenceTypes.set(aNode1, Accessibility.WRITE);
       referenceTypes.set(aNode3, Accessibility.READ);
 
-      checkScope(forInScope0, ScopeType.BLOCK, false, children, through, variables, referenceTypes);
+      checkScope(forInScope0, forInScope0Node, ScopeType.BLOCK, false, children, through, variables, referenceTypes);
     }
     { // second for-in scope
       let children = [];
@@ -1204,7 +1237,7 @@ suite("unit", () => {
       referenceTypes.set(bNode1, Accessibility.WRITE);
       referenceTypes.set(bNode3, Accessibility.READ);
 
-      checkScope(forInScope1, ScopeType.BLOCK, false, children, through, variables, referenceTypes);
+      checkScope(forInScope1, forInScope1Node, ScopeType.BLOCK, false, children, through, variables, referenceTypes);
     }
     { // third for-in scope
       let children = [blockScope];
@@ -1216,7 +1249,7 @@ suite("unit", () => {
       let referenceTypes = new Map;
       referenceTypes.set(cNode1, Accessibility.WRITE);
 
-      checkScope(forInScope2, ScopeType.BLOCK, false, children, through, variables, referenceTypes);
+      checkScope(forInScope2, forInScope2Node, ScopeType.BLOCK, false, children, through, variables, referenceTypes);
     }
     { // third for-in scope's block
       let children = [];
@@ -1228,7 +1261,7 @@ suite("unit", () => {
       let referenceTypes = new Map;
       referenceTypes.set(cNode4, Accessibility.READ);
 
-      checkScope(blockScope, ScopeType.BLOCK, false, children, through, variables, referenceTypes);
+      checkScope(blockScope, blockScopeNode, ScopeType.BLOCK, false, children, through, variables, referenceTypes);
     }
   });
 
@@ -1245,9 +1278,13 @@ suite("unit", () => {
       return memo;
     }, {});
     let forScope0 = forScopes.a;
+    let forScope0Node = script.body.statements[0];
     let forScope1 = forScopes.b;
+    let forScope1Node = script.body.statements[1];
     let forScope2 = forScopes.c;
+    let forScope2Node = script.body.statements[2];
     let blockScope = forScopes.c.children[0];
+    let blockScopeNode = script.body.statements[2].body.block;
 
     let aNode1 = script.body.statements[0].init.declarators[0].binding;
     let aNode2 = script.body.statements[0].body.block.statements[0].expression.identifier;
@@ -1285,7 +1322,7 @@ suite("unit", () => {
       referenceTypes.set(hNode, Accessibility.READ);
       referenceTypes.set(iNode, Accessibility.READ);
 
-      checkScope(globalScope, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
+      checkScope(globalScope, script, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
     }
     { // first for scope
       let children = [];
@@ -1297,7 +1334,7 @@ suite("unit", () => {
       let referenceTypes = new Map;
       referenceTypes.set(aNode2, Accessibility.READ);
 
-      checkScope(forScope0, ScopeType.BLOCK, false, children, through, variables, referenceTypes);
+      checkScope(forScope0, forScope0Node, ScopeType.BLOCK, false, children, through, variables, referenceTypes);
     }
     { // second for scope
       let children = [];
@@ -1309,7 +1346,7 @@ suite("unit", () => {
       let referenceTypes = new Map;
       referenceTypes.set(bNode2, Accessibility.READ);
 
-      checkScope(forScope1, ScopeType.BLOCK, false, children, through, variables, referenceTypes);
+      checkScope(forScope1, forScope1Node, ScopeType.BLOCK, false, children, through, variables, referenceTypes);
     }
     { // third for scope
       let children = [blockScope];
@@ -1320,7 +1357,7 @@ suite("unit", () => {
 
       let referenceTypes = new Map;
 
-      checkScope(forScope2, ScopeType.BLOCK, false, children, through, variables, referenceTypes);
+      checkScope(forScope2, forScope2Node, ScopeType.BLOCK, false, children, through, variables, referenceTypes);
     }
     { // third for scope's block
       let children = [];
@@ -1332,7 +1369,7 @@ suite("unit", () => {
       let referenceTypes = new Map;
       referenceTypes.set(cNode3, Accessibility.READ);
 
-      checkScope(blockScope, ScopeType.BLOCK, false, children, through, variables, referenceTypes);
+      checkScope(blockScope, blockScopeNode, ScopeType.BLOCK, false, children, through, variables, referenceTypes);
     }
   });
 });
