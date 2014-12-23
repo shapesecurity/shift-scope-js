@@ -1163,6 +1163,113 @@ suite("unit", () => {
     }
   });
 
+  test("block-scoped declaration in CatchClause", () => {
+    const js =
+      `try { throw 0; } catch (e) { e; }
+      try { throw 0; } catch (f) { let a; f }
+      try { throw 0; } catch (g) { let g; g; }`;
+    let script = parse(js);
+
+    let globalScope = analyze(script);
+    let catchScopes = globalScope.children.reduce((memo, s) => {
+      memo[s.astNode.binding.name] = s;
+      return memo;
+    }, {});
+
+    let catchScope0 = catchScopes.e;
+    let catchScope0Node = script.body.statements[0].catchClause;
+
+    let catchScope1 = catchScopes.f;
+    let catchScope1Node = script.body.statements[1].catchClause;
+    let blockScope0 = catchScopes.f.children[0];
+    let blockScope0Node = catchScope1Node.body;
+
+    let catchScope2 = catchScopes.g;
+    let catchScope2Node = script.body.statements[2].catchClause;
+    let blockScope1 = catchScopes.g.children[0];
+    let blockScope1Node = catchScope2Node.body;
+
+    let eNode1 = script.body.statements[0].catchClause.binding;
+    let eNode2 = script.body.statements[0].catchClause.body.statements[0].expression.identifier;
+
+    let fNode1 = script.body.statements[1].catchClause.binding;
+    let aNode1 = script.body.statements[1].catchClause.body.statements[0].declaration.declarators[0].binding;
+    let fNode2 = script.body.statements[1].catchClause.body.statements[1].expression.identifier;
+
+    let gNode1 = script.body.statements[2].catchClause.binding;
+    let gNode2 = script.body.statements[2].catchClause.body.statements[0].declaration.declarators[0].binding;
+    let gNode3 = script.body.statements[2].catchClause.body.statements[1].expression.identifier;
+
+    { // global scope
+      let children = [catchScope0, catchScope1, catchScope2];
+      let through = [];
+
+      let variables = new Map;
+
+      let referenceTypes = new Map;
+
+      checkScope(globalScope, script, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
+    }
+    { // first catch scope
+      let children = [];
+      let through = [];
+
+      let variables = new Map;
+      variables.set("e", [[eNode1], [eNode2]]);
+
+      let referenceTypes = new Map;
+      referenceTypes.set(eNode2, Accessibility.READ);
+
+      checkScope(catchScope0, catchScope0Node, ScopeType.CATCH, false, children, through, variables, referenceTypes);
+    }
+    { // second catch scope
+      let children = [blockScope0];
+      let through = [];
+
+      let variables = new Map;
+      variables.set("f", [[fNode1], [fNode2]]);
+
+      let referenceTypes = new Map;
+      referenceTypes.set(fNode2, Accessibility.READ);
+
+      checkScope(catchScope1, catchScope1Node, ScopeType.CATCH, false, children, through, variables, referenceTypes);
+    }
+    { // second catch scope's block
+      let children = [];
+      let through = ["f"];
+
+      let variables = new Map;
+      variables.set("a", [[aNode1], NO_REFERENCES]);
+
+      let referenceTypes = new Map;
+
+      checkScope(blockScope0, blockScope0Node, ScopeType.BLOCK, false, children, through, variables, referenceTypes);
+    }
+    { // third catch scope
+      let children = [blockScope1];
+      let through = [];
+
+      let variables = new Map;
+      variables.set("g", [[gNode1], NO_REFERENCES]);
+
+      let referenceTypes = new Map;
+
+      checkScope(catchScope2, catchScope2Node, ScopeType.CATCH, false, children, through, variables, referenceTypes);
+    }
+    { // third catch scope's block
+      let children = [];
+      let through = [];
+
+      let variables = new Map;
+      variables.set("g", [[gNode2], [gNode3]]);
+
+      let referenceTypes = new Map;
+      referenceTypes.set(gNode3, Accessibility.READ);
+
+      checkScope(blockScope1, blockScope1Node, ScopeType.BLOCK, false, children, through, variables, referenceTypes);
+    }
+  });
+
   test("block-scoped declaration in ForInStatement", () => {
     const js =
       `for(let a in a) { a; }
