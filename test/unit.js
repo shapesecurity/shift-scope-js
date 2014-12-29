@@ -1479,4 +1479,69 @@ suite("unit", () => {
       checkScope(blockScope, blockScopeNode, ScopeType.BLOCK, false, children, through, variables, referenceTypes);
     }
   });
+
+  test("direct/indirect call to eval", () => {
+    const js =
+      `function f() {
+        eval(s);
+        function g() {
+          (0, eval)(s);
+        }
+      }`;
+    let script = parse(js);
+
+    let globalScope = analyze(script);
+    let fScope = globalScope.children[0];
+    let fScopeNode = script.body.statements[0];
+    let gScope = fScope.children[0];
+    let gScopeNode = fScopeNode.body.statements[1];
+
+    let fNode = script.body.statements[0].name;
+    let gNode = script.body.statements[0].body.statements[1].name;
+    let evalNode1 = script.body.statements[0].body.statements[0].expression.callee.identifier
+    let evalNode2 = script.body.statements[0].body.statements[1].body.statements[0].expression.callee.right.identifier;
+    let sNode1 = script.body.statements[0].body.statements[0].expression.arguments[0].identifier;
+    let sNode2 = script.body.statements[0].body.statements[1].body.statements[0].expression.arguments[0].identifier;
+
+    { // global scope
+      let children = [fScope];
+      let through = ["eval", "s"];
+
+      let variables = new Map;
+      variables.set("eval", [NO_DECLARATIONS, [evalNode1, evalNode2]]);
+      variables.set("s", [NO_DECLARATIONS, [sNode1, sNode2]]);
+      variables.set("f", [[fNode], NO_REFERENCES]);
+
+      let referenceTypes = new Map;
+      referenceTypes.set(evalNode1, Accessibility.READ);
+      referenceTypes.set(evalNode2, Accessibility.READ);
+      referenceTypes.set(sNode1, Accessibility.READ);
+      referenceTypes.set(sNode2, Accessibility.READ);
+
+      checkScope(globalScope, script, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
+    }
+    { // f scope
+      let children = [gScope];
+      let through = ["eval", "s"];
+
+      let variables = new Map;
+      variables.set("arguments", [NO_DECLARATIONS, NO_REFERENCES]);
+      variables.set("g", [[gNode], NO_REFERENCES]);
+
+      let referenceTypes = new Map;
+
+      checkScope(fScope, fScopeNode, ScopeType.FUNCTION, true, children, through, variables, referenceTypes);
+    }
+    { // g scope
+      let children = [];
+      let through = ["eval", "s"];
+
+      let variables = new Map;
+      variables.set("arguments", [NO_DECLARATIONS, NO_REFERENCES]);
+
+      let referenceTypes = new Map;
+
+      checkScope(gScope, gScopeNode, ScopeType.FUNCTION, false, children, through, variables, referenceTypes);
+    }
+  });
 });
