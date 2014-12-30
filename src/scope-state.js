@@ -83,12 +83,12 @@ export default class ScopeState {
    */
   addDeclaration(decl) {
     let declMap = new MultiMap;
-    declMap.merge(decl.kind.isBlockScoped ? this.blockScopedDeclarations : this.functionScopedDeclarations);
+    declMap.merge(decl.type.isBlockScoped ? this.blockScopedDeclarations : this.functionScopedDeclarations);
     declMap.set(decl.node.name, decl);
     return new ScopeState(
       this.freeIdentifiers,
-      decl.kind.isBlockScoped ? this.functionScopedDeclarations : declMap,
-      decl.kind.isBlockScoped ? declMap : this.blockScopedDeclarations,
+      decl.type.isBlockScoped ? this.functionScopedDeclarations : declMap,
+      decl.type.isBlockScoped ? declMap : this.blockScopedDeclarations,
       this.children,
       this.dynamic
     );

@@ -42,9 +42,11 @@ DeclarationType.PARAMETER = new FunctionScopedDeclaration("parameter");
 DeclarationType.CATCH = new BlockScopedDeclaration("catch");
 
 export class Declaration {
-  constructor(node, kind) {
+  constructor(node, type) {
     this.node = node;
-    this.kind = kind;
+    this.type = type;
+    // for backwards compatibility with 1.x:
+    this.kind = type;
   }
 
   static fromVarDeclKind(node, variableDeclarationKind) {
