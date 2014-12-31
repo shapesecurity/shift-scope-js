@@ -55,9 +55,9 @@ function flatten(arrayOfArrays) {
 function declarationImpliesInitialisation(variable, scope) {
   return variable.name === "arguments" && scope.type === ScopeType.FUNCTION ||
     variable.declarations.some(decl =>
-      decl.kind === DeclarationType.PARAMETER ||
-      decl.kind === DeclarationType.FUNCTION_NAME ||
-      decl.kind === DeclarationType.CATCH
+      decl.type === DeclarationType.PARAMETER ||
+      decl.type === DeclarationType.FUNCTION_NAME ||
+      decl.type === DeclarationType.CATCH
     );
 }
 
