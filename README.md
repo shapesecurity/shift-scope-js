@@ -22,8 +22,6 @@ npm install shift-scope
 
 ## Usage
 
-### ES6
-
 ```js
 import parse from "shift-parser";
 import analyzeScope from "shift-scope";
@@ -31,14 +29,7 @@ import analyzeScope from "shift-scope";
 let scopeTree = analyzeScope(parse("/* JavaScript program */"));
 ```
 
-### ES5
-
-```js
-var parse = require("shift-parser").default;
-var analyzeScope = require("shift-scope").default;
-
-var scopeTree = analyzeScope(parse("/* JavaScript program */"));
-```
+See the [examples](./examples) directory for more details.
 
 
 ## Contributing
