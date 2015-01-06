@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "es6-map": "^0.1.1",
+    "es6-symbol": "^0.1.1",
     "multimap": "^0.1.0",
     "shift-reducer": "^1.0.2"
   },
