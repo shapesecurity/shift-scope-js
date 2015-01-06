@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import assert from "assert";
+import * as assert from "assert";
 
 import parse from "shift-parser";
-import Map from "es6-map";
+import * as Map from "es6-map";
 
 import analyze, {Accessibility, ScopeType} from "../";
 
