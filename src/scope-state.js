@@ -65,16 +65,16 @@ export default class ScopeState {
   /*
    * Monoidal append: merges the two states together
    */
-  concat(a) {
-    if (this === a) {
+  concat(b) {
+    if (this === b) {
       return this;
     }
     return new ScopeState(
-      (new MultiMap).merge(a.freeIdentifiers).merge(this.freeIdentifiers),
-      (new MultiMap).merge(a.functionScopedDeclarations).merge(this.functionScopedDeclarations),
-      (new MultiMap).merge(a.blockScopedDeclarations).merge(this.blockScopedDeclarations),
-      a.children.concat(this.children),
-      a.dynamic || this.dynamic
+      (new MultiMap).merge(this.freeIdentifiers).merge(b.freeIdentifiers),
+      (new MultiMap).merge(this.functionScopedDeclarations).merge(b.functionScopedDeclarations),
+      (new MultiMap).merge(this.blockScopedDeclarations).merge(b.blockScopedDeclarations),
+      this.children.concat(b.children),
+      this.dynamic || b.dynamic
     );
   }
 

@@ -1171,22 +1171,16 @@ suite("unit", () => {
     let script = parse(js);
 
     let globalScope = analyze(script);
-    let catchScopes = globalScope.children.reduce((memo, s) => {
-      memo[s.astNode.binding.name] = s;
-      return memo;
-    }, {});
+    let [catchScope0, catchScope1, catchScope2]  = globalScope.children;
 
-    let catchScope0 = catchScopes.e;
     let catchScope0Node = script.body.statements[0].catchClause;
 
-    let catchScope1 = catchScopes.f;
     let catchScope1Node = script.body.statements[1].catchClause;
-    let blockScope0 = catchScopes.f.children[0];
+    let blockScope0 = catchScope1.children[0];
     let blockScope0Node = catchScope1Node.body;
 
-    let catchScope2 = catchScopes.g;
     let catchScope2Node = script.body.statements[2].catchClause;
-    let blockScope1 = catchScopes.g.children[0];
+    let blockScope1 = catchScope2.children[0];
     let blockScope1Node = catchScope2Node.body;
 
     let eNode1 = script.body.statements[0].catchClause.binding;
@@ -1278,17 +1272,11 @@ suite("unit", () => {
     let script = parse(js);
 
     let globalScope = analyze(script);
-    let forInScopes = globalScope.children.reduce((memo, s) => {
-      memo[s.astNode.left.declarators[0].binding.name] = s;
-      return memo;
-    }, {});
-    let forInScope0 = forInScopes.a;
+    let [forInScope0, forInScope1, forInScope2] = globalScope.children;
     let forInScope0Node = script.body.statements[0];
-    let forInScope1 = forInScopes.b;
     let forInScope1Node = script.body.statements[1];
-    let forInScope2 = forInScopes.c;
     let forInScope2Node = script.body.statements[2];
-    let blockScope = forInScopes.c.children[0];
+    let blockScope = forInScope2.children[0];
     let blockScopeNode = script.body.statements[2].body.block;
 
     let aNode1 = script.body.statements[0].left.declarators[0].binding;
@@ -1380,17 +1368,11 @@ suite("unit", () => {
     let script = parse(js);
 
     let globalScope = analyze(script);
-    let forScopes = globalScope.children.reduce((memo, s) => {
-      memo[s.astNode.init.declarators[0].binding.name] = s;
-      return memo;
-    }, {});
-    let forScope0 = forScopes.a;
+    let [forScope0, forScope1, forScope2] = globalScope.children;
     let forScope0Node = script.body.statements[0];
-    let forScope1 = forScopes.b;
     let forScope1Node = script.body.statements[1];
-    let forScope2 = forScopes.c;
     let forScope2Node = script.body.statements[2];
-    let blockScope = forScopes.c.children[0];
+    let blockScope = forScope2.children[0];
     let blockScopeNode = script.body.statements[2].body.block;
 
     let aNode1 = script.body.statements[0].init.declarators[0].binding;
