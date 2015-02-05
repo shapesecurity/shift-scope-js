@@ -14,19 +14,17 @@
  * limitations under the License.
  */
 
-import * as Map from "es6-map";
 import * as MultiMap from "multimap";
-MultiMap.Map = Map;
+
+function merge(multiMap, otherMultiMap) {
+  otherMultiMap.forEachEntry((v, k) => {
+    multiMap.set.apply(multiMap, [k].concat(v));
+  });
+  return multiMap;
+}
 
 import {Scope, GlobalScope, ScopeType} from "./scope";
 import Variable from "./variable";
-
-MultiMap.prototype.merge = function merge(otherMultiMap) {
-  otherMultiMap.forEachEntry((v, k) => {
-    this.set.apply(this, [k].concat(v));
-  });
-  return this;
-}
 
 function resolveArguments(freeIdentifiers, variables) {
   let args = freeIdentifiers.get("arguments") || [];
@@ -70,9 +68,9 @@ export default class ScopeState {
       return this;
     }
     return new ScopeState(
-      (new MultiMap).merge(this.freeIdentifiers).merge(b.freeIdentifiers),
-      (new MultiMap).merge(this.functionScopedDeclarations).merge(b.functionScopedDeclarations),
-      (new MultiMap).merge(this.blockScopedDeclarations).merge(b.blockScopedDeclarations),
+      merge(merge(new MultiMap, this.freeIdentifiers), b.freeIdentifiers),
+      merge(merge(new MultiMap, this.functionScopedDeclarations), b.functionScopedDeclarations),
+      merge(merge(new MultiMap, this.blockScopedDeclarations), b.blockScopedDeclarations),
       this.children.concat(b.children),
       this.dynamic || b.dynamic
     );
@@ -83,7 +81,7 @@ export default class ScopeState {
    */
   addDeclaration(decl) {
     let declMap = new MultiMap;
-    declMap.merge(decl.type.isBlockScoped ? this.blockScopedDeclarations : this.functionScopedDeclarations);
+    merge(declMap, decl.type.isBlockScoped ? this.blockScopedDeclarations : this.functionScopedDeclarations);
     declMap.set(decl.node.name, decl);
     return new ScopeState(
       this.freeIdentifiers,
@@ -99,7 +97,7 @@ export default class ScopeState {
    */
   addReference(ref) {
     let freeMap = new MultiMap;
-    freeMap.merge(this.freeIdentifiers);
+    merge(freeMap, this.freeIdentifiers);
     freeMap.set(ref.node.name, ref);
     return new ScopeState(
       freeMap,
@@ -130,7 +128,7 @@ export default class ScopeState {
     let functionScope = new MultiMap;
     let freeIdentifiers = new MultiMap;
 
-    freeIdentifiers.merge(this.freeIdentifiers);
+    merge(freeIdentifiers, this.freeIdentifiers);
 
     switch (scopeType) {
     case ScopeType.BLOCK:
@@ -138,7 +136,7 @@ export default class ScopeState {
     case ScopeType.WITH:
       // resolve references to only block-scoped free declarations
       variables = resolveDeclarations(freeIdentifiers, this.blockScopedDeclarations, variables);
-      functionScope.merge(this.functionScopedDeclarations);
+      merge(functionScope, this.functionScopedDeclarations);
       break;
     default:
       // resolve references to both block-scoped and function-scoped free declarations
