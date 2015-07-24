@@ -26,7 +26,7 @@ const NO_DECLARATIONS = [];
 
 function entriesSize(multiMap) {
   let i = 0;
-  for(let x of multiMap.keys()) {
+  for (let x of multiMap.keys()) {
     ++i;
   }
   return i;
@@ -1364,7 +1364,8 @@ suite("unit", () => {
     const js =
       `for(let a; d; e) { a; }
       for(let b; f; g) b;
-      for(let c; h; i) { let c; c; }`;
+      for(let c; h; i) { let c; c; }
+      for(;;);`;
     let script = parse(js);
 
     let globalScope = analyze(script);
@@ -1415,7 +1416,7 @@ suite("unit", () => {
     }
     { // first for scope
       let children = [];
-      let through = [];
+      let through = ["d", "e"];
 
       let variables = new Map;
       variables.set("a", [[aNode1], [aNode2]]);
@@ -1427,7 +1428,7 @@ suite("unit", () => {
     }
     { // second for scope
       let children = [];
-      let through = [];
+      let through = ["f", "g"];
 
       let variables = new Map;
       variables.set("b", [[bNode1], [bNode2]]);
@@ -1439,7 +1440,7 @@ suite("unit", () => {
     }
     { // third for scope
       let children = [blockScope];
-      let through = [];
+      let through = ["h", "i"];
 
       let variables = new Map;
       variables.set("c", [[cNode1], NO_REFERENCES]);
