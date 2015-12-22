@@ -24,8 +24,13 @@ export class ScopeType {
 }
 
 ScopeType.GLOBAL = new ScopeType("global");
+ScopeType.MODULE = new ScopeType("module");
+ScopeType.SCRIPT = new ScopeType("script");
+ScopeType.ARROW_FUNCTION = new ScopeType("arrow function");
 ScopeType.FUNCTION = new ScopeType("function");
 ScopeType.FUNCTION_NAME = new ScopeType("function name");
+ScopeType.PARAMETERS = new ScopeType("parameters");
+ScopeType.PARAMETER_EXPRESSION = new ScopeType("parameter expression");
 ScopeType.WITH = new ScopeType("with");
 ScopeType.CATCH = new ScopeType("catch");
 ScopeType.BLOCK = new ScopeType("block");

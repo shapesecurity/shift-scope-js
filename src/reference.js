@@ -33,6 +33,7 @@ class Reference {
   }
 }
 
+// TODO these are unneccesary probably
 export class ReadReference extends Reference {
   constructor(node) {
     super(node, Accessibility.READ);

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import * as Map from "es6-map";
 import * as MultiMap from "multimap";
 
 function merge(multiMap, otherMultiMap) {
@@ -26,38 +27,46 @@ function merge(multiMap, otherMultiMap) {
 import {Scope, GlobalScope, ScopeType} from "./scope";
 import Variable from "./variable";
 
-function resolveArguments(freeIdentifiers, variables) {
+function resolveArguments(freeIdentifiers, variables) { // todo
   let args = freeIdentifiers.get("arguments") || [];
   freeIdentifiers.delete("arguments");
   return variables.concat(new Variable("arguments", args, []));
 }
 
-function resolveDeclarations(freeIdentifiers, decls, variables) {
+function resolveDeclarations(freeIdentifiers, decls, variables) { // todo
   decls.forEachEntry((declarations, name) => {
     let references = freeIdentifiers.get(name) || [];
     variables = variables.concat(new Variable(name, references, declarations));
     freeIdentifiers.delete(name);
   });
-  return variables;
+  return variables;  // todo just modify variables in place?
 }
 
 export default class ScopeState {
-  constructor(freeIdentifiers, functionScopedDeclarations, blockScopedDeclarations, children, dynamic) {
+  constructor({
+    freeIdentifiers = new MultiMap,
+    functionScopedDeclarations = new MultiMap,
+    blockScopedDeclarations = new MultiMap,
+    functionDeclarations = new MultiMap, // function declarations are special: they are lexical in blocks and var-scoped at the top level of functions and scripts.
+    children = [],
+    dynamic = false,
+    bindingsForParent = [], //  either references bubbling up to the AssignmentExpression, ForOfStatement, or ForInStatement which writes to them or declarations bubbling up to the VariableDeclaration, FunctionDeclaration, ClassDeclaration, FormalParameters, Setter, Method, or CatchClause which declares them
+    potentiallyVarScopedFunctionDeclarations = new Map, // for B.3.3. Maps from names of functions. Either goes to the relevant BindingIdentifier, or to null if no function declaration of that name can be var-scoped in the current context.
+    hasParameterExpressions = false,
+  }) {
     this.freeIdentifiers = freeIdentifiers;
     this.functionScopedDeclarations = functionScopedDeclarations;
     this.blockScopedDeclarations = blockScopedDeclarations;
+    this.functionDeclarations = functionDeclarations;
     this.children = children;
     this.dynamic = dynamic;
+    this.bindingsForParent = bindingsForParent;
+    this.potentiallyVarScopedFunctionDeclarations = potentiallyVarScopedFunctionDeclarations;
+    this.hasParameterExpressions = hasParameterExpressions;
   }
 
   static empty() {
-    return new ScopeState(
-      new MultiMap,
-      new MultiMap,
-      new MultiMap,
-      [],
-      false
-    );
+    return new ScopeState({});
   }
 
   /*
@@ -67,55 +76,98 @@ export default class ScopeState {
     if (this === b) {
       return this;
     }
-    return new ScopeState(
-      merge(merge(new MultiMap, this.freeIdentifiers), b.freeIdentifiers),
-      merge(merge(new MultiMap, this.functionScopedDeclarations), b.functionScopedDeclarations),
-      merge(merge(new MultiMap, this.blockScopedDeclarations), b.blockScopedDeclarations),
-      this.children.concat(b.children),
-      this.dynamic || b.dynamic
+    let pvsfd = new Map([
+      ...this.potentiallyVarScopedFunctionDeclarations, ...b.potentiallyVarScopedFunctionDeclarations
+    ]);
+    this.potentiallyVarScopedFunctionDeclarations.forEach(
+      (v,k) => {if (b.potentiallyVarScopedFunctionDeclarations.has(k)) {
+        pvsfd.set(k, null);
+      }}
     );
+    return new ScopeState({
+      freeIdentifiers: merge(merge(new MultiMap, this.freeIdentifiers), b.freeIdentifiers),
+      functionScopedDeclarations: merge(merge(new MultiMap, this.functionScopedDeclarations), b.functionScopedDeclarations),
+      blockScopedDeclarations: merge(merge(new MultiMap, this.blockScopedDeclarations), b.blockScopedDeclarations),
+      functionDeclarations: merge(merge(new MultiMap, this.functionDeclarations), b.functionDeclarations),
+      children: this.children.concat(b.children),
+      dynamic: this.dynamic || b.dynamic,
+      potentiallyVarScopedFunctionDeclarations: pvsfd,
+      hasParameterExpressions: this.hasParameterExpressions || b.hasParameterExpressions,
+    });
   }
 
   /*
-   * Observe a variable entering scope
+   * Observe variables entering scope
    */
-  addDeclaration(decl) {
+  addDeclarations(kind, keepBindingsForParent = false) {
     let declMap = new MultiMap;
-    merge(declMap, decl.type.isBlockScoped ? this.blockScopedDeclarations : this.functionScopedDeclarations);
-    declMap.set(decl.node.name, decl);
-    return new ScopeState(
-      this.freeIdentifiers,
-      decl.type.isBlockScoped ? this.functionScopedDeclarations : declMap,
-      decl.type.isBlockScoped ? declMap : this.blockScopedDeclarations,
-      this.children,
-      this.dynamic
-    );
+    merge(declMap, kind.isBlockScoped ? this.blockScopedDeclarations : this.functionScopedDeclarations);
+    this.bindingsForParent.forEach(binding => declMap.set(binding.name, new Declaration(binding, kind)));
+    let s = new ScopeState(this);
+    if (kind.isBlockScoped) {
+      s.blockScopedDeclarations = declMap;
+    } else {
+      s.functionScopedDeclarations = declMap;
+    }
+    if (!keepBindingsForParent) {
+      s.bindingsForParent = [];
+    }
+    return s;
+  }
+
+  addFunctionDeclaration() {
+    const binding = bindingsForParent[0]; // should be the only item.
+    let s = new ScopeState(this);
+    s.functionDeclarations = new MultiMap([[binding.name, new Declaration(binding, DeclarationType.FUNCTION_DECLARATION)]]);
+    s.bindingsForParent = [];
+    return s;
   }
 
   /*
    * Observe a reference to a variable
    */
-  addReference(ref) {
+  addReferences(accessibility, keepBindingsForParent = false) {
     let freeMap = new MultiMap;
     merge(freeMap, this.freeIdentifiers);
-    freeMap.set(ref.node.name, ref);
-    return new ScopeState(
-      freeMap,
-      this.functionScopedDeclarations,
-      this.blockScopedDeclarations,
-      this.children,
-      this.dynamic
-    );
+    this.bindingsForParent.forEach(binding => freeMap.set(binding.name, new Reference(binding, accessibility)));
+    let s = new ScopeState(this);
+    s.freeIdentifiers = freeMap;
+    if (!keepBindingsForParent) {
+      s.bindingsForParent = [];
+    }
+    return s;
   }
 
   taint() {
-    return new ScopeState(
-      this.freeIdentifiers,
-      this.functionScopedDeclarations,
-      this.blockScopedDeclarations,
-      this.children,
-      true
-    );
+    let s = new ScopeState(this);
+    s.dynamic = true;
+    return s;
+  }
+
+  withoutBindingsForParent() {
+    let s = new ScopeState(this);
+    s.bindingsForParent = [];
+    return s;
+  }
+
+  withParameterExpression() {
+    let s = new ScopeState(this);
+    s.hasParameterExpressions = true;
+    return s;
+  }
+
+  withoutParameterExpression() {
+    let s = new ScopeState(this);
+    s.hasParameterExpressions = false;
+    return s;
+  }
+
+  withPotentialVarFunctions(functions) {
+    let pvsfd = new Map(this.potentiallyVarScopedFunctionDeclarations);
+    functions.forEach(f => pvsfd.put(f.name, pvsfd.has(f.name) ? null : f));
+    let s = new ScopeState(this);
+    s.potentiallyVarScopedFunctionDeclarations = pvsfd;
+    return s;
   }
 
   /*
@@ -123,41 +175,84 @@ export default class ScopeState {
    * and declarations into variable objects. Any free identifiers remaining are
    * carried forward into the new state object.
    */
-  finish(astNode, scopeType) {
+  finish(astNode, scopeType, shouldResolveArguments = false) { // todo
     let variables = [];
-    let functionScope = new MultiMap;
+    let functionScoped = new MultiMap;
     let freeIdentifiers = new MultiMap;
+    let pvsfd = new Map(this.potentiallyVarScopedFunctionDeclarations);
+    let children = this.children;
 
     merge(freeIdentifiers, this.freeIdentifiers);
+
+    this.blockScopedDeclarations.forEachEntry((v, k) => {
+      pvsfd.delete(k);
+    });
+    this.functionDeclarations.forEachEntry((v, k) => {
+      const existing = pvsfd.get(k);
+      if (existing && (v.length > 1 || v[0].node !== existing)) {
+        pvsfd.delete(k);
+      }
+    })
+    pvsfd = new Map((new Array(...pvsfd)).filter(p => p[1] !== null));
 
     switch (scopeType) {
     case ScopeType.BLOCK:
     case ScopeType.CATCH:
     case ScopeType.WITH:
+    case ScopeType.FUNCTION_NAME:
+    case ScopeType.PARAMETERS:
+    case ScopeType.PARAMETER_EXPRESSION:
       // resolve references to only block-scoped free declarations
       variables = resolveDeclarations(freeIdentifiers, this.blockScopedDeclarations, variables);
-      merge(functionScope, this.functionScopedDeclarations);
+      merge(functionScoped, this.functionScopedDeclarations);
       break;
-    default:
+    case ScopeType.ARROW_FUNCTION:
+    case ScopeType.FUNCTION:
+    case ScopeType.MODULE:
+    case ScopeType.SCRIPT:
       // resolve references to both block-scoped and function-scoped free declarations
-      if (scopeType === ScopeType.FUNCTION) {
+
+      // todo maybe reorganize this section for readability
+
+      variables = resolveDeclarations(freeIdentifiers, this.blockScopedDeclarations, variables);
+      
+      if (scopeType === ScopeType.SCRIPT) {
+        // top-level lexical declarations in scripts are not globals, so create a separate scope for them 
+        children = [new Scope(children, variables, freeIdentifiers, ScopeType.SCRIPT, this.dynamic, astNode)];
+        variables = [];
+      }
+      
+      if (shouldResolveArguments) {
         variables = resolveArguments(freeIdentifiers, variables);
       }
-      variables = resolveDeclarations(freeIdentifiers, this.blockScopedDeclarations, variables);
       variables = resolveDeclarations(freeIdentifiers, this.functionScopedDeclarations, variables);
+
+      // B.3.3
+      if (scopeType === ScopeType.ARROW_FUNCTION || scopeType === ScopeType.FUNCTION) { // maybe also scripts? spec currently doesn't say to, but that may be a bug.
+        variables = resolveDeclarations(freeIdentifiers, new MultiMap(pvsfd), variables);
+      }
+      pvsfd = new Map;
+
+      // no declarations in a module are global
+      if (scopeType === ScopeType.MODULE) {
+        children = [new Scope(children, variables, freeIdentifiers, ScopeType.MODULE, this.dynamic, astNode)];
+        variables = [];
+      }
       break;
+    default:
+      throw new Error("not reached");
     }
 
-    let scope = scopeType === ScopeType.GLOBAL
-      ? new GlobalScope(this.children, variables, freeIdentifiers, astNode)
-      : new Scope(this.children, variables, freeIdentifiers, scopeType, this.dynamic, astNode);
+    const scope = scopeType === ScopeType.GLOBAL
+      ? new GlobalScope(children, variables, freeIdentifiers, astNode)
+      : new Scope(children, variables, freeIdentifiers, scopeType, this.dynamic, astNode);
 
-    return new ScopeState(
-      freeIdentifiers,
-      functionScope,
-      new MultiMap,
-      [scope],
-      false
-    );
+    return new ScopeState({
+      freeIdentifiers: freeIdentifiers,
+      functionScopedDeclarations: functionScoped,
+      children: [scope],
+      bindingsForParent: this.bindingsForParent,
+      potentiallyVarScopedFunctionDeclarations: pvsfd
+    });
   }
 }

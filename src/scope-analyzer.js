@@ -26,8 +26,8 @@ export default class ScopeAnalyzer extends MonoidalReducer {
     super(ScopeState);
   }
 
-  static analyze(script) {
-    return reduce(new this, script).children[0];
+  static analyze(program) {
+    return reduce(new this, program).children[0];
   }
 
   reduceAssignmentExpression(node, binding, expression) {

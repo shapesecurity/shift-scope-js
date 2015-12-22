@@ -40,6 +40,7 @@ DeclarationType.LET = new BlockScopedDeclaration("let");
 DeclarationType.FUNCTION_NAME = new FunctionScopedDeclaration("function name");
 DeclarationType.PARAMETER = new FunctionScopedDeclaration("parameter");
 DeclarationType.CATCH = new BlockScopedDeclaration("catch");
+// TODO other types
 
 export class Declaration {
   constructor(node, type) {
@@ -62,7 +63,7 @@ export class Declaration {
     }
   }
 }
-
+// TODO probably don't need these
 export class VarDeclaration extends Declaration {
   constructor(node) {
     super(node, DeclarationType.VAR);
