@@ -37,30 +37,29 @@ export class FunctionScopedDeclaration extends DeclarationType {
 DeclarationType.VAR = new FunctionScopedDeclaration("var");
 DeclarationType.CONST = new BlockScopedDeclaration("const");
 DeclarationType.LET = new BlockScopedDeclaration("let");
+DeclarationType.FUNCTION_DECLARATION = new BlockScopedDeclaration("function declaration"); // potentially also FunctionScoped
 DeclarationType.FUNCTION_NAME = new FunctionScopedDeclaration("function name");
+DeclarationType.CLASS_NAME = new BlockScopedDeclaration("class name");
 DeclarationType.PARAMETER = new FunctionScopedDeclaration("parameter");
-DeclarationType.CATCH = new BlockScopedDeclaration("catch");
-// TODO other types
+DeclarationType.CATCH_PARAMETER = new BlockScopedDeclaration("catch parameter");
+
+DeclarationType.fromVarDeclKind = function(variableDeclarationKind) {
+  switch (variableDeclarationKind) {
+  case "var":
+    return DeclarationType.VAR;
+  case "const":
+    return DeclarationType.CONST;
+  case "let":
+    return DeclarationType.LET;
+  default:
+    throw new Error("Invalid VariableDeclarationKind: " + JSON.stringify(variableDeclarationKind));
+  }
+}
 
 export class Declaration {
   constructor(node, type) {
     this.node = node;
     this.type = type;
-    // for backwards compatibility with 1.x:
-    this.kind = type;
-  }
-
-  static fromVarDeclKind(node, variableDeclarationKind) {
-    switch (variableDeclarationKind) {
-    case "var":
-      return new VarDeclaration(node);
-    case "const":
-      return new ConstDeclaration(node);
-    case "let":
-      return new LetDeclaration(node);
-    default:
-      throw new Error("Invalid VariableDeclarationKind: " + JSON.stringify(variableDeclarationKind));
-    }
   }
 }
 // TODO probably don't need these

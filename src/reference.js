@@ -26,20 +26,20 @@ Accessibility.READ = new Accessibility(true, false);
 Accessibility.WRITE = new Accessibility(false, true);
 Accessibility.READWRITE = new Accessibility(true, true);
 
-class Reference {
+export class Reference {
   constructor(node, accessibility) {
     this.node = node;
     this.accessibility = accessibility;
   }
 }
 
-// TODO these are unneccesary probably
 export class ReadReference extends Reference {
   constructor(node) {
     super(node, Accessibility.READ);
   }
 }
 
+// TODO these are unneccesary probably
 export class WriteReference extends Reference {
   constructor(node) {
     super(node, Accessibility.WRITE);

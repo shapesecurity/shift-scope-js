@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import * as Map from "es6-map";
+import Map from "es6-map";
 import Variable from "./variable";
 
 export class ScopeType {
@@ -34,6 +34,7 @@ ScopeType.PARAMETER_EXPRESSION = new ScopeType("parameter expression");
 ScopeType.WITH = new ScopeType("with");
 ScopeType.CATCH = new ScopeType("catch");
 ScopeType.BLOCK = new ScopeType("block");
+ScopeType.CLASS_NAME = new ScopeType("class name"); // class expressions, in particular
 
 export class Scope {
   constructor(children, variables, through, type, isDynamic, astNode) {

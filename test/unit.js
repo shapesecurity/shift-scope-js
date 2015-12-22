@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-import * as assert from "assert";
+import * as _assert from "assert";
+const assert = _assert.default; // (babel) TODO remove this
 
-import parse from "shift-parser";
-import * as Map from "es6-map";
-
+import {parseScript, parseModule} from "shift-parser";
+import * as _Map from "es6-map";
+const Map = _Map.default; // (babel) TODO remove this
 import analyze, {Accessibility, ScopeType} from "../";
 
 const NO_REFERENCES = [];
@@ -81,15 +82,16 @@ function checkScope(scope, scopeNode, scopeType, isDynamic, children, through, v
 suite("unit", () => {
   test("VariableDeclaration 1", () => {
     const js = "var v1; var v2 = 0;";
-    let script = parse(js);
+    let script = parseScript(js);
 
     let globalScope = analyze(script);
+    let scriptScope = globalScope.children[0];
 
-    let v1Node1 = script.body.statements[0].declaration.declarators[0].binding;
-    let v2Node1 = script.body.statements[1].declaration.declarators[0].binding;
+    let v1Node1 = script.statements[0].declaration.declarators[0].binding;
+    let v2Node1 = script.statements[1].declaration.declarators[0].binding;
 
     { // global scope
-      let children = [];
+      let children = [scriptScope];
       let through = [];
 
       let variables = new Map;
@@ -102,10 +104,11 @@ suite("unit", () => {
       checkScope(globalScope, script, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
     }
   });
+  return;
 
   test("VariableDeclaration 2", () => {
     const js = "var v1, v2 = 0;";
-    let script = parse(js);
+    let script = parseScript(js);
 
     let globalScope = analyze(script);
     let v1Node1 = script.body.statements[0].declaration.declarators[0].binding;
@@ -128,7 +131,7 @@ suite("unit", () => {
 
   test("VariableDeclaration 3", () => {
     const js = "v1 = 0; var v2 = v1;";
-    let script = parse(js);
+    let script = parseScript(js);
 
     let globalScope = analyze(script);
     let v1Node1 = script.body.statements[0].expression.binding.identifier;
@@ -154,7 +157,7 @@ suite("unit", () => {
 
   test("VariableDeclaration 4", () => {
     const js = "var v2 = v1 + 0; var v1 = 0; ";
-    let script = parse(js);
+    let script = parseScript(js);
 
     let globalScope = analyze(script);
     let v2Node1 = script.body.statements[0].declaration.declarators[0].binding;
@@ -180,7 +183,7 @@ suite("unit", () => {
 
   test("VariableDeclaration 5", () => {
     const js = "var v1; var v1 = 0; var v2 = v1 + 0;";
-    let script = parse(js);
+    let script = parseScript(js);
 
     let globalScope = analyze(script);
     let v1Node1 = script.body.statements[0].declaration.declarators[0].binding;
@@ -216,7 +219,7 @@ suite("unit", () => {
         return f2;
       }
       var r = f1(2, 3);`;
-    let script = parse(js);
+    let script = parseScript(js);
 
     let globalScope = analyze(script);
     let f1Scope = globalScope.children[0];
@@ -292,7 +295,7 @@ suite("unit", () => {
 
   test("FunctionDeclaration 2", () => {
     const js = "function f() { f = 0; } f();";
-    let script = parse(js);
+    let script = parseScript(js);
 
     let globalScope = analyze(script);
     let fScope = globalScope.children[0];
@@ -330,7 +333,7 @@ suite("unit", () => {
 
   test("FunctionExpression 1", () => {
     const js = "var f = function() { f = 0; }; f();";
-    let script = parse(js);
+    let script = parseScript(js);
 
     let globalScope = analyze(script);
     let fScope = globalScope.children[0];
@@ -369,7 +372,7 @@ suite("unit", () => {
 
   test("FunctionExpression 2", () => {
     const js = "var f2 = function f1() { f1 = 0; }; f1(); f2();";
-    let script = parse(js);
+    let script = parseScript(js);
 
     let globalScope = analyze(script);
     let functionNameScope = globalScope.children[0];
@@ -433,7 +436,7 @@ suite("unit", () => {
         }
         baz(foo);
       }`;
-    let script = parse(js);
+    let script = parseScript(js);
 
     let globalScope = analyze(script);
     let functionScope = globalScope.children[0];
@@ -488,7 +491,7 @@ suite("unit", () => {
       }
       b();
       c(a);`;
-    let script = parse(js);
+    let script = parseScript(js);
 
     let globalScope = analyze(script);
     let bScope = globalScope.children[0];
@@ -558,7 +561,7 @@ suite("unit", () => {
           return;
         }
       }`;
-    let script = parse(js);
+    let script = parseScript(js);
 
     let globalScope = analyze(script);
     let fooScope = globalScope.children[0];
@@ -623,7 +626,7 @@ suite("unit", () => {
 
   test("HoistDeclaration 4", () => {
     const js = "foo(); function foo() {}";
-    let script = parse(js);
+    let script = parseScript(js);
 
     let globalScope = analyze(script);
     let fooScope = globalScope.children[0];
@@ -668,7 +671,7 @@ suite("unit", () => {
           return;
         }
       }`;
-    let script = parse(js);
+    let script = parseScript(js);
 
     let globalScope = analyze(script);
     let fooScope = globalScope.children[0];
@@ -735,7 +738,7 @@ suite("unit", () => {
 
   test("Closure 1", () => {
     const js = "(function() { f1 = 0; f2(f1); });";
-    let script = parse(js);
+    let script = parseScript(js);
 
     let globalScope = analyze(script);
     let functionScope = globalScope.children[0];
@@ -775,7 +778,7 @@ suite("unit", () => {
 
   test("Closure 2", () => {
     const js = "(function() { var f1 = 0; f2(f1); });";
-    let script = parse(js);
+    let script = parseScript(js);
 
     let globalScope = analyze(script);
     let functionScope = globalScope.children[0];
@@ -815,7 +818,7 @@ suite("unit", () => {
 
   test("Argument 1", () => {
     const js = "function f(arg1, arg2) { var v1 = arg1 + arg2; }";
-    let script = parse(js);
+    let script = parseScript(js);
 
     let globalScope = analyze(script);
     let fScope = globalScope.children[0];
@@ -860,7 +863,7 @@ suite("unit", () => {
 
   test("Argument 2", () => {
     const js = "function f() { var v1 = arguments[0]; }";
-    let script = parse(js);
+    let script = parseScript(js);
 
     let globalScope = analyze(script);
     let fScope = globalScope.children[0];
@@ -899,7 +902,7 @@ suite("unit", () => {
 
   test("WithStatement 1", () => {
     const js = "with (Math) { var x = cos(1 * PI); f(x); }";
-    let script = parse(js);
+    let script = parseScript(js);
 
     let globalScope = analyze(script);
     let withScope = globalScope.children[0];
@@ -959,7 +962,7 @@ suite("unit", () => {
         f(p1);
         f(p2);
       }`;
-    let script = parse(js);
+    let script = parseScript(js);
 
     let globalScope = analyze(script);
     let withScope = globalScope.children[0];
@@ -1011,7 +1014,7 @@ suite("unit", () => {
       } catch(err) {
         f(err);
       }`;
-    let script = parse(js);
+    let script = parseScript(js);
 
     let globalScope = analyze(script);
     let catchScope = globalScope.children[0];
@@ -1061,7 +1064,7 @@ suite("unit", () => {
           f(err2);
         }
       }`;
-    let script = parse(js);
+    let script = parseScript(js);
 
     let globalScope = analyze(script);
     let catchScope1 = globalScope.children[0];
@@ -1126,7 +1129,7 @@ suite("unit", () => {
       } catch(err) {
         var err = 1;
       }`;
-    let script = parse(js);
+    let script = parseScript(js);
 
     let globalScope = analyze(script);
     let catchScope = globalScope.children[0];
@@ -1168,7 +1171,7 @@ suite("unit", () => {
       `try { throw 0; } catch (e) { e; }
       try { throw 0; } catch (f) { let a; f }
       try { throw 0; } catch (g) { let g; g; }`;
-    let script = parse(js);
+    let script = parseScript(js);
 
     let globalScope = analyze(script);
     let [catchScope0, catchScope1, catchScope2]  = globalScope.children;
@@ -1269,7 +1272,7 @@ suite("unit", () => {
       `for(let a in a) { a; }
       for(let b in b) b;
       for(let c in c) { let c; c; }`;
-    let script = parse(js);
+    let script = parseScript(js);
 
     let globalScope = analyze(script);
     let [forInScope0, forInScope1, forInScope2] = globalScope.children;
@@ -1366,7 +1369,7 @@ suite("unit", () => {
       for(let b; f; g) b;
       for(let c; h; i) { let c; c; }
       for(;;);`;
-    let script = parse(js);
+    let script = parseScript(js);
 
     let globalScope = analyze(script);
     let [forScope0, forScope1, forScope2] = globalScope.children;
@@ -1471,7 +1474,7 @@ suite("unit", () => {
           (0, eval)(s);
         }
       }`;
-    let script = parse(js);
+    let script = parseScript(js);
 
     let globalScope = analyze(script);
     let fScope = globalScope.children[0];
