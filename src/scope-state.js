@@ -214,24 +214,29 @@ export default class ScopeState {
 
       // todo maybe reorganize this section for readability
 
-      variables = resolveDeclarations(freeIdentifiers, this.blockScopedDeclarations, variables);
-      
+      let declarations = new MultiMap;
       if (scopeType === ScopeType.SCRIPT) {
         // top-level lexical declarations in scripts are not globals, so create a separate scope for them 
-        children = [new Scope(children, variables, freeIdentifiers, ScopeType.SCRIPT, this.dynamic, astNode)];
-        variables = [];
+        children = [new Scope(children, resolveDeclarations(freeIdentifiers, this.blockScopedDeclarations, []), freeIdentifiers, ScopeType.SCRIPT, this.dynamic, astNode)];
+      } else {
+        merge(declarations, this.blockScopedDeclarations);
       }
       
       if (shouldResolveArguments) {
-        variables = resolveArguments(freeIdentifiers, variables);
+        //variables = resolveArguments(freeIdentifiers, variables);
+        declarations.set('arguments');
       }
-      variables = resolveDeclarations(freeIdentifiers, this.functionScopedDeclarations, variables);
+      //variables = resolveDeclarations(freeIdentifiers, this.functionScopedDeclarations, variables);
+      merge(declarations, this.functionScopedDeclarations);
 
       // B.3.3
       if (scopeType === ScopeType.ARROW_FUNCTION || scopeType === ScopeType.FUNCTION) { // maybe also scripts? spec currently doesn't say to, but that may be a bug.
-        variables = resolveDeclarations(freeIdentifiers, new MultiMap(pvsfd), variables);
+        //variables = resolveDeclarations(freeIdentifiers, new MultiMap(pvsfd), variables);
+        merge(declarations, new MultiMap(pvsfd));
       }
       pvsfd = new Map;
+
+      variables = resolveDeclarations(freeIdentifiers, declarations, variables);
 
       // no declarations in a module are global
       if (scopeType === ScopeType.MODULE) {
