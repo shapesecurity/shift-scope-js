@@ -62,12 +62,14 @@ function checkScope(scope, scopeNode, scopeType, isDynamic, children, through, v
     let declarations = variableEntryValue[0];
     assert.equal(variable.declarations.length, declarations.length);
     declarations.forEach(node => {
+      assert.notEqual(node, void 0); // todo this is to help with writing tests
       assert(variable.declarations.some(declaration => declaration.node === node));
     });
 
     let refs = variableEntryValue[1];
     assert.equal(variable.references.length, refs.length);
     refs.forEach(node => {
+      assert.notEqual(node, void 0); // todo this is to help with writing tests
       let referencesWithNode = variable.references.filter(reference => reference.node === node);
       assert.notEqual(0, referencesWithNode.length);
       let ref = referencesWithNode[0];
@@ -104,18 +106,18 @@ suite("unit", () => {
       checkScope(globalScope, script, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
     }
   });
-  return;
 
   test("VariableDeclaration 2", () => {
     const js = "var v1, v2 = 0;";
     let script = parseScript(js);
 
     let globalScope = analyze(script);
-    let v1Node1 = script.body.statements[0].declaration.declarators[0].binding;
-    let v2Node1 = script.body.statements[0].declaration.declarators[1].binding;
+    let scriptScope = globalScope.children[0];
+    let v1Node1 = script.statements[0].declaration.declarators[0].binding;
+    let v2Node1 = script.statements[0].declaration.declarators[1].binding;
 
     { // global scope
-      let children = [];
+      let children = [scriptScope];
       let through = [];
 
       let variables = new Map;
@@ -132,14 +134,14 @@ suite("unit", () => {
   test("VariableDeclaration 3", () => {
     const js = "v1 = 0; var v2 = v1;";
     let script = parseScript(js);
-
     let globalScope = analyze(script);
-    let v1Node1 = script.body.statements[0].expression.binding.identifier;
-    let v1Node2 = script.body.statements[1].declaration.declarators[0].init.identifier;
-    let v2Node1 = script.body.statements[1].declaration.declarators[0].binding;
+    let scriptScope = globalScope.children[0];
+    let v1Node1 = script.statements[0].expression.binding;
+    let v1Node2 = script.statements[1].declaration.declarators[0].init;
+    let v2Node1 = script.statements[1].declaration.declarators[0].binding;
 
     { // global scope
-      let children = [];
+      let children = [scriptScope];
       let through = ["v1"];
 
       let variables = new Map;
@@ -160,12 +162,13 @@ suite("unit", () => {
     let script = parseScript(js);
 
     let globalScope = analyze(script);
-    let v2Node1 = script.body.statements[0].declaration.declarators[0].binding;
-    let v1Node1 = script.body.statements[0].declaration.declarators[0].init.left.identifier;
-    let v1Node2 = script.body.statements[1].declaration.declarators[0].binding;
+    let scriptScope = globalScope.children[0];
+    let v2Node1 = script.statements[0].declaration.declarators[0].binding;
+    let v1Node1 = script.statements[0].declaration.declarators[0].init.left;
+    let v1Node2 = script.statements[1].declaration.declarators[0].binding;
 
     { // global scope
-      let children = [];
+      let children = [scriptScope];
       let through = [];
 
       let variables = new Map;
@@ -186,13 +189,14 @@ suite("unit", () => {
     let script = parseScript(js);
 
     let globalScope = analyze(script);
-    let v1Node1 = script.body.statements[0].declaration.declarators[0].binding;
-    let v1Node2 = script.body.statements[1].declaration.declarators[0].binding;
-    let v1Node3 = script.body.statements[2].declaration.declarators[0].init.left.identifier;
-    let v2Node1 = script.body.statements[2].declaration.declarators[0].binding;
+    let scriptScope = globalScope.children[0];
+    let v1Node1 = script.statements[0].declaration.declarators[0].binding;
+    let v1Node2 = script.statements[1].declaration.declarators[0].binding;
+    let v1Node3 = script.statements[2].declaration.declarators[0].init.left;
+    let v2Node1 = script.statements[2].declaration.declarators[0].binding;
 
     { // global scope
-      let children = [];
+      let children = [scriptScope];
       let through = [];
 
       let variables = new Map;
@@ -222,28 +226,29 @@ suite("unit", () => {
     let script = parseScript(js);
 
     let globalScope = analyze(script);
-    let f1Scope = globalScope.children[0];
-    let f1ScopeNode = script.body.statements[0];
-    let f2Scope = globalScope.children[0].children[0];
+    let scriptScope = globalScope.children[0];
+    let f1Scope = scriptScope.children[0];
+    let f1ScopeNode = script.statements[0];
+    let f2Scope = scriptScope.children[0].children[0];
     let f2ScopeNode = f1ScopeNode.body.statements[1];
 
-    let f1Node1 = script.body.statements[0].name;
-    let f1Node2 = script.body.statements[1].declaration.declarators[0].init.callee.identifier;
-    let f2Node1 = script.body.statements[0].body.statements[1].name;
-    let f2Node2 = script.body.statements[0].body.statements[2].expression.identifier;
-    let p1Node1 = script.body.statements[0].parameters[0];
-    let p1Node2 = script.body.statements[0].body.statements[1].parameters[0];
-    let p1Node3 = script.body.statements[0].body.statements[1].body.statements[0].declaration.declarators[0].init.left.left.identifier;
-    let p2Node1 = script.body.statements[0].parameters[1];
-    let p2Node2 = script.body.statements[0].body.statements[1].body.statements[0].declaration.declarators[0].init.right.identifier;
-    let rNode1 = script.body.statements[1].declaration.declarators[0].binding;
-    let v1Node1 = script.body.statements[0].body.statements[0].declaration.declarators[0].binding;
-    let v1Node2 = script.body.statements[0].body.statements[1].body.statements[0].declaration.declarators[0].init.left.right.identifier;
-    let v2Node1 = script.body.statements[0].body.statements[1].body.statements[0].declaration.declarators[0].binding;
-    let v2Node2 = script.body.statements[0].body.statements[1].body.statements[1].expression.identifier;
+    let f1Node1 = script.statements[0].name;
+    let f1Node2 = script.statements[1].declaration.declarators[0].init.callee;
+    let f2Node1 = script.statements[0].body.statements[1].name;
+    let f2Node2 = script.statements[0].body.statements[2].expression;
+    let p1Node1 = script.statements[0].params.items[0];
+    let p1Node2 = script.statements[0].body.statements[1].params.items[0];
+    let p1Node3 = script.statements[0].body.statements[1].body.statements[0].declaration.declarators[0].init.left.left;
+    let p2Node1 = script.statements[0].params.items[1];
+    let p2Node2 = script.statements[0].body.statements[1].body.statements[0].declaration.declarators[0].init.right;
+    let rNode1 = script.statements[1].declaration.declarators[0].binding;
+    let v1Node1 = script.statements[0].body.statements[0].declaration.declarators[0].binding;
+    let v1Node2 = script.statements[0].body.statements[1].body.statements[0].declaration.declarators[0].init.left.right;
+    let v2Node1 = script.statements[0].body.statements[1].body.statements[0].declaration.declarators[0].binding;
+    let v2Node2 = script.statements[0].body.statements[1].body.statements[1].expression;
 
     { // global scope
-      let children = [f1Scope];
+      let children = [scriptScope];
       let through = [];
 
       let variables = new Map;
@@ -298,15 +303,16 @@ suite("unit", () => {
     let script = parseScript(js);
 
     let globalScope = analyze(script);
-    let fScope = globalScope.children[0];
-    let fScopeNode = script.body.statements[0];
+    let scriptScope = globalScope.children[0];
+    let fScope = scriptScope.children[0];
+    let fScopeNode = script.statements[0];
 
-    let fNode1 = script.body.statements[0].name;
-    let fNode2 = script.body.statements[0].body.statements[0].expression.binding.identifier;
-    let fNode3 = script.body.statements[1].expression.callee.identifier;
+    let fNode1 = script.statements[0].name;
+    let fNode2 = script.statements[0].body.statements[0].expression.binding;
+    let fNode3 = script.statements[1].expression.callee;
 
     { // global scope
-      let children = [fScope];
+      let children = [scriptScope];
       let through = [];
 
       let variables = new Map;
@@ -336,15 +342,16 @@ suite("unit", () => {
     let script = parseScript(js);
 
     let globalScope = analyze(script);
-    let fScope = globalScope.children[0];
-    let fScopeNode = script.body.statements[0].declaration.declarators[0].init;
+    let scriptScope = globalScope.children[0];
+    let fScope = scriptScope.children[0];
+    let fScopeNode = script.statements[0].declaration.declarators[0].init;
 
-    let fNode1 = script.body.statements[0].declaration.declarators[0].binding;
-    let fNode2 = script.body.statements[0].declaration.declarators[0].init.body.statements[0].expression.binding.identifier;
-    let fNode3 = script.body.statements[1].expression.callee.identifier;
+    let fNode1 = script.statements[0].declaration.declarators[0].binding;
+    let fNode2 = script.statements[0].declaration.declarators[0].init.body.statements[0].expression.binding;
+    let fNode3 = script.statements[1].expression.callee;
 
     { // global scope
-      let children = [fScope];
+      let children = [scriptScope];
       let through = [];
 
       let variables = new Map;
@@ -375,19 +382,20 @@ suite("unit", () => {
     let script = parseScript(js);
 
     let globalScope = analyze(script);
-    let functionNameScope = globalScope.children[0];
-    let functionNameScopeNode = script.body.statements[0].declaration.declarators[0].init;
+    let scriptScope = globalScope.children[0];
+    let functionNameScope = scriptScope.children[0];
+    let functionNameScopeNode = script.statements[0].declaration.declarators[0].init;
     let functionScope = functionNameScope.children[0];
     let functionScopeNode = functionNameScopeNode;
 
-    let f1Node1 = script.body.statements[0].declaration.declarators[0].init.name;
-    let f1Node2 = script.body.statements[0].declaration.declarators[0].init.body.statements[0].expression.binding.identifier;
-    let f1Node3 = script.body.statements[1].expression.callee.identifier;
-    let f2Node1 = script.body.statements[0].declaration.declarators[0].binding;
-    let f2Node2 = script.body.statements[2].expression.callee.identifier;
+    let f1Node1 = script.statements[0].declaration.declarators[0].init.name;
+    let f1Node2 = script.statements[0].declaration.declarators[0].init.body.statements[0].expression.binding;
+    let f1Node3 = script.statements[1].expression.callee;
+    let f2Node1 = script.statements[0].declaration.declarators[0].binding;
+    let f2Node2 = script.statements[2].expression.callee;
 
     { // global scope
-      let children = [functionNameScope];
+      let children = [scriptScope];
       let through = ["f1"];
 
       let variables = new Map;
@@ -439,18 +447,20 @@ suite("unit", () => {
     let script = parseScript(js);
 
     let globalScope = analyze(script);
-    let functionScope = globalScope.children[0];
-    let functionScopeNode = script.body.statements[1];
+    let scriptScope = globalScope.children[0];
+    let functionScope = scriptScope.children[0];
+    let functionScopeNode = script.statements[1];
+    let ifScope = functionScope.children[0];
 
-    let fooNode1 = script.body.statements[0].declaration.declarators[0].binding;
-    let fooNode2 = script.body.statements[1].body.statements[0].test.operand.identifier;
-    let fooNode3 = script.body.statements[1].body.statements[0].consequent.block.statements[0].declaration.declarators[0].binding;
-    let fooNode4 = script.body.statements[1].body.statements[1].expression.arguments[0].identifier;
-    let barNode1 = script.body.statements[1].name;
-    let bazNode1 = script.body.statements[1].body.statements[1].expression.callee.identifier;
+    let fooNode1 = script.statements[0].declaration.declarators[0].binding;
+    let fooNode2 = script.statements[1].body.statements[0].test.operand;
+    let fooNode3 = script.statements[1].body.statements[0].consequent.block.statements[0].declaration.declarators[0].binding;
+    let fooNode4 = script.statements[1].body.statements[1].expression.arguments[0];
+    let barNode1 = script.statements[1].name;
+    let bazNode1 = script.statements[1].body.statements[1].expression.callee;
 
     { // global scope
-      let children = [functionScope];
+      let children = [scriptScope];
       let through = ["baz"];
 
       let variables = new Map;
@@ -465,7 +475,7 @@ suite("unit", () => {
       checkScope(globalScope, script, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
     }
     { // function scope
-      let children = [];
+      let children = [ifScope];
       let through = ["baz"];
 
       let variables = new Map;
@@ -494,21 +504,22 @@ suite("unit", () => {
     let script = parseScript(js);
 
     let globalScope = analyze(script);
-    let bScope = globalScope.children[0];
-    let bScopeNode = script.body.statements[1];
+    let scriptScope = globalScope.children[0];
+    let bScope = scriptScope.children[0];
+    let bScopeNode = script.statements[1];
     let aScope = bScope.children[0];
     let aScopeNode = bScopeNode.body.statements[2];
 
-    let aNode1 = script.body.statements[0].declaration.declarators[0].binding;
-    let bNode1 = script.body.statements[1].name;
-    let aNode2 = script.body.statements[1].body.statements[0].expression.binding.identifier;
-    let aNode3 = script.body.statements[1].body.statements[2].name;
-    let bNode2 = script.body.statements[2].expression.callee.identifier;
-    let cNode1 = script.body.statements[3].expression.callee.identifier;
-    let aNode4 = script.body.statements[3].expression.arguments[0].identifier;
+    let aNode1 = script.statements[0].declaration.declarators[0].binding;
+    let bNode1 = script.statements[1].name;
+    let aNode2 = script.statements[1].body.statements[0].expression.binding;
+    let aNode3 = script.statements[1].body.statements[2].name;
+    let bNode2 = script.statements[2].expression.callee;
+    let cNode1 = script.statements[3].expression.callee;
+    let aNode4 = script.statements[3].expression.arguments[0];
 
     { // global scope
-      let children = [bScope];
+      let children = [scriptScope];
       let through = ["c"];
 
       let variables = new Map;
@@ -564,20 +575,21 @@ suite("unit", () => {
     let script = parseScript(js);
 
     let globalScope = analyze(script);
-    let fooScope = globalScope.children[0];
-    let fooScopeNode = script.body.statements[0];
+    let scriptScope = globalScope.children[0];
+    let fooScope = scriptScope.children[0];
+    let fooScopeNode = script.statements[0];
     let barScope1 = fooScope.children[0];
     let barScope1Node = barScope1.astNode;
     let barScope2 = fooScope.children[1];
     let barScope2Node = barScope2.astNode;
 
-    let fooNode1 = script.body.statements[0].name;
-    let barNode1 = script.body.statements[0].body.statements[0].name;
-    let barNode2 = script.body.statements[0].body.statements[1].expression.callee.identifier;
-    let barNode3 = script.body.statements[0].body.statements[2].name;
+    let fooNode1 = script.statements[0].name;
+    let barNode1 = script.statements[0].body.statements[0].name;
+    let barNode2 = script.statements[0].body.statements[1].expression.callee;
+    let barNode3 = script.statements[0].body.statements[2].name;
 
     { // global scope
-      let children = [fooScope];
+      let children = [scriptScope];
       let through = [];
 
       let variables = new Map;
@@ -629,14 +641,15 @@ suite("unit", () => {
     let script = parseScript(js);
 
     let globalScope = analyze(script);
-    let fooScope = globalScope.children[0];
-    let fooScopeNode = script.body.statements[1];
+    let scriptScope = globalScope.children[0];
+    let fooScope = scriptScope.children[0];
+    let fooScopeNode = script.statements[1];
 
-    let fooNode1 = script.body.statements[0].expression.callee.identifier;
-    let fooNode2 = script.body.statements[1].name;
+    let fooNode1 = script.statements[0].expression.callee;
+    let fooNode2 = script.statements[1].name;
 
     { // global scope
-      let children = [fooScope];
+      let children = [scriptScope];
       let through = [];
 
       let variables = new Map;
@@ -674,20 +687,21 @@ suite("unit", () => {
     let script = parseScript(js);
 
     let globalScope = analyze(script);
-    let fooScope = globalScope.children[0];
-    let fooScopeNode = script.body.statements[0];
+    let scriptScope = globalScope.children[0];
+    let fooScope = scriptScope.children[0];
+    let fooScopeNode = script.statements[0];
     let barScope1 = fooScope.children[0];
     let barScope1Node = barScope1.astNode;
     let barScope2 = fooScope.children[1];
     let barScope2Node = barScope2.astNode;
 
-    let fooNode1 = script.body.statements[0].name;
-    let barNode1 = script.body.statements[0].body.statements[0].expression.callee.identifier;
-    let barNode2 = script.body.statements[0].body.statements[1].declaration.declarators[0].binding;
-    let barNode3 = script.body.statements[0].body.statements[2].declaration.declarators[0].binding;
+    let fooNode1 = script.statements[0].name;
+    let barNode1 = script.statements[0].body.statements[0].expression.callee;
+    let barNode2 = script.statements[0].body.statements[1].declaration.declarators[0].binding;
+    let barNode3 = script.statements[0].body.statements[2].declaration.declarators[0].binding;
 
     { // global scope
-      let children = [fooScope];
+      let children = [scriptScope];
       let through = [];
 
       let variables = new Map;
@@ -741,15 +755,16 @@ suite("unit", () => {
     let script = parseScript(js);
 
     let globalScope = analyze(script);
-    let functionScope = globalScope.children[0];
-    let functionScopeNode = script.body.statements[0].expression;
+    let scriptScope = globalScope.children[0];
+    let functionScope = scriptScope.children[0];
+    let functionScopeNode = script.statements[0].expression;
 
-    let f1Node1 = script.body.statements[0].expression.body.statements[0].expression.binding.identifier;
-    let f2Node1 = script.body.statements[0].expression.body.statements[1].expression.callee.identifier;
-    let f1Node2 = script.body.statements[0].expression.body.statements[1].expression.arguments[0].identifier;
+    let f1Node1 = script.statements[0].expression.body.statements[0].expression.binding;
+    let f2Node1 = script.statements[0].expression.body.statements[1].expression.callee;
+    let f1Node2 = script.statements[0].expression.body.statements[1].expression.arguments[0];
 
     { // global scope
-      let children = [functionScope];
+      let children = [scriptScope];
       let through = ["f1", "f2"];
 
       let variables = new Map;
@@ -781,15 +796,16 @@ suite("unit", () => {
     let script = parseScript(js);
 
     let globalScope = analyze(script);
-    let functionScope = globalScope.children[0];
-    let functionScopeNode = script.body.statements[0].expression;
+    let scriptScope = globalScope.children[0];
+    let functionScope = scriptScope.children[0];
+    let functionScopeNode = script.statements[0].expression;
 
-    let f1Node1 = script.body.statements[0].expression.body.statements[0].declaration.declarators[0].binding;
-    let f2Node1 = script.body.statements[0].expression.body.statements[1].expression.callee.identifier;
-    let f1Node2 = script.body.statements[0].expression.body.statements[1].expression.arguments[0].identifier;
+    let f1Node1 = script.statements[0].expression.body.statements[0].declaration.declarators[0].binding;
+    let f2Node1 = script.statements[0].expression.body.statements[1].expression.callee;
+    let f1Node2 = script.statements[0].expression.body.statements[1].expression.arguments[0];
 
     { // global scope
-      let children = [functionScope];
+      let children = [scriptScope];
       let through = ["f2"];
 
       let variables = new Map;
@@ -821,18 +837,19 @@ suite("unit", () => {
     let script = parseScript(js);
 
     let globalScope = analyze(script);
-    let fScope = globalScope.children[0];
-    let fScopeNode = script.body.statements[0];
+    let scriptScope = globalScope.children[0];
+    let fScope = scriptScope.children[0];
+    let fScopeNode = script.statements[0];
 
-    let fNode1 = script.body.statements[0].name;
-    let arg1Node1 = script.body.statements[0].parameters[0];
-    let arg2Node1 = script.body.statements[0].parameters[1];
-    let v1Node1 = script.body.statements[0].body.statements[0].declaration.declarators[0].binding;
-    let arg1Node2 = script.body.statements[0].body.statements[0].declaration.declarators[0].init.left.identifier;
-    let arg2Node2 = script.body.statements[0].body.statements[0].declaration.declarators[0].init.right.identifier;
+    let fNode1 = script.statements[0].name;
+    let arg1Node1 = script.statements[0].params.items[0];
+    let arg2Node1 = script.statements[0].params.items[1];
+    let v1Node1 = script.statements[0].body.statements[0].declaration.declarators[0].binding;
+    let arg1Node2 = script.statements[0].body.statements[0].declaration.declarators[0].init.left;
+    let arg2Node2 = script.statements[0].body.statements[0].declaration.declarators[0].init.right;
 
     { // global scope
-      let children = [fScope];
+      let children = [scriptScope];
       let through = [];
 
       let variables = new Map;
@@ -866,15 +883,16 @@ suite("unit", () => {
     let script = parseScript(js);
 
     let globalScope = analyze(script);
-    let fScope = globalScope.children[0];
-    let fScopeNode = script.body.statements[0];
+    let scriptScope = globalScope.children[0];
+    let fScope = scriptScope.children[0];
+    let fScopeNode = script.statements[0];
 
-    let fNode1 = script.body.statements[0].name;
-    let v1Node1 = script.body.statements[0].body.statements[0].declaration.declarators[0].binding;
-    let argumentsNode1 = script.body.statements[0].body.statements[0].declaration.declarators[0].init.object.identifier;
+    let fNode1 = script.statements[0].name;
+    let v1Node1 = script.statements[0].body.statements[0].declaration.declarators[0].binding;
+    let argumentsNode1 = script.statements[0].body.statements[0].declaration.declarators[0].init.object;
 
     { // global scope
-      let children = [fScope];
+      let children = [scriptScope];
       let through = [];
 
       let variables = new Map;
@@ -905,18 +923,20 @@ suite("unit", () => {
     let script = parseScript(js);
 
     let globalScope = analyze(script);
-    let withScope = globalScope.children[0];
-    let withScopeNode = script.body.statements[0];
+    let scriptScope = globalScope.children[0];
+    let withScope = scriptScope.children[0];
+    let withScopeNode = script.statements[0];
+    let blockScope = withScope.children[0];
 
-    let mathNode1 = script.body.statements[0].object.identifier;
-    let xNode1 = script.body.statements[0].body.block.statements[0].declaration.declarators[0].binding;
-    let cosNode1 = script.body.statements[0].body.block.statements[0].declaration.declarators[0].init.callee.identifier;
-    let piNode1 = script.body.statements[0].body.block.statements[0].declaration.declarators[0].init.arguments[0].right.identifier;
-    let fNode1 = script.body.statements[0].body.block.statements[1].expression.callee.identifier;
-    let xNode2 = script.body.statements[0].body.block.statements[1].expression.arguments[0].identifier;
+    let mathNode1 = script.statements[0].object;
+    let xNode1 = script.statements[0].body.block.statements[0].declaration.declarators[0].binding;
+    let cosNode1 = script.statements[0].body.block.statements[0].declaration.declarators[0].init.callee;
+    let piNode1 = script.statements[0].body.block.statements[0].declaration.declarators[0].init.arguments[0].right;
+    let fNode1 = script.statements[0].body.block.statements[1].expression.callee;
+    let xNode2 = script.statements[0].body.block.statements[1].expression.arguments[0];
 
     { // global scope
-      let children = [withScope];
+      let children = [scriptScope];
       let through = ["Math", "cos", "PI", "f"];
 
       let variables = new Map;
@@ -937,7 +957,7 @@ suite("unit", () => {
       checkScope(globalScope, script, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
     }
     { // with scope
-      let children = [];
+      let children = [blockScope];
       let through = ["x", "cos", "PI", "f"];
 
       let variables = new Map;
@@ -965,18 +985,20 @@ suite("unit", () => {
     let script = parseScript(js);
 
     let globalScope = analyze(script);
-    let withScope = globalScope.children[0];
-    let withScopeNode = script.body.statements[1];
+    let scriptScope = globalScope.children[0];
+    let withScope = scriptScope.children[0];
+    let withScopeNode = script.statements[1];
+    let blockScope = withScope.children[0];
 
-    let oNode1 = script.body.statements[0].declaration.declarators[0].binding;
-    let oNode2 = script.body.statements[1].object.object.object.identifier;
-    let fNode1 = script.body.statements[1].body.block.statements[0].expression.callee.identifier;
-    let p1Node1 = script.body.statements[1].body.block.statements[0].expression.arguments[0].identifier;
-    let fNode2 = script.body.statements[1].body.block.statements[1].expression.callee.identifier;
-    let p2Node1 = script.body.statements[1].body.block.statements[1].expression.arguments[0].identifier;
+    let oNode1 = script.statements[0].declaration.declarators[0].binding;
+    let oNode2 = script.statements[1].object.object.object;
+    let fNode1 = script.statements[1].body.block.statements[0].expression.callee;
+    let p1Node1 = script.statements[1].body.block.statements[0].expression.arguments[0];
+    let fNode2 = script.statements[1].body.block.statements[1].expression.callee;
+    let p2Node1 = script.statements[1].body.block.statements[1].expression.arguments[0];
 
     { // global scope
-      let children = [withScope];
+      let children = [scriptScope];
       let through = ["f", "p1", "p2"];
 
       let variables = new Map;
@@ -996,7 +1018,7 @@ suite("unit", () => {
       checkScope(globalScope, script, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
     }
     { // with scope
-      let children = [];
+      let children = [blockScope];
       let through = ["f", "p1", "p2"];
 
       let variables = new Map;
@@ -1017,16 +1039,19 @@ suite("unit", () => {
     let script = parseScript(js);
 
     let globalScope = analyze(script);
-    let catchScope = globalScope.children[0];
-    let catchScopeNode = script.body.statements[0].catchClause;
+    let scriptScope = globalScope.children[0];
+    let tryScope = scriptScope.children[0];
+    let catchScope = scriptScope.children[1];
+    let catchScopeNode = script.statements[0].catchClause;
+    let catchBlockScope = catchScope.children[0];
 
-    let fNode1 = script.body.statements[0].body.statements[0].expression.callee.identifier;
-    let errNode1 = script.body.statements[0].catchClause.binding;
-    let fNode2 = script.body.statements[0].catchClause.body.statements[0].expression.callee.identifier;
-    let errNode2 = script.body.statements[0].catchClause.body.statements[0].expression.arguments[0].identifier;
+    let fNode1 = script.statements[0].body.statements[0].expression.callee;
+    let errNode1 = script.statements[0].catchClause.binding;
+    let fNode2 = script.statements[0].catchClause.body.statements[0].expression.callee;
+    let errNode2 = script.statements[0].catchClause.body.statements[0].expression.arguments[0];
 
     { // global scope
-      let children = [catchScope];
+      let children = [scriptScope];
       let through = ["f"];
 
       let variables = new Map;
@@ -1039,7 +1064,7 @@ suite("unit", () => {
       checkScope(globalScope, script, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
     }
     { // catch scope
-      let children = [];
+      let children = [catchBlockScope];
       let through = ["f"];
 
       let variables = new Map;
@@ -1067,22 +1092,27 @@ suite("unit", () => {
     let script = parseScript(js);
 
     let globalScope = analyze(script);
-    let catchScope1 = globalScope.children[0];
-    let catchScope1Node = script.body.statements[0].catchClause;
-    let catchScope2 = catchScope1.children[0];
-    let catchScope2Node = script.body.statements[0].catchClause.body.statements[0].catchClause;
+    let scriptScope = globalScope.children[0];
+    let tryScope1 = scriptScope.children[0];
+    let catchScope1 = scriptScope.children[1];
+    let catchScope1Node = script.statements[0].catchClause;
+    let catchBlockScope1 = catchScope1.children[0];
+    let tryScope2 = catchBlockScope1.children[0];
+    let catchScope2 = catchBlockScope1.children[1];
+    let catchScope2Node = script.statements[0].catchClause.body.statements[0].catchClause;
+    let catchBlockScope2 = catchScope2.children[0];
 
-    let fNode1 = script.body.statements[0].body.statements[0].expression.callee.identifier;
-    let err1Node1 = script.body.statements[0].catchClause.binding;
-    let err1Node2 = script.body.statements[0].catchClause.body.statements[0].body.statements[0].expression.object.identifier;
-    let err2Node1 = script.body.statements[0].catchClause.body.statements[0].catchClause.binding;
-    let fNode2 = script.body.statements[0].catchClause.body.statements[0].catchClause.body.statements[0].expression.callee.identifier;
-    let err1Node3 = script.body.statements[0].catchClause.body.statements[0].catchClause.body.statements[0].expression.arguments[0].identifier;
-    let fNode3 = script.body.statements[0].catchClause.body.statements[0].catchClause.body.statements[1].expression.callee.identifier;
-    let err2Node2 = script.body.statements[0].catchClause.body.statements[0].catchClause.body.statements[1].expression.arguments[0].identifier;
+    let fNode1 = script.statements[0].body.statements[0].expression.callee;
+    let err1Node1 = script.statements[0].catchClause.binding;
+    let err1Node2 = script.statements[0].catchClause.body.statements[0].body.statements[0].expression.object;
+    let err2Node1 = script.statements[0].catchClause.body.statements[0].catchClause.binding;
+    let fNode2 = script.statements[0].catchClause.body.statements[0].catchClause.body.statements[0].expression.callee;
+    let err1Node3 = script.statements[0].catchClause.body.statements[0].catchClause.body.statements[0].expression.arguments[0];
+    let fNode3 = script.statements[0].catchClause.body.statements[0].catchClause.body.statements[1].expression.callee;
+    let err2Node2 = script.statements[0].catchClause.body.statements[0].catchClause.body.statements[1].expression.arguments[0];
 
     { // global scope
-      let children = [catchScope1];
+      let children = [scriptScope];
       let through = ["f"];
 
       let variables = new Map;
@@ -1096,7 +1126,7 @@ suite("unit", () => {
       checkScope(globalScope, script, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
     }
     { // catch scope 1
-      let children = [catchScope2];
+      let children = [catchBlockScope1];
       let through = ["f"];
 
       let variables = new Map;
@@ -1109,7 +1139,7 @@ suite("unit", () => {
       checkScope(catchScope1, catchScope1Node, ScopeType.CATCH, false, children, through, variables, referenceTypes);
     }
     { // catch scope 2
-      let children = [];
+      let children = [catchBlockScope2];
       let through = ["f", "err1"];
 
       let variables = new Map;
@@ -1132,15 +1162,18 @@ suite("unit", () => {
     let script = parseScript(js);
 
     let globalScope = analyze(script);
-    let catchScope = globalScope.children[0];
-    let catchScopeNode = script.body.statements[0].catchClause;
+    let scriptScope = globalScope.children[0];
+    let tryScope = scriptScope.children[0];
+    let catchScope = scriptScope.children[1];
+    let catchScopeNode = script.statements[0].catchClause;
+    let catchBlockScope = catchScope.children[0];
 
-    let fNode1 = script.body.statements[0].body.statements[0].expression.callee.identifier;
-    let errNode1 = script.body.statements[0].catchClause.binding;
-    let errNode2 = script.body.statements[0].catchClause.body.statements[0].declaration.declarators[0].binding;
+    let fNode1 = script.statements[0].body.statements[0].expression.callee;
+    let errNode1 = script.statements[0].catchClause.binding;
+    let errNode2 = script.statements[0].catchClause.body.statements[0].declaration.declarators[0].binding;
 
     { // global scope
-      let children = [catchScope];
+      let children = [scriptScope];
       let through = ["f"];
 
       let variables = new Map;
@@ -1153,7 +1186,7 @@ suite("unit", () => {
       checkScope(globalScope, script, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
     }
     { // catch scope
-      let children = [];
+      let children = [catchBlockScope];
       let through = [];
 
       let variables = new Map;
@@ -1170,35 +1203,36 @@ suite("unit", () => {
     const js =
       `try { throw 0; } catch (e) { e; }
       try { throw 0; } catch (f) { let a; f }
-      try { throw 0; } catch (g) { let g; g; }`;
+      try { throw 0; } catch (g) { g; }`;
     let script = parseScript(js);
 
     let globalScope = analyze(script);
-    let [catchScope0, catchScope1, catchScope2]  = globalScope.children;
+    let scriptScope = globalScope.children[0];
+    let [tryScope0, catchScope0, tryScope1, catchScope1, tryScope2, catchScope2]  = scriptScope.children;
 
-    let catchScope0Node = script.body.statements[0].catchClause;
+    let catchScope0Node = script.statements[0].catchClause;
+    let catchBlockScope0 = catchScope0.children[0];
 
-    let catchScope1Node = script.body.statements[1].catchClause;
-    let blockScope0 = catchScope1.children[0];
-    let blockScope0Node = catchScope1Node.body;
+    let catchScope1Node = script.statements[1].catchClause;
+    let catchBlockScope1 = catchScope1.children[0];
+    let catchBlockScope1Node = catchScope1Node.body;
 
-    let catchScope2Node = script.body.statements[2].catchClause;
-    let blockScope1 = catchScope2.children[0];
-    let blockScope1Node = catchScope2Node.body;
+    let catchScope2Node = script.statements[2].catchClause;
+    let catchBlockScope2 = catchScope2.children[0];
+    let catchBlockScope2Node = catchScope2Node.body;
 
-    let eNode1 = script.body.statements[0].catchClause.binding;
-    let eNode2 = script.body.statements[0].catchClause.body.statements[0].expression.identifier;
+    let eNode1 = script.statements[0].catchClause.binding;
+    let eNode2 = script.statements[0].catchClause.body.statements[0].expression;
 
-    let fNode1 = script.body.statements[1].catchClause.binding;
-    let aNode1 = script.body.statements[1].catchClause.body.statements[0].declaration.declarators[0].binding;
-    let fNode2 = script.body.statements[1].catchClause.body.statements[1].expression.identifier;
+    let fNode1 = script.statements[1].catchClause.binding;
+    let aNode1 = script.statements[1].catchClause.body.statements[0].declaration.declarators[0].binding;
+    let fNode2 = script.statements[1].catchClause.body.statements[1].expression;
 
-    let gNode1 = script.body.statements[2].catchClause.binding;
-    let gNode2 = script.body.statements[2].catchClause.body.statements[0].declaration.declarators[0].binding;
-    let gNode3 = script.body.statements[2].catchClause.body.statements[1].expression.identifier;
+    let gNode1 = script.statements[2].catchClause.binding;
+    let gNode2 = script.statements[2].catchClause.body.statements[0].expression;
 
     { // global scope
-      let children = [catchScope0, catchScope1, catchScope2];
+      let children = [scriptScope];
       let through = [];
 
       let variables = new Map;
@@ -1208,7 +1242,7 @@ suite("unit", () => {
       checkScope(globalScope, script, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
     }
     { // first catch scope
-      let children = [];
+      let children = [catchBlockScope0];
       let through = [];
 
       let variables = new Map;
@@ -1220,7 +1254,7 @@ suite("unit", () => {
       checkScope(catchScope0, catchScope0Node, ScopeType.CATCH, false, children, through, variables, referenceTypes);
     }
     { // second catch scope
-      let children = [blockScope0];
+      let children = [catchBlockScope1];
       let through = [];
 
       let variables = new Map;
@@ -1240,34 +1274,33 @@ suite("unit", () => {
 
       let referenceTypes = new Map;
 
-      checkScope(blockScope0, blockScope0Node, ScopeType.BLOCK, false, children, through, variables, referenceTypes);
+      checkScope(catchBlockScope1, catchBlockScope1Node, ScopeType.BLOCK, false, children, through, variables, referenceTypes);
     }
     { // third catch scope
-      let children = [blockScope1];
+      let children = [catchBlockScope2];
       let through = [];
 
       let variables = new Map;
-      variables.set("g", [[gNode1], NO_REFERENCES]);
+      variables.set("g", [[gNode1], [gNode2]]);
 
       let referenceTypes = new Map;
+      referenceTypes.set(gNode2, Accessibility.READ);
 
       checkScope(catchScope2, catchScope2Node, ScopeType.CATCH, false, children, through, variables, referenceTypes);
     }
     { // third catch scope's block
       let children = [];
-      let through = [];
+      let through = ["g"];
 
       let variables = new Map;
-      variables.set("g", [[gNode2], [gNode3]]);
 
       let referenceTypes = new Map;
-      referenceTypes.set(gNode3, Accessibility.READ);
 
-      checkScope(blockScope1, blockScope1Node, ScopeType.BLOCK, false, children, through, variables, referenceTypes);
+      checkScope(catchBlockScope2, catchBlockScope2Node, ScopeType.BLOCK, false, children, through, variables, referenceTypes);
     }
   });
 
-  test("block-scoped declaration in ForInStatement", () => {
+  test("block-scoped declaration in ForInStatement", () => {return; // todo I believe this test is wrong: 13.7.5.12 seems to say that the expr is evaluated in a context where the names in the LHS are visible.
     const js =
       `for(let a in a) { a; }
       for(let b in b) b;
@@ -1275,28 +1308,31 @@ suite("unit", () => {
     let script = parseScript(js);
 
     let globalScope = analyze(script);
-    let [forInScope0, forInScope1, forInScope2] = globalScope.children;
-    let forInScope0Node = script.body.statements[0];
-    let forInScope1Node = script.body.statements[1];
-    let forInScope2Node = script.body.statements[2];
-    let blockScope = forInScope2.children[0];
-    let blockScopeNode = script.body.statements[2].body.block;
+    let scriptScope = globalScope.children[0];
+    let [forInScope0, forInScope1, forInScope2] = scriptScope.children;
+    let forInScope0Node = script.statements[0];
+    let forInScope1Node = script.statements[1];
+    let forInScope2Node = script.statements[2];
+    let blockScope0 = forInScope0.children[0];
+    let blockScope0Node = script.statements[0].body.block;
+    let blockScope2 = forInScope2.children[0];
+    let blockScope2Node = script.statements[2].body.block;
 
-    let aNode1 = script.body.statements[0].left.declarators[0].binding;
-    let aNode2 = script.body.statements[0].right.identifier;
-    let aNode3 = script.body.statements[0].body.block.statements[0].expression.identifier;
+    let aNode1 = script.statements[0].left.declarators[0].binding;
+    let aNode2 = script.statements[0].right;
+    let aNode3 = script.statements[0].body.block.statements[0].expression;
 
-    let bNode1 = script.body.statements[1].left.declarators[0].binding;
-    let bNode2 = script.body.statements[1].right.identifier;
-    let bNode3 = script.body.statements[1].body.expression.identifier;
+    let bNode1 = script.statements[1].left.declarators[0].binding;
+    let bNode2 = script.statements[1].right;
+    let bNode3 = script.statements[1].body.expression;
 
-    let cNode1 = script.body.statements[2].left.declarators[0].binding;
-    let cNode2 = script.body.statements[2].right.identifier;
-    let cNode3 = script.body.statements[2].body.block.statements[0].declaration.declarators[0].binding;
-    let cNode4 = script.body.statements[2].body.block.statements[1].expression.identifier;
+    let cNode1 = script.statements[2].left.declarators[0].binding;
+    let cNode2 = script.statements[2].right;
+    let cNode3 = script.statements[2].body.block.statements[0].declaration.declarators[0].binding;
+    let cNode4 = script.statements[2].body.block.statements[1].expression;
 
     { // global scope
-      let children = [forInScope0, forInScope1, forInScope2];
+      let children = [scriptScope];
       let through = ["a", "b", "c"];
 
       let variables = new Map;
@@ -1312,7 +1348,7 @@ suite("unit", () => {
       checkScope(globalScope, script, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
     }
     { // first for-in scope
-      let children = [];
+      let children = [blockScope0];
       let through = [];
 
       let variables = new Map;
@@ -1338,7 +1374,7 @@ suite("unit", () => {
       checkScope(forInScope1, forInScope1Node, ScopeType.BLOCK, false, children, through, variables, referenceTypes);
     }
     { // third for-in scope
-      let children = [blockScope];
+      let children = [blockScope2];
       let through = [];
 
       let variables = new Map;
@@ -1372,31 +1408,34 @@ suite("unit", () => {
     let script = parseScript(js);
 
     let globalScope = analyze(script);
-    let [forScope0, forScope1, forScope2] = globalScope.children;
-    let forScope0Node = script.body.statements[0];
-    let forScope1Node = script.body.statements[1];
-    let forScope2Node = script.body.statements[2];
-    let blockScope = forScope2.children[0];
-    let blockScopeNode = script.body.statements[2].body.block;
+    let scriptScope = globalScope.children[0];
+    let [forScope0, forScope1, forScope2] = scriptScope.children;
+    let forScope0Node = script.statements[0];
+    let forScope1Node = script.statements[1];
+    let forScope2Node = script.statements[2];
+    let blockScope0 = forScope0.children[0];
+    let blockScope0Node = script.statements[0].body.block;
+    let blockScope2 = forScope2.children[0];
+    let blockScope2Node = script.statements[2].body.block;
 
-    let aNode1 = script.body.statements[0].init.declarators[0].binding;
-    let aNode2 = script.body.statements[0].body.block.statements[0].expression.identifier;
-    let dNode = script.body.statements[0].test.identifier;
-    let eNode = script.body.statements[0].update.identifier;
+    let aNode1 = script.statements[0].init.declarators[0].binding;
+    let aNode2 = script.statements[0].body.block.statements[0].expression;
+    let dNode = script.statements[0].test;
+    let eNode = script.statements[0].update;
 
-    let bNode1 = script.body.statements[1].init.declarators[0].binding;
-    let bNode2 = script.body.statements[1].body.expression.identifier;
-    let fNode = script.body.statements[1].test.identifier;
-    let gNode = script.body.statements[1].update.identifier;
+    let bNode1 = script.statements[1].init.declarators[0].binding;
+    let bNode2 = script.statements[1].body.expression;
+    let fNode = script.statements[1].test;
+    let gNode = script.statements[1].update;
 
-    let cNode1 = script.body.statements[2].init.declarators[0].binding;
-    let cNode2 = script.body.statements[2].body.block.statements[0].declaration.declarators[0].binding;
-    let cNode3 = script.body.statements[2].body.block.statements[1].expression.identifier;
-    let hNode = script.body.statements[2].test.identifier;
-    let iNode = script.body.statements[2].update.identifier;
+    let cNode1 = script.statements[2].init.declarators[0].binding;
+    let cNode2 = script.statements[2].body.block.statements[0].declaration.declarators[0].binding;
+    let cNode3 = script.statements[2].body.block.statements[1].expression;
+    let hNode = script.statements[2].test;
+    let iNode = script.statements[2].update;
 
     { // global scope
-      let children = [forScope0, forScope1, forScope2];
+      let children = [scriptScope];
       let through = ["d", "e", "f", "g", "h", "i"];
 
       let variables = new Map;
@@ -1418,7 +1457,7 @@ suite("unit", () => {
       checkScope(globalScope, script, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
     }
     { // first for scope
-      let children = [];
+      let children = [blockScope0];
       let through = ["d", "e"];
 
       let variables = new Map;
@@ -1442,7 +1481,7 @@ suite("unit", () => {
       checkScope(forScope1, forScope1Node, ScopeType.BLOCK, false, children, through, variables, referenceTypes);
     }
     { // third for scope
-      let children = [blockScope];
+      let children = [blockScope2];
       let through = ["h", "i"];
 
       let variables = new Map;
@@ -1462,7 +1501,7 @@ suite("unit", () => {
       let referenceTypes = new Map;
       referenceTypes.set(cNode3, Accessibility.READ);
 
-      checkScope(blockScope, blockScopeNode, ScopeType.BLOCK, false, children, through, variables, referenceTypes);
+      checkScope(blockScope2, blockScope2Node, ScopeType.BLOCK, false, children, through, variables, referenceTypes);
     }
   });
 
@@ -1477,20 +1516,21 @@ suite("unit", () => {
     let script = parseScript(js);
 
     let globalScope = analyze(script);
-    let fScope = globalScope.children[0];
-    let fScopeNode = script.body.statements[0];
+    let scriptScope = globalScope.children[0];
+    let fScope = scriptScope.children[0];
+    let fScopeNode = script.statements[0];
     let gScope = fScope.children[0];
     let gScopeNode = fScopeNode.body.statements[1];
 
-    let fNode = script.body.statements[0].name;
-    let gNode = script.body.statements[0].body.statements[1].name;
-    let evalNode1 = script.body.statements[0].body.statements[0].expression.callee.identifier
-    let evalNode2 = script.body.statements[0].body.statements[1].body.statements[0].expression.callee.right.identifier;
-    let sNode1 = script.body.statements[0].body.statements[0].expression.arguments[0].identifier;
-    let sNode2 = script.body.statements[0].body.statements[1].body.statements[0].expression.arguments[0].identifier;
+    let fNode = script.statements[0].name;
+    let gNode = script.statements[0].body.statements[1].name;
+    let evalNode1 = script.statements[0].body.statements[0].expression.callee;
+    let evalNode2 = script.statements[0].body.statements[1].body.statements[0].expression.callee.right;
+    let sNode1 = script.statements[0].body.statements[0].expression.arguments[0];
+    let sNode2 = script.statements[0].body.statements[1].body.statements[0].expression.arguments[0];
 
     { // global scope
-      let children = [fScope];
+      let children = [scriptScope];
       let through = ["eval", "s"];
 
       let variables = new Map;

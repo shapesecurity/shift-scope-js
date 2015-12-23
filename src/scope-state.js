@@ -15,7 +15,7 @@
  */
 
 import MultiMap from "multimap";
-import {Declaration} from "./declaration";
+import {Declaration, DeclarationType} from "./declaration";
 import {Reference} from "./reference";
 
 function merge(multiMap, otherMultiMap) {
@@ -54,7 +54,7 @@ export default class ScopeState {
     bindingsForParent = [], //  either references bubbling up to the AssignmentExpression, ForOfStatement, or ForInStatement which writes to them or declarations bubbling up to the VariableDeclaration, FunctionDeclaration, ClassDeclaration, FormalParameters, Setter, Method, or CatchClause which declares them
     potentiallyVarScopedFunctionDeclarations = new MultiMap, // for B.3.3.
     hasParameterExpressions = false,
-  }) {
+  } = {}) {
     this.freeIdentifiers = freeIdentifiers;
     this.functionScopedDeclarations = functionScopedDeclarations;
     this.blockScopedDeclarations = blockScopedDeclarations;
@@ -110,9 +110,9 @@ export default class ScopeState {
   }
 
   addFunctionDeclaration() {
-    const binding = bindingsForParent[0]; // should be the only item.
+    const binding = this.bindingsForParent[0]; // should be the only item.
     let s = new ScopeState(this);
-    s.functionDeclarations = new MultiMap([[binding.name, new Declaration(binding, DeclarationType.FUNCTION_DECLARATION)]]);
+    merge(s.functionDeclarations, new MultiMap([[binding.name, new Declaration(binding, DeclarationType.FUNCTION_DECLARATION)]]));
     s.bindingsForParent = [];
     return s;
   }
@@ -144,7 +144,7 @@ export default class ScopeState {
     return s;
   }
 
-  withParameterExpression() {
+  withParameterExpressions() {
     let s = new ScopeState(this);
     s.hasParameterExpressions = true;
     return s;
@@ -172,7 +172,7 @@ export default class ScopeState {
   finish(astNode, scopeType, shouldResolveArguments = false) { // todo
     let variables = [];
     let functionScoped = new MultiMap;
-    let freeIdentifiers = merge(new MultiMap, this.freeIdentifiers)
+    let freeIdentifiers = merge(new MultiMap, this.freeIdentifiers);
     let pvsfd = merge(new MultiMap, this.potentiallyVarScopedFunctionDeclarations);
     let children = this.children;
 
@@ -217,6 +217,7 @@ export default class ScopeState {
         declarations.set('arguments');
       }
       merge(declarations, this.functionScopedDeclarations);
+      merge(declarations, this.functionDeclarations);
 
       // B.3.3
       if (scopeType === ScopeType.ARROW_FUNCTION || scopeType === ScopeType.FUNCTION) { // maybe also scripts? spec currently doesn't say to, but that may be a bug.

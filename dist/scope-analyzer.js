@@ -8,6 +8,10 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
+var _multimap = require("multimap");
+
+var _MultiMap = _interopRequireWildcard(_multimap);
+
 var _shiftReducer = require("shift-reducer");
 
 var _shiftReducer2 = _interopRequireDefault(_shiftReducer);
@@ -23,6 +27,8 @@ var _declaration = require("./declaration");
 var _scope = require("./scope");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -44,6 +50,8 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 * limitations under the License.
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 */
 
+var MultiMap = _MultiMap.default; // (babel) TODO remove this
+
 var reduce = _shiftReducer2.default.default; // (babel) TODO remove this
 
 function finishFunction(fnNode, params, body) {
@@ -53,7 +61,7 @@ function finishFunction(fnNode, params, body) {
   if (params.hasParameterExpressions) {
     return params.withoutParameterExpressions().concat(body.finish(fnNode, fnType)).addDeclarations(_declaration.DeclarationType.PARAMETER).finish(fnNode, _scope.ScopeType.PARAMETERS, !isArrowFn);
   } else {
-    return params.addDeclarations(_declaration.DeclarationType.PARAMETER).concat(body).finish(fnNode, fnType);
+    return params.addDeclarations(_declaration.DeclarationType.PARAMETER).concat(body).finish(fnNode, fnType, !isArrowFn);
   }
 }
 
@@ -127,7 +135,7 @@ var ScopeAnalyzer = (function (_MonoidalReducer) {
     key: "reduceCallExpression",
     value: function reduceCallExpression(node, _ref6) {
       var callee = _ref6.callee;
-      var _arguments = _ref6._arguments;
+      var _arguments = _ref6.arguments;
 
       var s = _get(Object.getPrototypeOf(ScopeAnalyzer.prototype), "reduceCallExpression", this).call(this, node, { callee: callee, arguments: _arguments });
       if (node.callee.type === "IdentifierExpression" && node.callee.name === "eval") {
@@ -138,16 +146,16 @@ var ScopeAnalyzer = (function (_MonoidalReducer) {
   }, {
     key: "reduceCatchClause",
     value: function reduceCatchClause(node, _ref7) {
-      var param = _ref7.param;
+      var binding = _ref7.binding;
       var body = _ref7.body;
 
-      return _get(Object.getPrototypeOf(ScopeAnalyzer.prototype), "reduceCatchClause", this).call(this, node, { param: param.addDeclarations(_declaration.DeclarationType.CATCH_PARAMETER), body: body }).finish(node, _scope.ScopeType.CATCH);
+      return _get(Object.getPrototypeOf(ScopeAnalyzer.prototype), "reduceCatchClause", this).call(this, node, { binding: binding.addDeclarations(_declaration.DeclarationType.CATCH_PARAMETER), body: body }).finish(node, _scope.ScopeType.CATCH);
     }
   }, {
     key: "reduceClassDeclaration",
     value: function reduceClassDeclaration(node, _ref8) {
       var name = _ref8.name;
-      var _super = _ref8._super;
+      var _super = _ref8.super;
       var elements = _ref8.elements;
 
       return _get(Object.getPrototypeOf(ScopeAnalyzer.prototype), "reduceClassDeclaration", this).call(this, node, { name: name.addDeclarations(_declaration.DeclarationType.CLASS_NAME), super: _super, elements: elements });
@@ -156,7 +164,7 @@ var ScopeAnalyzer = (function (_MonoidalReducer) {
     key: "reduceClassExpression",
     value: function reduceClassExpression(node, _ref9) {
       var name = _ref9.name;
-      var _super = _ref9._super;
+      var _super = _ref9.super;
       var elements = _ref9.elements;
 
       return _get(Object.getPrototypeOf(ScopeAnalyzer.prototype), "reduceClassExpression", this).call(this, node, { name: name, super: _super, elements: elements }).addDeclarations(_declaration.DeclarationType.CLASS_NAME).finish(node, _scope.ScopeType.CLASS_NAME);
@@ -172,52 +180,44 @@ var ScopeAnalyzer = (function (_MonoidalReducer) {
   }, {
     key: "reduceComputedMemberExpression",
     value: function reduceComputedMemberExpression(node, _ref11) {
-      var expression = _ref11.expression;
       var object = _ref11.object;
-
-      return _get(Object.getPrototypeOf(ScopeAnalyzer.prototype), "reduceComputedMemberExpression", this).call(this, node, { object: object, expression: expression }).withParameterExpressions();
-    }
-  }, {
-    key: "reduceComputedMemberExpression",
-    value: function reduceComputedMemberExpression(node, _ref12) {
-      var expression = _ref12.expression;
-      var object = _ref12.object;
+      var expression = _ref11.expression;
 
       return _get(Object.getPrototypeOf(ScopeAnalyzer.prototype), "reduceComputedMemberExpression", this).call(this, node, { object: object, expression: expression }).withParameterExpressions();
     }
   }, {
     key: "reduceForInStatement",
-    value: function reduceForInStatement(node, _ref13) {
-      var left = _ref13.left;
-      var right = _ref13.right;
-      var body = _ref13.body;
+    value: function reduceForInStatement(node, _ref12) {
+      var left = _ref12.left;
+      var right = _ref12.right;
+      var body = _ref12.body;
 
       return _get(Object.getPrototypeOf(ScopeAnalyzer.prototype), "reduceForInStatement", this).call(this, node, { left: left.addReferences(_reference.Accessibility.WRITE), right: right, body: body }).finish(node, _scope.ScopeType.BLOCK);
     }
   }, {
     key: "reduceForOfStatement",
-    value: function reduceForOfStatement(node, _ref14) {
-      var left = _ref14.left;
-      var right = _ref14.right;
-      var body = _ref14.body;
+    value: function reduceForOfStatement(node, _ref13) {
+      var left = _ref13.left;
+      var right = _ref13.right;
+      var body = _ref13.body;
 
       return _get(Object.getPrototypeOf(ScopeAnalyzer.prototype), "reduceForOfStatement", this).call(this, node, { left: left.addReferences(_reference.Accessibility.WRITE), right: right, body: body }).finish(node, _scope.ScopeType.BLOCK);
     }
   }, {
     key: "reduceForStatement",
-    value: function reduceForStatement(node, _ref15) {
-      var init = _ref15.init;
-      var test = _ref15.test;
-      var update = _ref15.update;
-      var body = _ref15.body;
+    value: function reduceForStatement(node, _ref14) {
+      var init = _ref14.init;
+      var test = _ref14.test;
+      var update = _ref14.update;
+      var body = _ref14.body;
 
       return _get(Object.getPrototypeOf(ScopeAnalyzer.prototype), "reduceForStatement", this).call(this, node, { init: init ? init.withoutBindingsForParent() : init, test: test, update: update, body: body }).finish(node, _scope.ScopeType.BLOCK);
     }
   }, {
     key: "reduceFormalParameters",
-    value: function reduceFormalParameters(node, _ref16) {
-      var items = _ref16.items;
-      var rest = _ref16.rest;
+    value: function reduceFormalParameters(node, _ref15) {
+      var items = _ref15.items;
+      var rest = _ref15.rest;
 
       var s = rest ? rest : new _scopeState2.default();
       items.forEach(function (item, ind) {
@@ -227,19 +227,19 @@ var ScopeAnalyzer = (function (_MonoidalReducer) {
     }
   }, {
     key: "reduceFunctionDeclaration",
-    value: function reduceFunctionDeclaration(node, _ref17) {
-      var name = _ref17.name;
-      var params = _ref17.params;
-      var body = _ref17.body;
+    value: function reduceFunctionDeclaration(node, _ref16) {
+      var name = _ref16.name;
+      var params = _ref16.params;
+      var body = _ref16.body;
 
       return name.concat(finishFunction(node, params, body)).addFunctionDeclaration();
     }
   }, {
-    key: "reduceFunctionExpresion",
-    value: function reduceFunctionExpresion(node, _ref18) {
-      var name = _ref18.name;
-      var params = _ref18.params;
-      var body = _ref18.body;
+    key: "reduceFunctionExpression",
+    value: function reduceFunctionExpression(node, _ref17) {
+      var name = _ref17.name;
+      var params = _ref17.params;
+      var body = _ref17.body;
 
       var s = finishFunction(node, params, body);
       if (name) {
@@ -249,9 +249,9 @@ var ScopeAnalyzer = (function (_MonoidalReducer) {
     }
   }, {
     key: "reduceGetter",
-    value: function reduceGetter(node, _ref19) {
-      var name = _ref19.name;
-      var body = _ref19.body;
+    value: function reduceGetter(node, _ref18) {
+      var name = _ref18.name;
+      var body = _ref18.body;
 
       // todo test order
       return name.concat(body.finish(node, _scope.ScopeType.Function, true));
@@ -259,50 +259,56 @@ var ScopeAnalyzer = (function (_MonoidalReducer) {
   }, {
     key: "reduceIdentifierExpression",
     value: function reduceIdentifierExpression(node) {
-      return new _scopeState2.default({ freeIdentifiers: [new _reference.ReadReference(node)] });
+      return new _scopeState2.default({ freeIdentifiers: new MultiMap([[node.name, new _reference.ReadReference(node)]]) });
     }
   }, {
     key: "reduceIfStatement",
-    value: function reduceIfStatement(node, _ref20) {
-      var test = _ref20.test;
-      var consequent = _ref20.consequent;
-      var alternate = _ref20.alternate;
+    value: function reduceIfStatement(node, _ref19) {
+      var test = _ref19.test;
+      var consequent = _ref19.consequent;
+      var alternate = _ref19.alternate;
 
-      var statements = node.consequent.concat(node.alternate ? node.alternate : []);
-      return _get(Object.getPrototypeOf(ScopeAnalyzer.prototype), "reduceIfStatement", this).call(this, node, { test: test, consequent: consequent, alternate: alternate }).withPotentialVarFunctions(getFunctionDeclarations(statements));
+      var pvsfd = [];
+      if (node.consequent.type === "FunctionDeclaration") {
+        pvsfd.push(node.consequent.name);
+      }
+      if (node.alternate && node.alternate.type === "FunctionDeclaration") {
+        pvsfd.push(node.alternate.name);
+      }
+      return _get(Object.getPrototypeOf(ScopeAnalyzer.prototype), "reduceIfStatement", this).call(this, node, { test: test, consequent: consequent, alternate: alternate }).withPotentialVarFunctions(pvsfd);
     }
   }, {
     key: "reduceMethod",
-    value: function reduceMethod(node, _ref21) {
-      var name = _ref21.name;
-      var params = _ref21.params;
-      var body = _ref21.body;
+    value: function reduceMethod(node, _ref20) {
+      var name = _ref20.name;
+      var params = _ref20.params;
+      var body = _ref20.body;
 
       // todo test order
       return name.concat(finishFunction(node, params, body));
     }
   }, {
     key: "reduceModule",
-    value: function reduceModule(node, _ref22) {
-      var directives = _ref22.directives;
-      var statements = _ref22.statements;
+    value: function reduceModule(node, _ref21) {
+      var directives = _ref21.directives;
+      var statements = _ref21.statements;
 
       return _get(Object.getPrototypeOf(ScopeAnalyzer.prototype), "reduceModule", this).call(this, node, { directives: directives, statements: statements }).finish(node, _scope.ScopeType.MODULE);
     }
   }, {
     key: "reduceScript",
-    value: function reduceScript(node, _ref23) {
-      var directives = _ref23.directives;
-      var statements = _ref23.statements;
+    value: function reduceScript(node, _ref22) {
+      var directives = _ref22.directives;
+      var statements = _ref22.statements;
 
       return _get(Object.getPrototypeOf(ScopeAnalyzer.prototype), "reduceScript", this).call(this, node, { directives: directives, statements: statements }).finish(node, _scope.ScopeType.SCRIPT);
     }
   }, {
     key: "reduceSetter",
-    value: function reduceSetter(node, _ref24) {
-      var name = _ref24.name;
-      var param = _ref24.param;
-      var body = _ref24.body;
+    value: function reduceSetter(node, _ref23) {
+      var name = _ref23.name;
+      var param = _ref23.param;
+      var body = _ref23.body;
 
       // todo test order
       if (param.hasParameterExpressions) {
@@ -312,46 +318,46 @@ var ScopeAnalyzer = (function (_MonoidalReducer) {
     }
   }, {
     key: "reduceSwitchCase",
-    value: function reduceSwitchCase(node, _ref25) {
-      var test = _ref25.test;
-      var consequent = _ref25.consequent;
+    value: function reduceSwitchCase(node, _ref24) {
+      var test = _ref24.test;
+      var consequent = _ref24.consequent;
 
       return _get(Object.getPrototypeOf(ScopeAnalyzer.prototype), "reduceSwitchCase", this).call(this, node, { test: test, consequent: consequent }).finish(node, _scope.ScopeType.BLOCK).withPotentialVarFunctions(getFunctionDeclarations(node.consequent));
     }
   }, {
     key: "reduceSwitchDefault",
-    value: function reduceSwitchDefault(node, _ref26) {
-      var consequent = _ref26.consequent;
+    value: function reduceSwitchDefault(node, _ref25) {
+      var consequent = _ref25.consequent;
 
       return _get(Object.getPrototypeOf(ScopeAnalyzer.prototype), "reduceSwitchDefault", this).call(this, node, { consequent: consequent }).finish(node, _scope.ScopeType.BLOCK).withPotentialVarFunctions(getFunctionDeclarations(node.consequent));
     }
   }, {
     key: "reduceUpdateExpression",
-    value: function reduceUpdateExpression(node, _ref27) {
-      var operand = _ref27.operand;
+    value: function reduceUpdateExpression(node, _ref26) {
+      var operand = _ref26.operand;
 
       return operand.addReferences(_reference.Accessibility.READWRITE);
     }
   }, {
     key: "reduceVariableDeclaration",
-    value: function reduceVariableDeclaration(node, _ref28) {
-      var declarators = _ref28.declarators;
+    value: function reduceVariableDeclaration(node, _ref27) {
+      var declarators = _ref27.declarators;
 
       return _get(Object.getPrototypeOf(ScopeAnalyzer.prototype), "reduceVariableDeclaration", this).call(this, node, { declarators: declarators }).addDeclarations(_declaration.DeclarationType.fromVarDeclKind(node.kind), true);
       // passes bindingsForParent up, for for-in and for-of to add their write-references
     }
   }, {
     key: "reduceVariableDeclarationStatement",
-    value: function reduceVariableDeclarationStatement(node, _ref29) {
-      var declaration = _ref29.declaration;
+    value: function reduceVariableDeclarationStatement(node, _ref28) {
+      var declaration = _ref28.declaration;
 
       return declaration.withoutBindingsForParent();
     }
   }, {
     key: "reduceVariableDeclarator",
-    value: function reduceVariableDeclarator(node, _ref30) {
-      var binding = _ref30.binding;
-      var init = _ref30.init;
+    value: function reduceVariableDeclarator(node, _ref29) {
+      var binding = _ref29.binding;
+      var init = _ref29.init;
 
       var s = _get(Object.getPrototypeOf(ScopeAnalyzer.prototype), "reduceVariableDeclarator", this).call(this, node, { binding: binding, init: init });
       if (init) {
@@ -361,9 +367,9 @@ var ScopeAnalyzer = (function (_MonoidalReducer) {
     }
   }, {
     key: "reduceWithStatement",
-    value: function reduceWithStatement(node, _ref31) {
-      var object = _ref31.object;
-      var body = _ref31.body;
+    value: function reduceWithStatement(node, _ref30) {
+      var object = _ref30.object;
+      var body = _ref30.body;
 
       return _get(Object.getPrototypeOf(ScopeAnalyzer.prototype), "reduceWithStatement", this).call(this, node, { object: object, body: body.finish(node, _scope.ScopeType.WITH) });
     }

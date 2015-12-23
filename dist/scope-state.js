@@ -63,7 +63,9 @@ function resolveDeclarations(freeIdentifiers, decls, variables) {
 }
 
 var ScopeState = (function () {
-  function ScopeState(_ref) {
+  function ScopeState() {
+    var _ref = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+
     var _ref$freeIdentifiers = _ref.freeIdentifiers;
     var freeIdentifiers = _ref$freeIdentifiers === undefined ? new _multimap2.default() : _ref$freeIdentifiers;
     var _ref$functionScopedDe = _ref.functionScopedDeclarations;
@@ -150,9 +152,9 @@ var ScopeState = (function () {
   }, {
     key: "addFunctionDeclaration",
     value: function addFunctionDeclaration() {
-      var binding = bindingsForParent[0]; // should be the only item.
+      var binding = this.bindingsForParent[0]; // should be the only item.
       var s = new ScopeState(this);
-      s.functionDeclarations = new _multimap2.default([[binding.name, new _declaration.Declaration(binding, DeclarationType.FUNCTION_DECLARATION)]]);
+      merge(s.functionDeclarations, new _multimap2.default([[binding.name, new _declaration.Declaration(binding, _declaration.DeclarationType.FUNCTION_DECLARATION)]]));
       s.bindingsForParent = [];
       return s;
     }
@@ -193,8 +195,8 @@ var ScopeState = (function () {
       return s;
     }
   }, {
-    key: "withParameterExpression",
-    value: function withParameterExpression() {
+    key: "withParameterExpressions",
+    value: function withParameterExpressions() {
       var s = new ScopeState(this);
       s.hasParameterExpressions = true;
       return s;
@@ -276,6 +278,7 @@ var ScopeState = (function () {
             declarations.set('arguments');
           }
           merge(declarations, this.functionScopedDeclarations);
+          merge(declarations, this.functionDeclarations);
 
           // B.3.3
           if (scopeType === _scope.ScopeType.ARROW_FUNCTION || scopeType === _scope.ScopeType.FUNCTION) {

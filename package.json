@@ -13,7 +13,7 @@
     "dist"
   ],
   "scripts": {
-    "test": "mocha --compilers js:babel-core/register --inline-diffs --check-leaks --ui tdd --reporter spec --full-trace test",
+    "test": "mocha --compilers js:babel-core/register --inline-diffs --check-leaks --ui tdd --reporter dot test",
     "build": "babel --source-maps-inline --out-dir dist src"
   },
   "dependencies": {

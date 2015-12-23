@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import * as _MultiMap from "multimap";
+const MultiMap = _MultiMap.default; // (babel) TODO remove this
 import _reduce, {MonoidalReducer} from "shift-reducer";
 const reduce = _reduce.default; // (babel) TODO remove this
 import ScopeState from "./scope-state";
@@ -31,7 +33,7 @@ function finishFunction(fnNode, params, body, isArrowFn = false) {
   } else {
     return params.addDeclarations(DeclarationType.PARAMETER)
       .concat(body)
-      .finish(fnNode, fnType);
+      .finish(fnNode, fnType, !isArrowFn);
   }
 }
 
@@ -80,7 +82,7 @@ export default class ScopeAnalyzer extends MonoidalReducer {
       .finish(node, ScopeType.BLOCK);
   }
 
-  reduceCallExpression(node, {callee, _arguments}) {
+  reduceCallExpression(node, {callee, arguments: _arguments}) {
     const s = super.reduceCallExpression(node, {callee, arguments: _arguments});
     if (node.callee.type === "IdentifierExpression" && node.callee.name === "eval") {
       return s.taint();
@@ -88,15 +90,15 @@ export default class ScopeAnalyzer extends MonoidalReducer {
     return s;
   }
 
-  reduceCatchClause(node, {param, body}) {
-    return super.reduceCatchClause(node, {param: param.addDeclarations(DeclarationType.CATCH_PARAMETER), body}).finish(node, ScopeType.CATCH);
+  reduceCatchClause(node, {binding, body}) {
+    return super.reduceCatchClause(node, {binding: binding.addDeclarations(DeclarationType.CATCH_PARAMETER), body}).finish(node, ScopeType.CATCH);
   }
 
-  reduceClassDeclaration(node, {name, _super, elements}) {
+  reduceClassDeclaration(node, {name, super: _super, elements}) {
     return super.reduceClassDeclaration(node, {name: name.addDeclarations(DeclarationType.CLASS_NAME), super: _super, elements});
   }
 
-  reduceClassExpression(node, {name, _super, elements}) {
+  reduceClassExpression(node, {name, super: _super, elements}) {
     return super.reduceClassExpression(node, {name, super: _super, elements}).addDeclarations(DeclarationType.CLASS_NAME).finish(node, ScopeType.CLASS_NAME);
   }
 
@@ -104,11 +106,7 @@ export default class ScopeAnalyzer extends MonoidalReducer {
     return super.reduceCompoundAssignmentExpression(node, {binding: binding.addReferences(Accessibility.READWRITE), expression});
   }
 
-  reduceComputedMemberExpression(node, {expression, object}) {
-    return super.reduceComputedMemberExpression(node, {object, expression}).withParameterExpressions();
-  }
-
-  reduceComputedMemberExpression(node, {expression, object}) {
+  reduceComputedMemberExpression(node, {object, expression}) {
     return super.reduceComputedMemberExpression(node, {object, expression}).withParameterExpressions();
   }
 
@@ -134,7 +132,7 @@ export default class ScopeAnalyzer extends MonoidalReducer {
     return name.concat(finishFunction(node, params, body)).addFunctionDeclaration();
   }
 
-  reduceFunctionExpresion(node, {name, params, body}) {
+  reduceFunctionExpression(node, {name, params, body}) {
     let s = finishFunction(node, params, body);
     if (name) {
       return name.concat(s).addDeclarations(DeclarationType.FUNCTION_NAME).finish(node, ScopeType.FUNCTION_NAME);
@@ -148,12 +146,18 @@ export default class ScopeAnalyzer extends MonoidalReducer {
   }
 
   reduceIdentifierExpression(node) {
-    return new ScopeState({freeIdentifiers: [new ReadReference(node)]});
+    return new ScopeState({freeIdentifiers: new MultiMap([[node.name, new ReadReference(node)]])});
   }
 
   reduceIfStatement(node, {test, consequent, alternate}) {
-    const statements = node.consequent.concat(node.alternate ? node.alternate : []);
-    return super.reduceIfStatement(node, {test, consequent, alternate}).withPotentialVarFunctions(getFunctionDeclarations(statements));
+    let pvsfd = [];
+    if (node.consequent.type === "FunctionDeclaration") {
+      pvsfd.push(node.consequent.name);
+    }
+    if (node.alternate && node.alternate.type === "FunctionDeclaration") {
+      pvsfd.push(node.alternate.name);
+    }    
+    return super.reduceIfStatement(node, {test, consequent, alternate}).withPotentialVarFunctions(pvsfd);
   }
 
   reduceMethod(node, {name, params, body}) {
