@@ -1,5 +1,5 @@
 /**
- * Copyright 2014 Shape Security, Inc.
+ * Copyright 2015 Shape Security, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License")
  * you may not use this file except in compliance with the License.
@@ -27,11 +27,10 @@ function finishFunction(fnNode, params, body, isArrowFn = false) {
   const fnType = isArrowFn ? ScopeType.ARROW_FUNCTION : ScopeType.FUNCTION;
   if (params.hasParameterExpressions) {
     return params.withoutParameterExpressions()
-      .concat(body.finish(fnNode, fnType))
-      .addDeclarations(DeclarationType.PARAMETER)
-      .finish(fnNode, ScopeType.PARAMETERS, !isArrowFn);
+      .concat(body.finish(fnNode, fnType, !isArrowFn))
+      .finish(fnNode, ScopeType.PARAMETERS);
   } else {
-    return params.addDeclarations(DeclarationType.PARAMETER)
+    return params
       .concat(body)
       .finish(fnNode, fnType, !isArrowFn);
   }
@@ -142,7 +141,7 @@ export default class ScopeAnalyzer extends MonoidalReducer {
 
   reduceGetter(node, {name, body}) {
     // todo test order
-    return name.concat(body.finish(node, ScopeType.Function, true));
+    return name.concat(body.finish(node, ScopeType.FUNCTION, true));
   }
 
   reduceIdentifierExpression(node) {
@@ -160,13 +159,17 @@ export default class ScopeAnalyzer extends MonoidalReducer {
     return super.reduceIfStatement(node, {test, consequent, alternate}).withPotentialVarFunctions(pvsfd);
   }
 
+  reduceImport(node, {moduleSpecifier, defaultBinding, namedImports}) {
+    return super.reduceImport(node, {moduleSpecifier, defaultBinding, namedImports}).addDeclarations(DeclarationType.IMPORT);
+  }
+
   reduceMethod(node, {name, params, body}) {
     // todo test order
     return name.concat(finishFunction(node, params, body));
   }
 
-  reduceModule(node, {directives, statements}) {
-    return super.reduceModule(node, {directives, statements}).finish(node, ScopeType.MODULE);
+  reduceModule(node, {directives, items}) {
+    return super.reduceModule(node, {directives, items}).finish(node, ScopeType.MODULE);
   }
 
   reduceScript(node, {directives, statements}) {

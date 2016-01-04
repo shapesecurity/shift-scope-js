@@ -3,7 +3,16 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.Accessibility = exports.DeclarationType = exports.ScopeType = undefined;
+exports.Serialize = exports.Accessibility = exports.DeclarationType = exports.ScopeType = exports.ScopeLookup = undefined;
+
+var _scopeLookup = require("./scope-lookup");
+
+Object.defineProperty(exports, "ScopeLookup", {
+  enumerable: true,
+  get: function get() {
+    return _scopeLookup.default;
+  }
+});
 
 var _scope = require("./scope");
 
@@ -29,6 +38,15 @@ Object.defineProperty(exports, "Accessibility", {
   enumerable: true,
   get: function get() {
     return _reference.Accessibility;
+  }
+});
+
+var _scopeSerializer = require("./scope-serializer");
+
+Object.defineProperty(exports, "Serialize", {
+  enumerable: true,
+  get: function get() {
+    return _scopeSerializer.Serialize;
   }
 });
 exports.default = analyze;

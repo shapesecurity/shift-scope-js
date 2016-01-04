@@ -1,5 +1,5 @@
 /**
- * Copyright 2014 Shape Security, Inc.
+ * Copyright 2015 Shape Security, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License")
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import MultiMap from "multimap";
+import * as _MultiMap from "multimap";
+const MultiMap = _MultiMap.default; // (babel) TODO remove this
 import {Declaration, DeclarationType} from "./declaration";
 import {Reference} from "./reference";
 
@@ -150,7 +151,7 @@ export default class ScopeState {
     return s;
   }
 
-  withoutParameterExpression() {
+  withoutParameterExpressions() {
     let s = new ScopeState(this);
     s.hasParameterExpressions = false;
     return s;
@@ -158,7 +159,7 @@ export default class ScopeState {
 
   withPotentialVarFunctions(functions) {
     let pvsfd = merge(new MultiMap, this.potentiallyVarScopedFunctionDeclarations);
-    functions.forEach(f => pvsfd.put(f.name, f));
+    functions.forEach(f => pvsfd.set(f.name, new Declaration(f, DeclarationType.FUNCTION_VAR_DECLARATION)));
     let s = new ScopeState(this);
     s.potentiallyVarScopedFunctionDeclarations = pvsfd;
     return s;
@@ -181,22 +182,23 @@ export default class ScopeState {
     });
     this.functionDeclarations.forEachEntry((v, k) => {
       const existing = pvsfd.get(k);
-      if (existing && (v.length > 1 || v[0].node !== existing)) {
+      if (existing && (v.length > 1 || v[0].node !== existing[0].node)) {
         pvsfd.delete(k);
       }
-    })
+    });
 
     switch (scopeType) {
     case ScopeType.BLOCK:
     case ScopeType.CATCH:
     case ScopeType.WITH:
     case ScopeType.FUNCTION_NAME:
-    case ScopeType.PARAMETERS:
     case ScopeType.PARAMETER_EXPRESSION:
       // resolve references to only block-scoped free declarations
       variables = resolveDeclarations(freeIdentifiers, this.blockScopedDeclarations, variables);
+      variables = resolveDeclarations(freeIdentifiers, this.functionDeclarations, variables);
       merge(functionScoped, this.functionScopedDeclarations);
       break;
+    case ScopeType.PARAMETERS:
     case ScopeType.ARROW_FUNCTION:
     case ScopeType.FUNCTION:
     case ScopeType.MODULE:
@@ -206,8 +208,9 @@ export default class ScopeState {
       // todo maybe reorganize this section for readability
 
       let declarations = new MultiMap;
+      // top-level lexical declarations in scripts are not globals, so create a separate scope for them 
+      // otherwise lexical and variable declarations go in the same scope.
       if (scopeType === ScopeType.SCRIPT) {
-        // top-level lexical declarations in scripts are not globals, so create a separate scope for them 
         children = [new Scope(children, resolveDeclarations(freeIdentifiers, this.blockScopedDeclarations, []), freeIdentifiers, ScopeType.SCRIPT, this.dynamic, astNode)];
       } else {
         merge(declarations, this.blockScopedDeclarations);
@@ -246,7 +249,8 @@ export default class ScopeState {
       functionScopedDeclarations: functionScoped,
       children: [scope],
       bindingsForParent: this.bindingsForParent,
-      potentiallyVarScopedFunctionDeclarations: pvsfd
+      potentiallyVarScopedFunctionDeclarations: pvsfd,
+      hasParameterExpressions: this.hasParameterExpressions
     });
   }
 }

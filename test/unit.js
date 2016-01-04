@@ -20,7 +20,7 @@ const assert = _assert.default; // (babel) TODO remove this
 import {parseScript, parseModule} from "shift-parser";
 import * as _Map from "es6-map";
 const Map = _Map.default; // (babel) TODO remove this
-import analyze, {Accessibility, ScopeType} from "../";
+import analyze, {Accessibility, ScopeType, Serialize} from "../";
 
 const NO_REFERENCES = [];
 const NO_DECLARATIONS = [];
@@ -1570,4 +1570,90 @@ suite("unit", () => {
       checkScope(gScope, gScopeNode, ScopeType.FUNCTION, false, children, through, variables, referenceTypes);
     }
   });
+
+  test("arrow", () => {
+    const js =
+      `var x = x => ++x`;
+    let script = parseScript(js);
+
+    let globalScope = analyze(script);
+    let scriptScope = globalScope.children[0];
+    let xScope = scriptScope.children[0];
+    let xScopeNode = script.statements[0].declaration.declarators[0].init;
+
+    let xNode1 = script.statements[0].declaration.declarators[0].binding;
+    let xNode2 = script.statements[0].declaration.declarators[0].init.params.items[0];
+    let xNode3 = script.statements[0].declaration.declarators[0].init.body.operand;
+
+    { // global scope
+      let children = [scriptScope];
+      let through = [];
+
+      let variables = new Map;
+      variables.set("x", [[xNode1], [xNode1]]);
+
+      let referenceTypes = new Map;
+      referenceTypes.set(xNode1, Accessibility.WRITE);
+
+      checkScope(globalScope, script, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
+    }
+    { // x scope
+      let children = [];
+      let through = [];
+
+      let variables = new Map;
+      variables.set("x", [[xNode2], [xNode3]]);
+
+      let referenceTypes = new Map;
+      referenceTypes.set(xNode3, Accessibility.READWRITE);
+
+      checkScope(xScope, xScopeNode, ScopeType.ARROW_FUNCTION, false, children, through, variables, referenceTypes);
+    }
+  });
+
+  test("arrow arguments", () => {
+    const js =
+      `() => arguments`;
+    let script = parseScript(js);
+
+    let globalScope = analyze(script);
+    let scriptScope = globalScope.children[0];
+    let aScope = scriptScope.children[0];
+    let aScopeNode = script.statements[0].expression;
+
+    let argumentsNode = script.statements[0].expression.body;
+
+    { // global scope
+      let children = [scriptScope];
+      let through = ["arguments"];
+
+      let variables = new Map;
+      variables.set("arguments", [NO_DECLARATIONS, [argumentsNode]]);
+
+      let referenceTypes = new Map;
+      referenceTypes.set(argumentsNode, Accessibility.READ);
+
+      checkScope(globalScope, script, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
+    }
+    { // arrow scope
+      let children = [];
+      let through = ["arguments"];
+
+      let variables = new Map;
+
+      let referenceTypes = new Map;
+
+      checkScope(aScope, aScopeNode, ScopeType.ARROW_FUNCTION, false, children, through, variables, referenceTypes);
+    }
+  });
+
+test("foo", () => {
+    const js =
+      `() => arguments`;
+    let script = parseScript(js);
+
+    let globalScope = analyze(script);
+
+    console.log(Serialize(globalScope));
+});
 });

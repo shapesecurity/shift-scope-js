@@ -22,9 +22,11 @@ if (typeof Symbol === "undefined")
   require('es6-symbol/implement');
 
 import ScopeAnalyzer from "./scope-analyzer";
+export {default as ScopeLookup} from "./scope-lookup";
 export {ScopeType} from "./scope";
 export {DeclarationType} from "./declaration";
 export {Accessibility} from "./reference";
+export {serialize} from "./scope-serializer";
 
 export default function analyze(script) {
   return ScopeAnalyzer.analyze(script);

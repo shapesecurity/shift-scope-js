@@ -1,5 +1,5 @@
 /**
- * Copyright 2014 Shape Security, Inc.
+ * Copyright 2015 Shape Security, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License")
  * you may not use this file except in compliance with the License.
@@ -38,10 +38,12 @@ DeclarationType.VAR = new FunctionScopedDeclaration("var");
 DeclarationType.CONST = new BlockScopedDeclaration("const");
 DeclarationType.LET = new BlockScopedDeclaration("let");
 DeclarationType.FUNCTION_DECLARATION = new BlockScopedDeclaration("function declaration"); // potentially also FunctionScoped
+DeclarationType.FUNCTION_VAR_DECLARATION = new BlockScopedDeclaration("function var declaration"); // potentially also FunctionScoped
 DeclarationType.FUNCTION_NAME = new BlockScopedDeclaration("function name");
 DeclarationType.CLASS_NAME = new BlockScopedDeclaration("class name");
 DeclarationType.PARAMETER = new FunctionScopedDeclaration("parameter");
 DeclarationType.CATCH_PARAMETER = new BlockScopedDeclaration("catch parameter");
+DeclarationType.IMPORT = new BlockScopedDeclaration("import");
 
 DeclarationType.fromVarDeclKind = function(variableDeclarationKind) {
   switch (variableDeclarationKind) {
