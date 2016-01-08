@@ -16,8 +16,7 @@
 
 import _reduce from "shift-reducer";
 const reduce = _reduce.default; // (babel) TODO remove this
-import _ShiftSpec from "shift-spec";
-let ShiftSpec = _ShiftSpec.default; // (babel) TODO remove this
+import ShiftSpec from "shift-spec";
 import {MonoidalReducer} from "shift-reducer";
 
 // TODO this file should live elsewhere

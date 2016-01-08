@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-import * as _MultiMap from "multimap";
-const MultiMap = _MultiMap.default; // (babel) TODO remove this
+import MultiMap from "multimap";
 import _reduce, {MonoidalReducer} from "shift-reducer";
 const reduce = _reduce.default; // (babel) TODO remove this
 import ScopeState from "./scope-state";

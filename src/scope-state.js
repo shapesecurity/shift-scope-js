@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-import * as _MultiMap from "multimap";
-const MultiMap = _MultiMap.default; // (babel) TODO remove this
+import MultiMap from "multimap";
 import {Declaration, DeclarationType} from "./declaration";
 import {Reference} from "./reference";
 import {Scope, GlobalScope, ScopeType} from "./scope";

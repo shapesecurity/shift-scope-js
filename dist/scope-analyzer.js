@@ -10,7 +10,7 @@ Object.defineProperty(exports, "__esModule", {
 
 var _multimap = require("multimap");
 
-var _MultiMap = _interopRequireWildcard(_multimap);
+var _multimap2 = _interopRequireDefault(_multimap);
 
 var _shiftReducer = require("shift-reducer");
 
@@ -36,8 +36,6 @@ var _strictnessReducer2 = _interopRequireDefault(_strictnessReducer);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
-
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
@@ -57,8 +55,6 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 * See the License for the specific language governing permissions and
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 * limitations under the License.
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 */
-
-var MultiMap = _MultiMap.default; // (babel) TODO remove this
 
 var reduce = _shiftReducer2.default.default; // (babel) TODO remove this
 
@@ -269,7 +265,7 @@ var ScopeAnalyzer = (function (_MonoidalReducer) {
   }, {
     key: "reduceIdentifierExpression",
     value: function reduceIdentifierExpression(node) {
-      return new _scopeState2.default({ freeIdentifiers: new MultiMap([[node.name, new _reference.Reference(node, _reference.Accessibility.READ)]]) });
+      return new _scopeState2.default({ freeIdentifiers: new _multimap2.default([[node.name, new _reference.Reference(node, _reference.Accessibility.READ)]]) });
     }
   }, {
     key: "reduceIfStatement",

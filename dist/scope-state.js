@@ -22,7 +22,7 @@ Object.defineProperty(exports, "__esModule", {
 
 var _multimap = require("multimap");
 
-var _MultiMap = _interopRequireWildcard(_multimap);
+var _multimap2 = _interopRequireDefault(_multimap);
 
 var _declaration = require("./declaration");
 
@@ -36,11 +36,7 @@ var _variable2 = _interopRequireDefault(_variable);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
-
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var MultiMap = _MultiMap.default; // (babel) TODO remove this
 
 function merge(multiMap, otherMultiMap) {
   otherMultiMap.forEachEntry(function (v, k) {
@@ -63,13 +59,13 @@ var ScopeState = (function () {
     var _ref = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
     var _ref$freeIdentifiers = _ref.freeIdentifiers;
-    var freeIdentifiers = _ref$freeIdentifiers === undefined ? new MultiMap() : _ref$freeIdentifiers;
+    var freeIdentifiers = _ref$freeIdentifiers === undefined ? new _multimap2.default() : _ref$freeIdentifiers;
     var _ref$functionScopedDe = _ref.functionScopedDeclarations;
-    var functionScopedDeclarations = _ref$functionScopedDe === undefined ? new MultiMap() : _ref$functionScopedDe;
+    var functionScopedDeclarations = _ref$functionScopedDe === undefined ? new _multimap2.default() : _ref$functionScopedDe;
     var _ref$blockScopedDecla = _ref.blockScopedDeclarations;
-    var blockScopedDeclarations = _ref$blockScopedDecla === undefined ? new MultiMap() : _ref$blockScopedDecla;
+    var blockScopedDeclarations = _ref$blockScopedDecla === undefined ? new _multimap2.default() : _ref$blockScopedDecla;
     var _ref$functionDeclarat = _ref.functionDeclarations;
-    var functionDeclarations = _ref$functionDeclarat === undefined ? new MultiMap() : _ref$functionDeclarat;
+    var functionDeclarations = _ref$functionDeclarat === undefined ? new _multimap2.default() : _ref$functionDeclarat;
     var _ref$children = _ref.children;
     var // function declarations are special: they are lexical in blocks and var-scoped at the top level of functions and scripts.
     children = _ref$children === undefined ? [] : _ref$children;
@@ -79,7 +75,7 @@ var ScopeState = (function () {
     var bindingsForParent = _ref$bindingsForParen === undefined ? [] : _ref$bindingsForParen;
     var _ref$potentiallyVarSc = _ref.potentiallyVarScopedFunctionDeclarations;
     var // either references bubbling up to the AssignmentExpression, ForOfStatement, or ForInStatement which writes to them or declarations bubbling up to the VariableDeclaration, FunctionDeclaration, ClassDeclaration, FormalParameters, Setter, Method, or CatchClause which declares them
-    potentiallyVarScopedFunctionDeclarations = _ref$potentiallyVarSc === undefined ? new MultiMap() : _ref$potentiallyVarSc;
+    potentiallyVarScopedFunctionDeclarations = _ref$potentiallyVarSc === undefined ? new _multimap2.default() : _ref$potentiallyVarSc;
     var _ref$hasParameterExpr = _ref.hasParameterExpressions;
     var // for B.3.3
     hasParameterExpressions = _ref$hasParameterExpr === undefined ? false : _ref$hasParameterExpr;
@@ -108,14 +104,14 @@ var ScopeState = (function () {
         return this;
       }
       return new ScopeState({
-        freeIdentifiers: merge(merge(new MultiMap(), this.freeIdentifiers), b.freeIdentifiers),
-        functionScopedDeclarations: merge(merge(new MultiMap(), this.functionScopedDeclarations), b.functionScopedDeclarations),
-        blockScopedDeclarations: merge(merge(new MultiMap(), this.blockScopedDeclarations), b.blockScopedDeclarations),
-        functionDeclarations: merge(merge(new MultiMap(), this.functionDeclarations), b.functionDeclarations),
+        freeIdentifiers: merge(merge(new _multimap2.default(), this.freeIdentifiers), b.freeIdentifiers),
+        functionScopedDeclarations: merge(merge(new _multimap2.default(), this.functionScopedDeclarations), b.functionScopedDeclarations),
+        blockScopedDeclarations: merge(merge(new _multimap2.default(), this.blockScopedDeclarations), b.blockScopedDeclarations),
+        functionDeclarations: merge(merge(new _multimap2.default(), this.functionDeclarations), b.functionDeclarations),
         children: this.children.concat(b.children),
         dynamic: this.dynamic || b.dynamic,
         bindingsForParent: this.bindingsForParent.concat(b.bindingsForParent),
-        potentiallyVarScopedFunctionDeclarations: merge(merge(new MultiMap(), this.potentiallyVarScopedFunctionDeclarations), b.potentiallyVarScopedFunctionDeclarations),
+        potentiallyVarScopedFunctionDeclarations: merge(merge(new _multimap2.default(), this.potentiallyVarScopedFunctionDeclarations), b.potentiallyVarScopedFunctionDeclarations),
         hasParameterExpressions: this.hasParameterExpressions || b.hasParameterExpressions
       });
     }
@@ -129,7 +125,7 @@ var ScopeState = (function () {
     value: function addDeclarations(kind) {
       var keepBindingsForParent = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
 
-      var declMap = new MultiMap();
+      var declMap = new _multimap2.default();
       merge(declMap, kind.isBlockScoped ? this.blockScopedDeclarations : this.functionScopedDeclarations);
       this.bindingsForParent.forEach(function (binding) {
         return declMap.set(binding.name, new _declaration.Declaration(binding, kind));
@@ -150,7 +146,7 @@ var ScopeState = (function () {
     value: function addFunctionDeclaration() {
       var binding = this.bindingsForParent[0];
       var s = new ScopeState(this);
-      merge(s.functionDeclarations, new MultiMap([[binding.name, new _declaration.Declaration(binding, _declaration.DeclarationType.FUNCTION_DECLARATION)]]));
+      merge(s.functionDeclarations, new _multimap2.default([[binding.name, new _declaration.Declaration(binding, _declaration.DeclarationType.FUNCTION_DECLARATION)]]));
       s.bindingsForParent = [];
       return s;
     }
@@ -164,7 +160,7 @@ var ScopeState = (function () {
     value: function addReferences(accessibility) {
       var keepBindingsForParent = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
 
-      var freeMap = new MultiMap();
+      var freeMap = new _multimap2.default();
       merge(freeMap, this.freeIdentifiers);
       this.bindingsForParent.forEach(function (binding) {
         return freeMap.set(binding.name, new _reference.Reference(binding, accessibility));
@@ -207,7 +203,7 @@ var ScopeState = (function () {
   }, {
     key: "withPotentialVarFunctions",
     value: function withPotentialVarFunctions(functions) {
-      var pvsfd = merge(new MultiMap(), this.potentiallyVarScopedFunctionDeclarations);
+      var pvsfd = merge(new _multimap2.default(), this.potentiallyVarScopedFunctionDeclarations);
       functions.forEach(function (f) {
         return pvsfd.set(f.name, new _declaration.Declaration(f, _declaration.DeclarationType.FUNCTION_VAR_DECLARATION));
       });
@@ -233,9 +229,9 @@ var ScopeState = (function () {
       var shouldB33 = _ref2$shouldB === undefined ? false : _ref2$shouldB;
 
       var variables = [];
-      var functionScoped = new MultiMap();
-      var freeIdentifiers = merge(new MultiMap(), this.freeIdentifiers);
-      var pvsfd = merge(new MultiMap(), this.potentiallyVarScopedFunctionDeclarations);
+      var functionScoped = new _multimap2.default();
+      var freeIdentifiers = merge(new _multimap2.default(), this.freeIdentifiers);
+      var pvsfd = merge(new _multimap2.default(), this.potentiallyVarScopedFunctionDeclarations);
       var children = this.children;
 
       this.blockScopedDeclarations.forEachEntry(function (v, k) {
@@ -248,7 +244,7 @@ var ScopeState = (function () {
         }
       });
 
-      var declarations = new MultiMap();
+      var declarations = new _multimap2.default();
 
       switch (scopeType) {
         case _scope.ScopeType.BLOCK:
@@ -272,7 +268,7 @@ var ScopeState = (function () {
           // top-level lexical declarations in scripts are not globals, so create a separate scope for them
           // otherwise lexical and variable declarations go in the same scope.
           if (scopeType === _scope.ScopeType.SCRIPT) {
-            children = [new _scope.Scope(children, resolveDeclarations(freeIdentifiers, this.blockScopedDeclarations, []), merge(new MultiMap(), freeIdentifiers), _scope.ScopeType.SCRIPT, this.dynamic, astNode)];
+            children = [new _scope.Scope(children, resolveDeclarations(freeIdentifiers, this.blockScopedDeclarations, []), merge(new _multimap2.default(), freeIdentifiers), _scope.ScopeType.SCRIPT, this.dynamic, astNode)];
           } else {
             merge(declarations, this.blockScopedDeclarations);
           }
@@ -287,7 +283,7 @@ var ScopeState = (function () {
             // maybe also scripts? spec currently doesn't say to, but that may be a bug.
             merge(declarations, pvsfd);
           }
-          pvsfd = new MultiMap();
+          pvsfd = new _multimap2.default();
 
           variables = resolveDeclarations(freeIdentifiers, declarations, variables);
 

@@ -15,11 +15,11 @@
  */
 
 import * as _assert from "assert";
-const assert = _assert.default; // (babel) TODO remove this
+const assert = _assert.default;
 
 import {parseScript, parseModule} from "shift-parser";
 import * as _Map from "es6-map";
-const Map = _Map.default; // (babel) TODO remove this
+const Map = _Map.default;
 import analyze, {Accessibility, ScopeType, serialize} from "../";
 
 const NO_REFERENCES = [];
