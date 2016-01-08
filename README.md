@@ -26,7 +26,7 @@ npm install shift-scope
 import parse from "shift-parser";
 import analyzeScope from "shift-scope";
 
-let scopeTree = analyzeScope(parse("/* JavaScript program */"));
+let scopeTree = analyzeScope(parse("/* ECMAScript program text */"));
 ```
 
 See the [examples](./examples) directory for more details.
@@ -46,7 +46,7 @@ See the [examples](./examples) directory for more details.
 
 ## License
 
-    Copyright 2014 Shape Security, Inc.
+    Copyright 2016 Shape Security, Inc.
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
