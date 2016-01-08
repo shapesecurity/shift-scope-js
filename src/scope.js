@@ -23,18 +23,18 @@ export class ScopeType {
   }
 }
 
-ScopeType.GLOBAL = new ScopeType("global");
-ScopeType.MODULE = new ScopeType("module");
-ScopeType.SCRIPT = new ScopeType("script");
-ScopeType.ARROW_FUNCTION = new ScopeType("arrow function");
-ScopeType.FUNCTION = new ScopeType("function");
-ScopeType.FUNCTION_NAME = new ScopeType("function name");
-ScopeType.PARAMETERS = new ScopeType("parameters");
-ScopeType.PARAMETER_EXPRESSION = new ScopeType("parameter expression");
-ScopeType.WITH = new ScopeType("with");
-ScopeType.CATCH = new ScopeType("catch");
-ScopeType.BLOCK = new ScopeType("block");
-ScopeType.CLASS_NAME = new ScopeType("class name"); // class expressions, in particular
+ScopeType.GLOBAL = new ScopeType("Global");
+ScopeType.MODULE = new ScopeType("Module");
+ScopeType.SCRIPT = new ScopeType("Script");
+ScopeType.ARROW_FUNCTION = new ScopeType("ArrowFunction");
+ScopeType.FUNCTION = new ScopeType("Function");
+ScopeType.FUNCTION_NAME = new ScopeType("FunctionName"); // named function expressions
+ScopeType.CLASS_NAME = new ScopeType("ClassName"); // named class expressions
+ScopeType.PARAMETERS = new ScopeType("Parameters");
+ScopeType.PARAMETER_EXPRESSION = new ScopeType("ParameterExpression");
+ScopeType.WITH = new ScopeType("With");
+ScopeType.CATCH = new ScopeType("Catch");
+ScopeType.BLOCK = new ScopeType("Block");
 
 export class Scope {
   constructor(children, variables, through, type, isDynamic, astNode) {
@@ -60,10 +60,6 @@ export class Scope {
 
   lookupVariable(name) {
     return this.variables.get(name);
-  }
-
-  findVariables(identifier) {
-    // TODO
   }
 }
 

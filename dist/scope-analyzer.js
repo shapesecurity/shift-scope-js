@@ -26,6 +26,14 @@ var _declaration = require("./declaration");
 
 var _scope = require("./scope");
 
+var _es6Set = require("es6-set");
+
+var _es6Set2 = _interopRequireDefault(_es6Set);
+
+var _strictnessReducer = require("./strictness-reducer");
+
+var _strictnessReducer2 = _interopRequireDefault(_strictnessReducer);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
@@ -54,19 +62,7 @@ var MultiMap = _MultiMap.default; // (babel) TODO remove this
 
 var reduce = _shiftReducer2.default.default; // (babel) TODO remove this
 
-function finishFunction(fnNode, params, body) {
-  var isArrowFn = arguments.length <= 3 || arguments[3] === undefined ? false : arguments[3];
-
-  var fnType = isArrowFn ? _scope.ScopeType.ARROW_FUNCTION : _scope.ScopeType.FUNCTION;
-  if (params.hasParameterExpressions) {
-    return params.withoutParameterExpressions().concat(body.finish(fnNode, fnType, !isArrowFn)).finish(fnNode, _scope.ScopeType.PARAMETERS);
-  } else {
-    return params.concat(body).finish(fnNode, fnType, !isArrowFn);
-  }
-}
-
 function getFunctionDeclarations(statements) {
-  // returns the binding identifiers of function declarations in the list of statements
   return statements.filter(function (s) {
     return s.type === "FunctionDeclaration";
   }).map(function (f) {
@@ -77,19 +73,34 @@ function getFunctionDeclarations(statements) {
 var ScopeAnalyzer = (function (_MonoidalReducer) {
   _inherits(ScopeAnalyzer, _MonoidalReducer);
 
-  function ScopeAnalyzer() {
+  function ScopeAnalyzer(program) {
     _classCallCheck(this, ScopeAnalyzer);
 
-    return _possibleConstructorReturn(this, Object.getPrototypeOf(ScopeAnalyzer).call(this, _scopeState2.default));
+    var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(ScopeAnalyzer).call(this, _scopeState2.default));
+
+    _this.sloppySet = program.type === "Script" ? _strictnessReducer2.default.analyze(program) : new _es6Set2.default();
+    return _this;
   }
 
   _createClass(ScopeAnalyzer, [{
+    key: "finishFunction",
+    value: function finishFunction(fnNode, params, body) {
+      var isArrowFn = fnNode.type === "ArrowExpression";
+      var fnType = isArrowFn ? _scope.ScopeType.ARROW_FUNCTION : _scope.ScopeType.FUNCTION;
+      var opts = { shouldResolveArguments: !isArrowFn, shouldB33: this.sloppySet.has(fnNode) };
+      if (params.hasParameterExpressions) {
+        return params.withoutParameterExpressions().concat(body.finish(fnNode, fnType, opts)).finish(fnNode, _scope.ScopeType.PARAMETERS);
+      } else {
+        return params.concat(body).finish(fnNode, fnType, opts);
+      }
+    }
+  }, {
     key: "reduceArrowExpression",
     value: function reduceArrowExpression(node, _ref) {
       var params = _ref.params;
       var body = _ref.body;
 
-      return finishFunction(node, params, body, true);
+      return this.finishFunction(node, params, body);
     }
   }, {
     key: "reduceAssignmentExpression",
@@ -158,7 +169,7 @@ var ScopeAnalyzer = (function (_MonoidalReducer) {
       var _super = _ref8.super;
       var elements = _ref8.elements;
 
-      return _get(Object.getPrototypeOf(ScopeAnalyzer.prototype), "reduceClassDeclaration", this).call(this, node, { name: name.addDeclarations(_declaration.DeclarationType.CLASS_NAME), super: _super, elements: elements });
+      return _get(Object.getPrototypeOf(ScopeAnalyzer.prototype), "reduceClassDeclaration", this).call(this, node, { name: name.addDeclarations(_declaration.DeclarationType.CLASS_DECLARATION), super: _super, elements: elements });
     }
   }, {
     key: "reduceClassExpression",
@@ -232,7 +243,7 @@ var ScopeAnalyzer = (function (_MonoidalReducer) {
       var params = _ref16.params;
       var body = _ref16.body;
 
-      return name.concat(finishFunction(node, params, body)).addFunctionDeclaration();
+      return name.concat(this.finishFunction(node, params, body)).addFunctionDeclaration();
     }
   }, {
     key: "reduceFunctionExpression",
@@ -241,7 +252,7 @@ var ScopeAnalyzer = (function (_MonoidalReducer) {
       var params = _ref17.params;
       var body = _ref17.body;
 
-      var s = finishFunction(node, params, body);
+      var s = this.finishFunction(node, params, body);
       if (name) {
         return name.concat(s).addDeclarations(_declaration.DeclarationType.FUNCTION_NAME).finish(node, _scope.ScopeType.FUNCTION_NAME);
       }
@@ -253,13 +264,12 @@ var ScopeAnalyzer = (function (_MonoidalReducer) {
       var name = _ref18.name;
       var body = _ref18.body;
 
-      // todo test order
-      return name.concat(body.finish(node, _scope.ScopeType.FUNCTION, true));
+      return name.concat(body.finish(node, _scope.ScopeType.FUNCTION, { shouldResolveArguments: true, shouldB33: this.sloppySet.has(node) }));
     }
   }, {
     key: "reduceIdentifierExpression",
     value: function reduceIdentifierExpression(node) {
-      return new _scopeState2.default({ freeIdentifiers: new MultiMap([[node.name, new _reference.ReadReference(node)]]) });
+      return new _scopeState2.default({ freeIdentifiers: new MultiMap([[node.name, new _reference.Reference(node, _reference.Accessibility.READ)]]) });
     }
   }, {
     key: "reduceIfStatement",
@@ -293,8 +303,7 @@ var ScopeAnalyzer = (function (_MonoidalReducer) {
       var params = _ref21.params;
       var body = _ref21.body;
 
-      // todo test order
-      return name.concat(finishFunction(node, params, body));
+      return name.concat(this.finishFunction(node, params, body));
     }
   }, {
     key: "reduceModule",
@@ -319,11 +328,10 @@ var ScopeAnalyzer = (function (_MonoidalReducer) {
       var param = _ref24.param;
       var body = _ref24.body;
 
-      // todo test order
       if (param.hasParameterExpressions) {
         param = param.finish(node, _scope.ScopeType.PARAMETER_EXPRESSION);
       }
-      return name.concat(finishFunction(node, param.addDeclarations(_declaration.DeclarationType.PARAMETER), body));
+      return name.concat(this.finishFunction(node, param.addDeclarations(_declaration.DeclarationType.PARAMETER), body));
     }
   }, {
     key: "reduceSwitchCase",
@@ -385,7 +393,7 @@ var ScopeAnalyzer = (function (_MonoidalReducer) {
   }], [{
     key: "analyze",
     value: function analyze(program) {
-      return reduce(new this(), program).children[0];
+      return reduce(new this(program), program).children[0];
     }
   }]);
 

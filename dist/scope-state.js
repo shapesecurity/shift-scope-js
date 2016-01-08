@@ -49,21 +49,13 @@ function merge(multiMap, otherMultiMap) {
   return multiMap;
 }
 
-function resolveArguments(freeIdentifiers, variables) {
-  // todo
-  var args = freeIdentifiers.get("arguments") || [];
-  freeIdentifiers.delete("arguments");
-  return variables.concat(new _variable2.default("arguments", args, []));
-}
-
 function resolveDeclarations(freeIdentifiers, decls, variables) {
-  // todo
   decls.forEachEntry(function (declarations, name) {
     var references = freeIdentifiers.get(name) || [];
     variables = variables.concat(new _variable2.default(name, references, declarations));
     freeIdentifiers.delete(name);
   });
-  return variables; // todo just modify variables in place?
+  return variables;
 }
 
 var ScopeState = (function () {
@@ -86,10 +78,10 @@ var ScopeState = (function () {
     var _ref$bindingsForParen = _ref.bindingsForParent;
     var bindingsForParent = _ref$bindingsForParen === undefined ? [] : _ref$bindingsForParen;
     var _ref$potentiallyVarSc = _ref.potentiallyVarScopedFunctionDeclarations;
-    var //  either references bubbling up to the AssignmentExpression, ForOfStatement, or ForInStatement which writes to them or declarations bubbling up to the VariableDeclaration, FunctionDeclaration, ClassDeclaration, FormalParameters, Setter, Method, or CatchClause which declares them
+    var // either references bubbling up to the AssignmentExpression, ForOfStatement, or ForInStatement which writes to them or declarations bubbling up to the VariableDeclaration, FunctionDeclaration, ClassDeclaration, FormalParameters, Setter, Method, or CatchClause which declares them
     potentiallyVarScopedFunctionDeclarations = _ref$potentiallyVarSc === undefined ? new MultiMap() : _ref$potentiallyVarSc;
     var _ref$hasParameterExpr = _ref.hasParameterExpressions;
-    var // for B.3.3.
+    var // for B.3.3
     hasParameterExpressions = _ref$hasParameterExpr === undefined ? false : _ref$hasParameterExpr;
 
     _classCallCheck(this, ScopeState);
@@ -156,7 +148,7 @@ var ScopeState = (function () {
   }, {
     key: "addFunctionDeclaration",
     value: function addFunctionDeclaration() {
-      var binding = this.bindingsForParent[0]; // should be the only item.
+      var binding = this.bindingsForParent[0];
       var s = new ScopeState(this);
       merge(s.functionDeclarations, new MultiMap([[binding.name, new _declaration.Declaration(binding, _declaration.DeclarationType.FUNCTION_DECLARATION)]]));
       s.bindingsForParent = [];
@@ -233,8 +225,13 @@ var ScopeState = (function () {
   }, {
     key: "finish",
     value: function finish(astNode, scopeType) {
-      var shouldResolveArguments = arguments.length <= 2 || arguments[2] === undefined ? false : arguments[2];
-      // todo
+      var _ref2 = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
+
+      var _ref2$shouldResolveAr = _ref2.shouldResolveArguments;
+      var shouldResolveArguments = _ref2$shouldResolveAr === undefined ? false : _ref2$shouldResolveAr;
+      var _ref2$shouldB = _ref2.shouldB33;
+      var shouldB33 = _ref2$shouldB === undefined ? false : _ref2$shouldB;
+
       var variables = [];
       var functionScoped = new MultiMap();
       var freeIdentifiers = merge(new MultiMap(), this.freeIdentifiers);
@@ -251,6 +248,8 @@ var ScopeState = (function () {
         }
       });
 
+      var declarations = new MultiMap();
+
       switch (scopeType) {
         case _scope.ScopeType.BLOCK:
         case _scope.ScopeType.CATCH:
@@ -258,8 +257,9 @@ var ScopeState = (function () {
         case _scope.ScopeType.FUNCTION_NAME:
         case _scope.ScopeType.PARAMETER_EXPRESSION:
           // resolve references to only block-scoped free declarations
-          variables = resolveDeclarations(freeIdentifiers, this.blockScopedDeclarations, variables);
-          variables = resolveDeclarations(freeIdentifiers, this.functionDeclarations, variables);
+          merge(declarations, this.blockScopedDeclarations);
+          merge(declarations, this.functionDeclarations);
+          variables = resolveDeclarations(freeIdentifiers, declarations, variables);
           merge(functionScoped, this.functionScopedDeclarations);
           break;
         case _scope.ScopeType.PARAMETERS:
@@ -269,13 +269,10 @@ var ScopeState = (function () {
         case _scope.ScopeType.SCRIPT:
           // resolve references to both block-scoped and function-scoped free declarations
 
-          // todo maybe reorganize this section for readability
-
-          var declarations = new MultiMap();
           // top-level lexical declarations in scripts are not globals, so create a separate scope for them
           // otherwise lexical and variable declarations go in the same scope.
           if (scopeType === _scope.ScopeType.SCRIPT) {
-            children = [new _scope.Scope(children, resolveDeclarations(freeIdentifiers, this.blockScopedDeclarations, []), freeIdentifiers, _scope.ScopeType.SCRIPT, this.dynamic, astNode)];
+            children = [new _scope.Scope(children, resolveDeclarations(freeIdentifiers, this.blockScopedDeclarations, []), merge(new MultiMap(), freeIdentifiers), _scope.ScopeType.SCRIPT, this.dynamic, astNode)];
           } else {
             merge(declarations, this.blockScopedDeclarations);
           }
@@ -286,8 +283,7 @@ var ScopeState = (function () {
           merge(declarations, this.functionScopedDeclarations);
           merge(declarations, this.functionDeclarations);
 
-          // B.3.3
-          if (scopeType === _scope.ScopeType.ARROW_FUNCTION || scopeType === _scope.ScopeType.FUNCTION) {
+          if (shouldB33) {
             // maybe also scripts? spec currently doesn't say to, but that may be a bug.
             merge(declarations, pvsfd);
           }

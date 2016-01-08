@@ -58,16 +58,17 @@ var FunctionScopedDeclaration = exports.FunctionScopedDeclaration = (function (_
   return FunctionScopedDeclaration;
 })(DeclarationType);
 
-DeclarationType.VAR = new FunctionScopedDeclaration("var");
-DeclarationType.CONST = new BlockScopedDeclaration("const");
-DeclarationType.LET = new BlockScopedDeclaration("let");
-DeclarationType.FUNCTION_DECLARATION = new BlockScopedDeclaration("function declaration"); // potentially also FunctionScoped
-DeclarationType.FUNCTION_VAR_DECLARATION = new BlockScopedDeclaration("function var declaration"); // potentially also FunctionScoped
-DeclarationType.FUNCTION_NAME = new BlockScopedDeclaration("function name");
-DeclarationType.CLASS_NAME = new BlockScopedDeclaration("class name");
-DeclarationType.PARAMETER = new FunctionScopedDeclaration("parameter");
-DeclarationType.CATCH_PARAMETER = new BlockScopedDeclaration("catch parameter");
-DeclarationType.IMPORT = new BlockScopedDeclaration("import");
+DeclarationType.VAR = new FunctionScopedDeclaration("Var");
+DeclarationType.CONST = new BlockScopedDeclaration("Const");
+DeclarationType.LET = new BlockScopedDeclaration("Let");
+DeclarationType.FUNCTION_DECLARATION = new BlockScopedDeclaration("FunctionDeclaration"); // potentially also `FunctionScoped` versions of this, for functions at top of functions/etc?
+DeclarationType.FUNCTION_VAR_DECLARATION = new FunctionScopedDeclaration("FunctionB33"); // The additional variable created by B.3.3.
+DeclarationType.FUNCTION_NAME = new BlockScopedDeclaration("FunctionExpressionName");
+DeclarationType.CLASS_DECLARATION = new BlockScopedDeclaration("ClassDeclaration");
+DeclarationType.CLASS_NAME = new BlockScopedDeclaration("ClassExpressionName");
+DeclarationType.PARAMETER = new FunctionScopedDeclaration("Parameter");
+DeclarationType.CATCH_PARAMETER = new BlockScopedDeclaration("CatchParam");
+DeclarationType.IMPORT = new BlockScopedDeclaration("Import");
 
 DeclarationType.fromVarDeclKind = function (variableDeclarationKind) {
   switch (variableDeclarationKind) {
@@ -88,76 +89,3 @@ var Declaration = exports.Declaration = function Declaration(node, type) {
   this.node = node;
   this.type = type;
 };
-// TODO probably don't need these
-
-var VarDeclaration = exports.VarDeclaration = (function (_Declaration) {
-  _inherits(VarDeclaration, _Declaration);
-
-  function VarDeclaration(node) {
-    _classCallCheck(this, VarDeclaration);
-
-    return _possibleConstructorReturn(this, Object.getPrototypeOf(VarDeclaration).call(this, node, DeclarationType.VAR));
-  }
-
-  return VarDeclaration;
-})(Declaration);
-
-var ConstDeclaration = exports.ConstDeclaration = (function (_Declaration2) {
-  _inherits(ConstDeclaration, _Declaration2);
-
-  function ConstDeclaration(node) {
-    _classCallCheck(this, ConstDeclaration);
-
-    return _possibleConstructorReturn(this, Object.getPrototypeOf(ConstDeclaration).call(this, node, DeclarationType.CONST));
-  }
-
-  return ConstDeclaration;
-})(Declaration);
-
-var LetDeclaration = exports.LetDeclaration = (function (_Declaration3) {
-  _inherits(LetDeclaration, _Declaration3);
-
-  function LetDeclaration(node) {
-    _classCallCheck(this, LetDeclaration);
-
-    return _possibleConstructorReturn(this, Object.getPrototypeOf(LetDeclaration).call(this, node, DeclarationType.LET));
-  }
-
-  return LetDeclaration;
-})(Declaration);
-
-var FunctionNameDeclaration = exports.FunctionNameDeclaration = (function (_Declaration4) {
-  _inherits(FunctionNameDeclaration, _Declaration4);
-
-  function FunctionNameDeclaration(node) {
-    _classCallCheck(this, FunctionNameDeclaration);
-
-    return _possibleConstructorReturn(this, Object.getPrototypeOf(FunctionNameDeclaration).call(this, node, DeclarationType.FUNCTION_NAME));
-  }
-
-  return FunctionNameDeclaration;
-})(Declaration);
-
-var ParameterDeclaration = exports.ParameterDeclaration = (function (_Declaration5) {
-  _inherits(ParameterDeclaration, _Declaration5);
-
-  function ParameterDeclaration(node) {
-    _classCallCheck(this, ParameterDeclaration);
-
-    return _possibleConstructorReturn(this, Object.getPrototypeOf(ParameterDeclaration).call(this, node, DeclarationType.PARAMETER));
-  }
-
-  return ParameterDeclaration;
-})(Declaration);
-
-var CatchDeclaration = exports.CatchDeclaration = (function (_Declaration6) {
-  _inherits(CatchDeclaration, _Declaration6);
-
-  function CatchDeclaration(node) {
-    _classCallCheck(this, CatchDeclaration);
-
-    return _possibleConstructorReturn(this, Object.getPrototypeOf(CatchDeclaration).call(this, node, DeclarationType.CATCH));
-  }
-
-  return CatchDeclaration;
-})(Declaration);

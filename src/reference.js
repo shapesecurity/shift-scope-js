@@ -32,22 +32,3 @@ export class Reference {
     this.accessibility = accessibility;
   }
 }
-
-export class ReadReference extends Reference {
-  constructor(node) {
-    super(node, Accessibility.READ);
-  }
-}
-
-// TODO these are unneccesary probably
-export class WriteReference extends Reference {
-  constructor(node) {
-    super(node, Accessibility.WRITE);
-  }
-}
-
-export class ReadWriteReference extends Reference {
-  constructor(node) {
-    super(node, Accessibility.READWRITE);
-  }
-}

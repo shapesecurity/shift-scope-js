@@ -19,35 +19,35 @@ const MultiMap = _MultiMap.default; // (babel) TODO remove this
 import {GlobalScope} from "./scope";
 
 export default class ScopeLookup {
-	constructor(globalScope) {
-		this.scope = globalScope;
-		this.variableMap = new MultiMap;
+  constructor(globalScope) {
+    this.scope = globalScope;
+    this.variableMap = new MultiMap;
 
-		const addVariable = v => {
-			v.declarations.forEach(decl => this.variableMap.set(decl.node, v));
-			v.references.forEach(ref => {
+    const addVariable = v => {
+      v.declarations.forEach(decl => this.variableMap.set(decl.node, v));
+      v.references.forEach(ref => {
         if (!this.variableMap.has(ref.node) || this.variableMap.get(ref.node).indexOf(v) === -1) {
-  				this.variableMap.set(ref.node, v);
+          this.variableMap.set(ref.node, v);
         }
-			});
-		};
-		(function getVariables(scope) {
-			scope.children.forEach(getVariables);
-			scope.variables.forEach(addVariable);
-		}(globalScope));
-	}
+      });
+    };
+    (function addVariables(scope) {
+      scope.children.forEach(addVariables);
+      scope.variables.forEach(addVariable);
+    }(globalScope));
+  }
 
-	lookup(node) {
-		/* Gives a map from BindingIdentifiers and IdentifierExpressions to a list of Variables.
-		Assuming that the given node is defined in the scope, the map always returns at least one Variable.
-		It will return two in precisely two cases:
-		`try{}catch(e){var e = ...}`, and function declarations in blocks for which annex B.3.3 applies.
-		In this case the same identifier refers to two variables, one var-scoped and one block-scoped.
-		Both are returned, with the block-scoped variable being returned first. */
-		return this.variableMap.get(node);
-	}
+  lookup(node) {
+    /* Gives a map from BindingIdentifiers and IdentifierExpressions to a list of Variables.
+    Assuming that the given node is defined in the scope, the map always returns at least one Variable.
+    It will return two in precisely two cases:
+    `try{}catch(e){var e = ...}`, and function declarations in blocks for which annex B.3.3 applies.
+    In this case the same identifier refers to two variables, one var-scoped and one block-scoped.
+    Both are returned, with the block-scoped variable being returned first. */
+    return this.variableMap.get(node);
+  }
 
-	isGlobal(node) {
-		return this.scope instanceof GlobalScope && this.scope.has(node);
-	}
+  isGlobal(node) {
+    return this.scope instanceof GlobalScope && this.scope.has(node);
+  }
 }

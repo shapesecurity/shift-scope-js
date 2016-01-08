@@ -18,6 +18,8 @@ import * as _MultiMap from "multimap";
 const MultiMap = _MultiMap.default; // (babel) TODO remove this
 import {Declaration, DeclarationType} from "./declaration";
 import {Reference} from "./reference";
+import {Scope, GlobalScope, ScopeType} from "./scope";
+import Variable from "./variable";
 
 function merge(multiMap, otherMultiMap) {
   otherMultiMap.forEachEntry((v, k) => {
@@ -26,22 +28,13 @@ function merge(multiMap, otherMultiMap) {
   return multiMap;
 }
 
-import {Scope, GlobalScope, ScopeType} from "./scope";
-import Variable from "./variable";
-
-function resolveArguments(freeIdentifiers, variables) { // todo
-  let args = freeIdentifiers.get("arguments") || [];
-  freeIdentifiers.delete("arguments");
-  return variables.concat(new Variable("arguments", args, []));
-}
-
-function resolveDeclarations(freeIdentifiers, decls, variables) { // todo
+function resolveDeclarations(freeIdentifiers, decls, variables) {
   decls.forEachEntry((declarations, name) => {
     let references = freeIdentifiers.get(name) || [];
     variables = variables.concat(new Variable(name, references, declarations));
     freeIdentifiers.delete(name);
   });
-  return variables;  // todo just modify variables in place?
+  return variables;
 }
 
 export default class ScopeState {
@@ -52,8 +45,8 @@ export default class ScopeState {
     functionDeclarations = new MultiMap, // function declarations are special: they are lexical in blocks and var-scoped at the top level of functions and scripts.
     children = [],
     dynamic = false,
-    bindingsForParent = [], //  either references bubbling up to the AssignmentExpression, ForOfStatement, or ForInStatement which writes to them or declarations bubbling up to the VariableDeclaration, FunctionDeclaration, ClassDeclaration, FormalParameters, Setter, Method, or CatchClause which declares them
-    potentiallyVarScopedFunctionDeclarations = new MultiMap, // for B.3.3.
+    bindingsForParent = [], // either references bubbling up to the AssignmentExpression, ForOfStatement, or ForInStatement which writes to them or declarations bubbling up to the VariableDeclaration, FunctionDeclaration, ClassDeclaration, FormalParameters, Setter, Method, or CatchClause which declares them
+    potentiallyVarScopedFunctionDeclarations = new MultiMap, // for B.3.3
     hasParameterExpressions = false,
   } = {}) {
     this.freeIdentifiers = freeIdentifiers;
@@ -111,7 +104,7 @@ export default class ScopeState {
   }
 
   addFunctionDeclaration() {
-    const binding = this.bindingsForParent[0]; // should be the only item.
+    const binding = this.bindingsForParent[0];
     let s = new ScopeState(this);
     merge(s.functionDeclarations, new MultiMap([[binding.name, new Declaration(binding, DeclarationType.FUNCTION_DECLARATION)]]));
     s.bindingsForParent = [];
@@ -170,7 +163,7 @@ export default class ScopeState {
    * and declarations into variable objects. Any free identifiers remaining are
    * carried forward into the new state object.
    */
-  finish(astNode, scopeType, shouldResolveArguments = false) { // todo
+  finish(astNode, scopeType, {shouldResolveArguments = false, shouldB33 = false} = {}) {
     let variables = [];
     let functionScoped = new MultiMap;
     let freeIdentifiers = merge(new MultiMap, this.freeIdentifiers);
@@ -186,58 +179,57 @@ export default class ScopeState {
         pvsfd.delete(k);
       }
     });
+    
+    let declarations = new MultiMap;
 
     switch (scopeType) {
-    case ScopeType.BLOCK:
-    case ScopeType.CATCH:
-    case ScopeType.WITH:
-    case ScopeType.FUNCTION_NAME:
-    case ScopeType.PARAMETER_EXPRESSION:
-      // resolve references to only block-scoped free declarations
-      variables = resolveDeclarations(freeIdentifiers, this.blockScopedDeclarations, variables);
-      variables = resolveDeclarations(freeIdentifiers, this.functionDeclarations, variables);
-      merge(functionScoped, this.functionScopedDeclarations);
-      break;
-    case ScopeType.PARAMETERS:
-    case ScopeType.ARROW_FUNCTION:
-    case ScopeType.FUNCTION:
-    case ScopeType.MODULE:
-    case ScopeType.SCRIPT:
-      // resolve references to both block-scoped and function-scoped free declarations
-
-      // todo maybe reorganize this section for readability
-
-      let declarations = new MultiMap;
-      // top-level lexical declarations in scripts are not globals, so create a separate scope for them 
-      // otherwise lexical and variable declarations go in the same scope.
-      if (scopeType === ScopeType.SCRIPT) {
-        children = [new Scope(children, resolveDeclarations(freeIdentifiers, this.blockScopedDeclarations, []), freeIdentifiers, ScopeType.SCRIPT, this.dynamic, astNode)];
-      } else {
+      case ScopeType.BLOCK:
+      case ScopeType.CATCH:
+      case ScopeType.WITH:
+      case ScopeType.FUNCTION_NAME:
+      case ScopeType.PARAMETER_EXPRESSION:
+        // resolve references to only block-scoped free declarations
         merge(declarations, this.blockScopedDeclarations);
-      }
-      
-      if (shouldResolveArguments) {
-        declarations.set('arguments');
-      }
-      merge(declarations, this.functionScopedDeclarations);
-      merge(declarations, this.functionDeclarations);
+        merge(declarations, this.functionDeclarations);
+        variables = resolveDeclarations(freeIdentifiers, declarations, variables);
+        merge(functionScoped, this.functionScopedDeclarations);
+        break;
+      case ScopeType.PARAMETERS:
+      case ScopeType.ARROW_FUNCTION:
+      case ScopeType.FUNCTION:
+      case ScopeType.MODULE:
+      case ScopeType.SCRIPT:
+        // resolve references to both block-scoped and function-scoped free declarations
 
-      // B.3.3
-      if (scopeType === ScopeType.ARROW_FUNCTION || scopeType === ScopeType.FUNCTION) { // maybe also scripts? spec currently doesn't say to, but that may be a bug.
-        merge(declarations, pvsfd);
-      }
-      pvsfd = new MultiMap;
+        // top-level lexical declarations in scripts are not globals, so create a separate scope for them 
+        // otherwise lexical and variable declarations go in the same scope.
+        if (scopeType === ScopeType.SCRIPT) {
+          children = [new Scope(children, resolveDeclarations(freeIdentifiers, this.blockScopedDeclarations, []), merge(new MultiMap, freeIdentifiers), ScopeType.SCRIPT, this.dynamic, astNode)];
+        } else {
+          merge(declarations, this.blockScopedDeclarations);
+        }
+        
+        if (shouldResolveArguments) {
+          declarations.set('arguments');
+        }
+        merge(declarations, this.functionScopedDeclarations);
+        merge(declarations, this.functionDeclarations);
 
-      variables = resolveDeclarations(freeIdentifiers, declarations, variables);
+        if (shouldB33) { // maybe also scripts? spec currently doesn't say to, but that may be a bug.
+          merge(declarations, pvsfd);
+        }
+        pvsfd = new MultiMap;
 
-      // no declarations in a module are global
-      if (scopeType === ScopeType.MODULE) {
-        children = [new Scope(children, variables, freeIdentifiers, ScopeType.MODULE, this.dynamic, astNode)];
-        variables = [];
-      }
-      break;
-    default:
-      throw new Error("not reached");
+        variables = resolveDeclarations(freeIdentifiers, declarations, variables);
+
+        // no declarations in a module are global
+        if (scopeType === ScopeType.MODULE) {
+          children = [new Scope(children, variables, freeIdentifiers, ScopeType.MODULE, this.dynamic, astNode)];
+          variables = [];
+        }
+        break;
+      default:
+        throw new Error("not reached");
     }
 
     const scope = (scopeType === ScopeType.SCRIPT || scopeType === ScopeType.MODULE)

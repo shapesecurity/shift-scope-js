@@ -34,16 +34,17 @@ export class FunctionScopedDeclaration extends DeclarationType {
   }
 }
 
-DeclarationType.VAR = new FunctionScopedDeclaration("var");
-DeclarationType.CONST = new BlockScopedDeclaration("const");
-DeclarationType.LET = new BlockScopedDeclaration("let");
-DeclarationType.FUNCTION_DECLARATION = new BlockScopedDeclaration("function declaration"); // potentially also FunctionScoped
-DeclarationType.FUNCTION_VAR_DECLARATION = new BlockScopedDeclaration("function var declaration"); // potentially also FunctionScoped
-DeclarationType.FUNCTION_NAME = new BlockScopedDeclaration("function name");
-DeclarationType.CLASS_NAME = new BlockScopedDeclaration("class name");
-DeclarationType.PARAMETER = new FunctionScopedDeclaration("parameter");
-DeclarationType.CATCH_PARAMETER = new BlockScopedDeclaration("catch parameter");
-DeclarationType.IMPORT = new BlockScopedDeclaration("import");
+DeclarationType.VAR = new FunctionScopedDeclaration("Var");
+DeclarationType.CONST = new BlockScopedDeclaration("Const");
+DeclarationType.LET = new BlockScopedDeclaration("Let");
+DeclarationType.FUNCTION_DECLARATION = new BlockScopedDeclaration("FunctionDeclaration"); // potentially also `FunctionScoped` versions of this, for functions at top of functions/etc?
+DeclarationType.FUNCTION_VAR_DECLARATION = new FunctionScopedDeclaration("FunctionB33"); // The additional variable created by B.3.3.
+DeclarationType.FUNCTION_NAME = new BlockScopedDeclaration("FunctionExpressionName");
+DeclarationType.CLASS_DECLARATION = new BlockScopedDeclaration("ClassDeclaration");
+DeclarationType.CLASS_NAME = new BlockScopedDeclaration("ClassExpressionName");
+DeclarationType.PARAMETER = new FunctionScopedDeclaration("Parameter");
+DeclarationType.CATCH_PARAMETER = new BlockScopedDeclaration("CatchParam");
+DeclarationType.IMPORT = new BlockScopedDeclaration("Import");
 
 DeclarationType.fromVarDeclKind = function(variableDeclarationKind) {
   switch (variableDeclarationKind) {
@@ -62,41 +63,5 @@ export class Declaration {
   constructor(node, type) {
     this.node = node;
     this.type = type;
-  }
-}
-// TODO probably don't need these
-export class VarDeclaration extends Declaration {
-  constructor(node) {
-    super(node, DeclarationType.VAR);
-  }
-}
-
-export class ConstDeclaration extends Declaration {
-  constructor(node) {
-    super(node, DeclarationType.CONST);
-  }
-}
-
-export class LetDeclaration extends Declaration {
-  constructor(node) {
-    super(node, DeclarationType.LET);
-  }
-}
-
-export class FunctionNameDeclaration extends Declaration {
-  constructor(node) {
-    super(node, DeclarationType.FUNCTION_NAME);
-  }
-}
-
-export class ParameterDeclaration extends Declaration {
-  constructor(node) {
-    super(node, DeclarationType.PARAMETER);
-  }
-}
-
-export class CatchDeclaration extends Declaration {
-  constructor(node) {
-    super(node, DeclarationType.CATCH);
   }
 }

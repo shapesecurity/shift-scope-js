@@ -19,40 +19,45 @@ const MultiMap = _MultiMap.default; // (babel) TODO remove this
 import _reduce, {MonoidalReducer} from "shift-reducer";
 const reduce = _reduce.default; // (babel) TODO remove this
 import ScopeState from "./scope-state";
-import {Accessibility, ReadReference} from "./reference";
+import {Accessibility, Reference} from "./reference";
 import {Declaration, DeclarationType} from "./declaration";
 import {ScopeType} from "./scope";
+import Set from "es6-set";
+import StrictnessReducer from "./strictness-reducer";
 
-function finishFunction(fnNode, params, body, isArrowFn = false) {
-  const fnType = isArrowFn ? ScopeType.ARROW_FUNCTION : ScopeType.FUNCTION;
-  if (params.hasParameterExpressions) {
-    return params.withoutParameterExpressions()
-      .concat(body.finish(fnNode, fnType, !isArrowFn))
-      .finish(fnNode, ScopeType.PARAMETERS);
-  } else {
-    return params
-      .concat(body)
-      .finish(fnNode, fnType, !isArrowFn);
-  }
-}
 
 function getFunctionDeclarations(statements) {
-  // returns the binding identifiers of function declarations in the list of statements
   return statements.filter(s => s.type === "FunctionDeclaration").map(f => f.name);
 }
 
 export default class ScopeAnalyzer extends MonoidalReducer {
-
-  constructor() {
+  constructor(program) {
     super(ScopeState);
+    this.sloppySet = program.type === "Script" ? StrictnessReducer.analyze(program) : new Set;
   }
 
   static analyze(program) {
-    return reduce(new this, program).children[0];
+    return reduce(new this(program), program).children[0];
   }
 
+  finishFunction(fnNode, params, body) {
+    const isArrowFn = fnNode.type === "ArrowExpression";
+    const fnType = isArrowFn ? ScopeType.ARROW_FUNCTION : ScopeType.FUNCTION;
+    const opts = {shouldResolveArguments: !isArrowFn, shouldB33: this.sloppySet.has(fnNode)};
+    if (params.hasParameterExpressions) {
+      return params.withoutParameterExpressions()
+        .concat(body.finish(fnNode, fnType, opts))
+        .finish(fnNode, ScopeType.PARAMETERS);
+    } else {
+      return params
+        .concat(body)
+        .finish(fnNode, fnType, opts);
+    }
+  }
+
+
   reduceArrowExpression(node, {params, body}) {
-    return finishFunction(node, params, body, true);
+    return this.finishFunction(node, params, body);
   }
 
   reduceAssignmentExpression(node, {binding, expression}) {
@@ -94,7 +99,7 @@ export default class ScopeAnalyzer extends MonoidalReducer {
   }
 
   reduceClassDeclaration(node, {name, super: _super, elements}) {
-    return super.reduceClassDeclaration(node, {name: name.addDeclarations(DeclarationType.CLASS_NAME), super: _super, elements});
+    return super.reduceClassDeclaration(node, {name: name.addDeclarations(DeclarationType.CLASS_DECLARATION), super: _super, elements});
   }
 
   reduceClassExpression(node, {name, super: _super, elements}) {
@@ -128,11 +133,11 @@ export default class ScopeAnalyzer extends MonoidalReducer {
   }
 
   reduceFunctionDeclaration(node, {name, params, body}) {
-    return name.concat(finishFunction(node, params, body)).addFunctionDeclaration();
+    return name.concat(this.finishFunction(node, params, body)).addFunctionDeclaration();
   }
 
   reduceFunctionExpression(node, {name, params, body}) {
-    let s = finishFunction(node, params, body);
+    let s = this.finishFunction(node, params, body);
     if (name) {
       return name.concat(s).addDeclarations(DeclarationType.FUNCTION_NAME).finish(node, ScopeType.FUNCTION_NAME);
     }
@@ -140,12 +145,11 @@ export default class ScopeAnalyzer extends MonoidalReducer {
   }
 
   reduceGetter(node, {name, body}) {
-    // todo test order
-    return name.concat(body.finish(node, ScopeType.FUNCTION, true));
+    return name.concat(body.finish(node, ScopeType.FUNCTION, {shouldResolveArguments: true, shouldB33: this.sloppySet.has(node)}));
   }
 
   reduceIdentifierExpression(node) {
-    return new ScopeState({freeIdentifiers: new MultiMap([[node.name, new ReadReference(node)]])});
+    return new ScopeState({freeIdentifiers: new MultiMap([[node.name, new Reference(node, Accessibility.READ)]])});
   }
 
   reduceIfStatement(node, {test, consequent, alternate}) {
@@ -164,8 +168,7 @@ export default class ScopeAnalyzer extends MonoidalReducer {
   }
 
   reduceMethod(node, {name, params, body}) {
-    // todo test order
-    return name.concat(finishFunction(node, params, body));
+    return name.concat(this.finishFunction(node, params, body));
   }
 
   reduceModule(node, {directives, items}) {
@@ -177,11 +180,10 @@ export default class ScopeAnalyzer extends MonoidalReducer {
   }
 
   reduceSetter(node, {name, param, body}) {
-    // todo test order
     if (param.hasParameterExpressions) {
       param = param.finish(node, ScopeType.PARAMETER_EXPRESSION);
     }
-    return name.concat(finishFunction(node, param.addDeclarations(DeclarationType.PARAMETER), body));
+    return name.concat(this.finishFunction(node, param.addDeclarations(DeclarationType.PARAMETER), body));
   }
 
   reduceSwitchCase(node, {test, consequent}) {
