@@ -7,6 +7,5 @@ script:
   - npm test
 node_js:
   - "0.12"
-  - "0.11"
-  - "0.10"
-  - iojs
+  - "4"
+  - "5"

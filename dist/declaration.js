@@ -34,7 +34,7 @@ var DeclarationType = exports.DeclarationType = function DeclarationType(name, i
   this.isFunctionScoped = !isBlockScoped;
 };
 
-var BlockScopedDeclaration = exports.BlockScopedDeclaration = (function (_DeclarationType) {
+var BlockScopedDeclaration = exports.BlockScopedDeclaration = function (_DeclarationType) {
   _inherits(BlockScopedDeclaration, _DeclarationType);
 
   function BlockScopedDeclaration(name) {
@@ -44,9 +44,9 @@ var BlockScopedDeclaration = exports.BlockScopedDeclaration = (function (_Declar
   }
 
   return BlockScopedDeclaration;
-})(DeclarationType);
+}(DeclarationType);
 
-var FunctionScopedDeclaration = exports.FunctionScopedDeclaration = (function (_DeclarationType2) {
+var FunctionScopedDeclaration = exports.FunctionScopedDeclaration = function (_DeclarationType2) {
   _inherits(FunctionScopedDeclaration, _DeclarationType2);
 
   function FunctionScopedDeclaration(name) {
@@ -56,7 +56,7 @@ var FunctionScopedDeclaration = exports.FunctionScopedDeclaration = (function (_
   }
 
   return FunctionScopedDeclaration;
-})(DeclarationType);
+}(DeclarationType);
 
 DeclarationType.VAR = new FunctionScopedDeclaration("Var");
 DeclarationType.CONST = new BlockScopedDeclaration("Const");

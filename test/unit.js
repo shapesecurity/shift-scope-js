@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-import * as _assert from "assert";
-const assert = _assert.default;
+import assert from "assert";
 
 import {parseScript, parseModule} from "shift-parser";
-import * as _Map from "es6-map";
-const Map = _Map.default;
+import Map from "es6-map";
 import analyze, {Accessibility, ScopeType, serialize} from "../";
 
 const NO_REFERENCES = [];

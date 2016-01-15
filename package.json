@@ -13,16 +13,17 @@
     "dist"
   ],
   "scripts": {
-    "test": "mocha --compilers js:babel-core/register --inline-diffs --check-leaks --ui tdd --reporter dot test",
+    "test": "mocha --compilers js:babel-register --inline-diffs --check-leaks --ui tdd --reporter dot test",
     "build": "babel --source-maps-inline --out-dir dist src",
     "prepublish": "rm -rf dist && npm update && npm run build"
   },
   "dependencies": {
     "es6-map": "^0.1.1",
+    "es6-set": "^0.1.3",
     "es6-symbol": "^2.0.0",
     "multimap": "^0.1.1",
-    "shift-reducer": "^2.0.5",
-    "shift-spec-js": "^2015.2.0"
+    "shift-reducer": "^3.0.2",
+    "shift-spec": "^2015.2.0"
   },
   "devDependencies": {
     "babel-cli": "6.3.13",

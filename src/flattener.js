@@ -14,10 +14,8 @@
  * limitations under the License.
  */
 
-import _reduce from "shift-reducer";
-const reduce = _reduce.default; // (babel) TODO remove this
+import reduce, {MonoidalReducer} from "shift-reducer";
 import ShiftSpec from "shift-spec";
-import {MonoidalReducer} from "shift-reducer";
 
 // TODO this file should live elsewhere
 

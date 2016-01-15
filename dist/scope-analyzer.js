@@ -1,6 +1,6 @@
 "use strict";
 
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
 
@@ -56,8 +56,6 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 * limitations under the License.
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 */
 
-var reduce = _shiftReducer2.default.default; // (babel) TODO remove this
-
 function getFunctionDeclarations(statements) {
   return statements.filter(function (s) {
     return s.type === "FunctionDeclaration";
@@ -66,7 +64,7 @@ function getFunctionDeclarations(statements) {
   });
 }
 
-var ScopeAnalyzer = (function (_MonoidalReducer) {
+var ScopeAnalyzer = function (_MonoidalReducer) {
   _inherits(ScopeAnalyzer, _MonoidalReducer);
 
   function ScopeAnalyzer(program) {
@@ -389,11 +387,11 @@ var ScopeAnalyzer = (function (_MonoidalReducer) {
   }], [{
     key: "analyze",
     value: function analyze(program) {
-      return reduce(new this(program), program).children[0];
+      return (0, _shiftReducer2.default)(new this(program), program).children[0];
     }
   }]);
 
   return ScopeAnalyzer;
-})(_shiftReducer.MonoidalReducer);
+}(_shiftReducer.MonoidalReducer);
 
 exports.default = ScopeAnalyzer;

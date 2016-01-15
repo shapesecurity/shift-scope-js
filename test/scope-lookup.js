@@ -14,14 +14,11 @@
  * limitations under the License.
  */
 
-import * as _assert from "assert";
-const assert = _assert.default; // (babel) TODO remove this
+import assert from "assert";
 
 import {parseScript, parseModule} from "shift-parser";
-import * as _Map from "es6-map";
-const Map = _Map.default; // (babel) TODO remove this
-import * as _MultiMap from "multimap";
-const MultiMap = _MultiMap.default; // (babel) TODO remove this
+import Map from "es6-map";
+import MultiMap from "multimap";
 import analyze, {ScopeLookup} from "../";
 
 function setup(js) {

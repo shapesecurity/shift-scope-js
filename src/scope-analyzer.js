@@ -15,8 +15,7 @@
  */
 
 import MultiMap from "multimap";
-import _reduce, {MonoidalReducer} from "shift-reducer";
-const reduce = _reduce.default; // (babel) TODO remove this
+import reduce, {MonoidalReducer} from "shift-reducer";
 import ScopeState from "./scope-state";
 import {Accessibility, Reference} from "./reference";
 import {Declaration, DeclarationType} from "./declaration";

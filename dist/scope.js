@@ -1,6 +1,6 @@
 "use strict";
 
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -56,7 +56,7 @@ ScopeType.WITH = new ScopeType("With");
 ScopeType.CATCH = new ScopeType("Catch");
 ScopeType.BLOCK = new ScopeType("Block");
 
-var Scope = exports.Scope = (function () {
+var Scope = exports.Scope = function () {
   function Scope(children, variables, through, type, isDynamic, astNode) {
     var _this = this;
 
@@ -114,9 +114,9 @@ var Scope = exports.Scope = (function () {
   }]);
 
   return Scope;
-})();
+}();
 
-var GlobalScope = exports.GlobalScope = (function (_Scope) {
+var GlobalScope = exports.GlobalScope = function (_Scope) {
   _inherits(GlobalScope, _Scope);
 
   function GlobalScope(children, variables, through, astNode) {
@@ -157,4 +157,4 @@ var GlobalScope = exports.GlobalScope = (function (_Scope) {
   }
 
   return GlobalScope;
-})(Scope);
+}(Scope);

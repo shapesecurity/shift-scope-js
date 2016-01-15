@@ -1,6 +1,6 @@
 "use strict";
 
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -36,13 +36,11 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 * limitations under the License.
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 */
 
-var reduce = _shiftReducer2.default.default; // (babel) TODO remove this
-
 // TODO this file should live elsewhere
 
 // Gives a flat list of all nodes rooted at the given node, in preorder: that is, a node appears before its children.
 
-var Flattener = (function (_MonoidalReducer) {
+var Flattener = function (_MonoidalReducer) {
   _inherits(Flattener, _MonoidalReducer);
 
   // We explicitly invoke Monoidal.prototype methods so that we can automatically generate methods from the spec.
@@ -56,12 +54,12 @@ var Flattener = (function (_MonoidalReducer) {
   _createClass(Flattener, null, [{
     key: "flatten",
     value: function flatten(node) {
-      return reduce(new this(), node).extract();
+      return (0, _shiftReducer2.default)(new this(), node).extract();
     }
   }]);
 
   return Flattener;
-})(_shiftReducer.MonoidalReducer);
+}(_shiftReducer.MonoidalReducer);
 
 exports.default = Flattener;
 
@@ -78,7 +76,7 @@ for (var typeName in _shiftSpec2.default) {
   _loop(typeName);
 }
 
-var ListMonoid = (function () {
+var ListMonoid = function () {
   function ListMonoid(list) {
     _classCallCheck(this, ListMonoid);
 
@@ -103,4 +101,4 @@ var ListMonoid = (function () {
   }]);
 
   return ListMonoid;
-})();
+}();
