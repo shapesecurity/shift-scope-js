@@ -186,6 +186,7 @@ export default class ScopeState {
       case ScopeType.CATCH:
       case ScopeType.WITH:
       case ScopeType.FUNCTION_NAME:
+      case ScopeType.CLASS_NAME:
       case ScopeType.PARAMETER_EXPRESSION:
         // resolve references to only block-scoped free declarations
         merge(declarations, this.blockScopedDeclarations);
