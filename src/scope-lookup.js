@@ -39,10 +39,11 @@ export default class ScopeLookup {
   lookup(node) {
     /* Gives a map from BindingIdentifiers and IdentifierExpressions to a list of Variables.
     Assuming that the given node is defined in the scope, the map always returns at least one Variable.
-    It will return two in precisely two cases:
-    `try{}catch(e){var e = ...}`, and function declarations in blocks for which annex B.3.3 applies.
-    In this case the same identifier refers to two variables, one var-scoped and one block-scoped.
-    Both are returned, with the block-scoped variable being returned first. */
+    It will return two in precisely three cases:
+    `try{}catch(e){var e = ...}`, function declarations in blocks for which annex B.3.3 applies, and class declarations.
+    In this case the same identifier refers to two variables.
+    Both are returned, with the block-scoped variable being returned first in the first two cases, and the inner variable
+    being returned first in the third case. */
     return this.variableMap.get(node);
   }
 

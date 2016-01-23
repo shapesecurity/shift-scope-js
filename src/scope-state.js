@@ -103,6 +103,9 @@ export default class ScopeState {
   }
 
   addFunctionDeclaration() {
+    if (this.bindingsForParent.length == 0) {
+      return this; // i.e., this function declaration is `export default function () {...}`
+    }
     const binding = this.bindingsForParent[0];
     let s = new ScopeState(this);
     merge(s.functionDeclarations, new MultiMap([[binding.name, new Declaration(binding, DeclarationType.FUNCTION_DECLARATION)]]));
