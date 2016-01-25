@@ -1783,4 +1783,62 @@ suite("unit", () => {
       {asScript: false}
     );
   });
+
+  test("class", () => {
+    checkScopeSerialization(
+      "class C{}",
+      "{\"node\": \"Module_0\", \"type\": \"Global\", \"isDynamic\": true, \"through\": [], \"variables\": [], \"children\": [{\"node\": \"Module_0\", \"type\": \"Module\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"C\", \"references\": [], \"declarations\": [{\"node\": \"BindingIdentifier(C)_2\", \"kind\": \"ClassDeclaration\"}]}], \"children\": [{\"node\": \"ClassDeclaration_1\", \"type\": \"ClassName\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"C\", \"references\": [], \"declarations\": [{\"node\": \"BindingIdentifier(C)_2\", \"kind\": \"ClassName\"}]}], \"children\": []}]}]}",
+      {asScript: false}
+    );
+
+    checkScopeSerialization(
+      "class C extends (()=>C, C, null) {f(){return C;}} C;",
+      "{\"node\": \"Module_0\", \"type\": \"Global\", \"isDynamic\": true, \"through\": [], \"variables\": [], \"children\": [{\"node\": \"Module_0\", \"type\": \"Module\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"C\", \"references\": [{\"node\": \"IdentifierExpression(C)_18\", \"accessibility\": \"Read\"}], \"declarations\": [{\"node\": \"BindingIdentifier(C)_2\", \"kind\": \"ClassDeclaration\"}]}], \"children\": [{\"node\": \"ClassDeclaration_1\", \"type\": \"ClassName\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"C\", \"references\": [{\"node\": \"IdentifierExpression(C)_7\", \"accessibility\": \"Read\"}, {\"node\": \"IdentifierExpression(C)_8\", \"accessibility\": \"Read\"}, {\"node\": \"IdentifierExpression(C)_16\", \"accessibility\": \"Read\"}], \"declarations\": [{\"node\": \"BindingIdentifier(C)_2\", \"kind\": \"ClassName\"}]}], \"children\": [{\"node\": \"ArrowExpression_5\", \"type\": \"ArrowFunction\", \"isDynamic\": false, \"through\": [{\"node\": \"IdentifierExpression(C)_7\", \"accessibility\": \"Read\"}], \"variables\": [], \"children\": []}, {\"node\": \"Method_11\", \"type\": \"Function\", \"isDynamic\": false, \"through\": [{\"node\": \"IdentifierExpression(C)_16\", \"accessibility\": \"Read\"}], \"variables\": [{\"name\": \"arguments\", \"references\": [], \"declarations\": []}], \"children\": []}]}]}]}",
+      {asScript: false}
+    );
+
+    checkScopeSerialization(
+      "(class{})",
+      "{\"node\": \"Module_0\", \"type\": \"Global\", \"isDynamic\": true, \"through\": [], \"variables\": [], \"children\": [{\"node\": \"Module_0\", \"type\": \"Module\", \"isDynamic\": false, \"through\": [], \"variables\": [], \"children\": [{\"node\": \"ClassExpression_2\", \"type\": \"ClassName\", \"isDynamic\": false, \"through\": [], \"variables\": [], \"children\": []}]}]}",
+      {asScript: false}
+    );
+
+    checkScopeSerialization(
+      "(class C{})",
+      "{\"node\": \"Module_0\", \"type\": \"Global\", \"isDynamic\": true, \"through\": [], \"variables\": [], \"children\": [{\"node\": \"Module_0\", \"type\": \"Module\", \"isDynamic\": false, \"through\": [], \"variables\": [], \"children\": [{\"node\": \"ClassExpression_2\", \"type\": \"ClassName\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"C\", \"references\": [], \"declarations\": [{\"node\": \"BindingIdentifier(C)_3\", \"kind\": \"ClassName\"}]}], \"children\": []}]}]}",
+      {asScript: false}
+    );
+
+    checkScopeSerialization(
+      "(class C extends (()=>C, C, null) {f(){return C;}}); C;",
+      "{\"node\": \"Module_0\", \"type\": \"Global\", \"isDynamic\": true, \"through\": [{\"node\": \"IdentifierExpression(C)_19\", \"accessibility\": \"Read\"}], \"variables\": [{\"name\": \"C\", \"references\": [{\"node\": \"IdentifierExpression(C)_19\", \"accessibility\": \"Read\"}], \"declarations\": []}], \"children\": [{\"node\": \"Module_0\", \"type\": \"Module\", \"isDynamic\": false, \"through\": [{\"node\": \"IdentifierExpression(C)_19\", \"accessibility\": \"Read\"}], \"variables\": [], \"children\": [{\"node\": \"ClassExpression_2\", \"type\": \"ClassName\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"C\", \"references\": [{\"node\": \"IdentifierExpression(C)_8\", \"accessibility\": \"Read\"}, {\"node\": \"IdentifierExpression(C)_9\", \"accessibility\": \"Read\"}, {\"node\": \"IdentifierExpression(C)_17\", \"accessibility\": \"Read\"}], \"declarations\": [{\"node\": \"BindingIdentifier(C)_3\", \"kind\": \"ClassName\"}]}], \"children\": [{\"node\": \"ArrowExpression_6\", \"type\": \"ArrowFunction\", \"isDynamic\": false, \"through\": [{\"node\": \"IdentifierExpression(C)_8\", \"accessibility\": \"Read\"}], \"variables\": [], \"children\": []}, {\"node\": \"Method_12\", \"type\": \"Function\", \"isDynamic\": false, \"through\": [{\"node\": \"IdentifierExpression(C)_17\", \"accessibility\": \"Read\"}], \"variables\": [{\"name\": \"arguments\", \"references\": [], \"declarations\": []}], \"children\": []}]}]}]}",
+      {asScript: false}
+    );
+  });
+
+  test("export default", () => {
+    checkScopeSerialization(
+      "export default class {}",
+      "{\"node\": \"Module_0\", \"type\": \"Global\", \"isDynamic\": true, \"through\": [], \"variables\": [], \"children\": [{\"node\": \"Module_0\", \"type\": \"Module\", \"isDynamic\": false, \"through\": [], \"variables\": [], \"children\": [{\"node\": \"ClassDeclaration_2\", \"type\": \"ClassName\", \"isDynamic\": false, \"through\": [], \"variables\": [], \"children\": []}]}]}",
+      {asScript: false}
+    );
+
+    checkScopeSerialization(
+      "export default class C extends (()=>C, C, null) {f(){return C;}} C;",
+      "{\"node\": \"Module_0\", \"type\": \"Global\", \"isDynamic\": true, \"through\": [], \"variables\": [], \"children\": [{\"node\": \"Module_0\", \"type\": \"Module\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"C\", \"references\": [{\"node\": \"IdentifierExpression(C)_19\", \"accessibility\": \"Read\"}], \"declarations\": [{\"node\": \"BindingIdentifier(C)_3\", \"kind\": \"ClassDeclaration\"}]}], \"children\": [{\"node\": \"ClassDeclaration_2\", \"type\": \"ClassName\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"C\", \"references\": [{\"node\": \"IdentifierExpression(C)_8\", \"accessibility\": \"Read\"}, {\"node\": \"IdentifierExpression(C)_9\", \"accessibility\": \"Read\"}, {\"node\": \"IdentifierExpression(C)_17\", \"accessibility\": \"Read\"}], \"declarations\": [{\"node\": \"BindingIdentifier(C)_3\", \"kind\": \"ClassName\"}]}], \"children\": [{\"node\": \"ArrowExpression_6\", \"type\": \"ArrowFunction\", \"isDynamic\": false, \"through\": [{\"node\": \"IdentifierExpression(C)_8\", \"accessibility\": \"Read\"}], \"variables\": [], \"children\": []}, {\"node\": \"Method_12\", \"type\": \"Function\", \"isDynamic\": false, \"through\": [{\"node\": \"IdentifierExpression(C)_17\", \"accessibility\": \"Read\"}], \"variables\": [{\"name\": \"arguments\", \"references\": [], \"declarations\": []}], \"children\": []}]}]}]}",
+      {asScript: false}
+    );
+
+    checkScopeSerialization(
+      "export default function() {}",
+      "{\"node\": \"Module_0\", \"type\": \"Global\", \"isDynamic\": true, \"through\": [], \"variables\": [], \"children\": [{\"node\": \"Module_0\", \"type\": \"Module\", \"isDynamic\": false, \"through\": [], \"variables\": [], \"children\": [{\"node\": \"FunctionDeclaration_2\", \"type\": \"Function\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"arguments\", \"references\": [], \"declarations\": []}], \"children\": []}]}]}",
+      {asScript: false}
+    );
+
+    checkScopeSerialization(
+      "export default function f() {}",
+      "{\"node\": \"Module_0\", \"type\": \"Global\", \"isDynamic\": true, \"through\": [], \"variables\": [], \"children\": [{\"node\": \"Module_0\", \"type\": \"Module\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"f\", \"references\": [], \"declarations\": [{\"node\": \"BindingIdentifier(f)_3\", \"kind\": \"FunctionDeclaration\"}]}], \"children\": [{\"node\": \"FunctionDeclaration_2\", \"type\": \"Function\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"arguments\", \"references\": [], \"declarations\": []}], \"children\": []}]}]}",
+      {asScript: false}
+    );
+  });
 });

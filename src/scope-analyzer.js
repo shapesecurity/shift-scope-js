@@ -63,6 +63,9 @@ export default class ScopeAnalyzer extends MonoidalReducer {
   }
 
   reduceBindingIdentifier(node) {
+    if (node.name == "*default*") {
+      return new ScopeState();
+    }
     return new ScopeState({bindingsForParent: [node]});
   }
 
@@ -97,7 +100,8 @@ export default class ScopeAnalyzer extends MonoidalReducer {
   }
 
   reduceClassDeclaration(node, {name, super: _super, elements}) {
-    return super.reduceClassDeclaration(node, {name: name.addDeclarations(DeclarationType.CLASS_DECLARATION), super: _super, elements});
+    let s = super.reduceClassDeclaration(node, {name, super: _super, elements}).addDeclarations(DeclarationType.CLASS_NAME).finish(node, ScopeType.CLASS_NAME);
+    return s.concat(name.addDeclarations(DeclarationType.CLASS_DECLARATION));
   }
 
   reduceClassExpression(node, {name, super: _super, elements}) {
