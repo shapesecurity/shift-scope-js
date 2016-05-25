@@ -44,7 +44,8 @@ export default class ScopeState {
     functionDeclarations = new MultiMap, // function declarations are special: they are lexical in blocks and var-scoped at the top level of functions and scripts.
     children = [],
     dynamic = false,
-    bindingsForParent = [], // either references bubbling up to the AssignmentExpression, ForOfStatement, or ForInStatement which writes to them or declarations bubbling up to the VariableDeclaration, FunctionDeclaration, ClassDeclaration, FormalParameters, Setter, Method, or CatchClause which declares them
+    bindingsForParent = [], // either references bubbling up to the ForOfStatement, or ForInStatement which writes to them or declarations bubbling up to the VariableDeclaration, FunctionDeclaration, ClassDeclaration, FormalParameters, Setter, Method, or CatchClause which declares them
+    atsForParent = [], // references bubbling up to the AssignmentExpression, ForOfStatement, or ForInStatement which writes to them
     potentiallyVarScopedFunctionDeclarations = new MultiMap, // for B.3.3
     hasParameterExpressions = false,
   } = {}) {
@@ -55,6 +56,7 @@ export default class ScopeState {
     this.children = children;
     this.dynamic = dynamic;
     this.bindingsForParent = bindingsForParent;
+    this.atsForParent = atsForParent;
     this.potentiallyVarScopedFunctionDeclarations = potentiallyVarScopedFunctionDeclarations;
     this.hasParameterExpressions = hasParameterExpressions;
   }
@@ -78,6 +80,7 @@ export default class ScopeState {
       children: this.children.concat(b.children),
       dynamic: this.dynamic || b.dynamic,
       bindingsForParent : this.bindingsForParent.concat(b.bindingsForParent),
+      atsForParent : this.atsForParent.concat(b.atsForParent),
       potentiallyVarScopedFunctionDeclarations: merge(merge(new MultiMap, this.potentiallyVarScopedFunctionDeclarations), b.potentiallyVarScopedFunctionDeclarations),
       hasParameterExpressions: this.hasParameterExpressions || b.hasParameterExpressions,
     });
@@ -98,6 +101,7 @@ export default class ScopeState {
     }
     if (!keepBindingsForParent) {
       s.bindingsForParent = [];
+      s.atsForParent = [];
     }
     return s;
   }
@@ -120,10 +124,12 @@ export default class ScopeState {
     let freeMap = new MultiMap;
     merge(freeMap, this.freeIdentifiers);
     this.bindingsForParent.forEach(binding => freeMap.set(binding.name, new Reference(binding, accessibility)));
+    this.atsForParent.forEach(binding => freeMap.set(binding.name, new Reference(binding, accessibility)));
     let s = new ScopeState(this);
     s.freeIdentifiers = freeMap;
     if (!keepBindingsForParent) {
       s.bindingsForParent = [];
+      s.atsForParent = [];
     }
     return s;
   }

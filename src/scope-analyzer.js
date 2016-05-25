@@ -62,6 +62,10 @@ export default class ScopeAnalyzer extends MonoidalReducer {
     return super.reduceAssignmentExpression(node, {binding: binding.addReferences(Accessibility.WRITE), expression});
   }
 
+  reduceAssignmentTargetIdentifier(node) {
+    return new ScopeState({atsForParent: [node]});
+  }
+
   reduceBindingIdentifier(node) {
     if (node.name == "*default*") {
       return new ScopeState();

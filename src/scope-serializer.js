@@ -51,6 +51,8 @@ class Serializer {
 	serializeNode(node) {
 		if (node.type === "IdentifierExpression") {
 			return "IdentifierExpression(" + node.name + ")_" + this.ids.get(node);
+		} else if (node.type === "AssignmentTargetIdentifier") {
+			return "AssignmentTargetIdentifier(" + node.name + ")_" + this.ids.get(node);
 		} else if (node.type === "BindingIdentifier") {
 			return "BindingIdentifier(" + node.name + ")_" + this.ids.get(node);
 		} else {
