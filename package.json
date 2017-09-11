@@ -20,9 +20,6 @@
     "lint": "eslint src test"
   },
   "dependencies": {
-    "es6-map": "^0.1.1",
-    "es6-set": "^0.1.3",
-    "es6-symbol": "^2.0.0",
     "multimap": "^0.1.1",
     "shift-reducer": "^4.0.0",
     "shift-spec": "^2016.0.0"

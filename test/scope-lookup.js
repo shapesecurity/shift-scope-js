@@ -17,7 +17,6 @@
 import assert from 'assert';
 
 import { parseScript } from 'shift-parser';
-import Map from 'es6-map';
 import MultiMap from 'multimap';
 import analyze, { ScopeLookup } from '../';
 

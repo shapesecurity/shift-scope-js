@@ -1,5 +1,3 @@
-import Set from 'es6-set';
-
 import reduce, { MonoidalReducer } from 'shift-reducer';
 
 // TODO this file should live elsewhere
