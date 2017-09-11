@@ -20,7 +20,6 @@ import ScopeState from './scope-state';
 import { Accessibility, Reference } from './reference';
 import { DeclarationType } from './declaration';
 import { ScopeType } from './scope';
-import Set from 'es6-set';
 import StrictnessReducer from './strictness-reducer';
 
 

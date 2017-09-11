@@ -6,6 +6,6 @@ script:
   - npm test
   - npm run lint
 node_js:
-  - "0.12"
   - "4"
   - "6"
+  - "8"

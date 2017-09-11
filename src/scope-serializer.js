@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import Map from 'es6-map';
 import Flattener from './flattener';
 import { DeclarationType } from './declaration';
 

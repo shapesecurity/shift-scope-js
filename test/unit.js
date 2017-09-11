@@ -17,7 +17,6 @@
 import assert from 'assert';
 
 import { parseScript, parseModule } from 'shift-parser';
-import Map from 'es6-map';
 import analyze, { Accessibility, ScopeType, serialize } from '../';
 
 const NO_REFERENCES = [];
