@@ -14,45 +14,44 @@
  * limitations under the License.
  */
 
-import reduce, {MonoidalReducer} from "shift-reducer";
-import ShiftSpec from "shift-spec";
+import reduce, { MonoidalReducer } from 'shift-reducer';
+import ShiftSpec from 'shift-spec';
 
 // TODO this file should live elsewhere
 
+class ListMonoid {
+  constructor(list) {
+    this.list = list;
+  }
+
+  static empty() {
+    return new ListMonoid([]);
+  }
+
+  concat(b) {
+    return new ListMonoid(this.list.concat(b.list));
+  }
+
+  extract() {
+    return this.list;
+  }
+}
+
 // Gives a flat list of all nodes rooted at the given node, in preorder: that is, a node appears before its children.
 export default class Flattener extends MonoidalReducer { // We explicitly invoke Monoidal.prototype methods so that we can automatically generate methods from the spec.
-	constructor() {
-		super(ListMonoid);
-	}
+  constructor() {
+    super(ListMonoid);
+  }
 
   static flatten(node) {
     return reduce(new this, node).extract();
   }
 }
 
-for (let typeName in ShiftSpec) {
-  let type = ShiftSpec[typeName];
+for (let typeName of Object.keys(ShiftSpec)) {
   Object.defineProperty(Flattener.prototype, `reduce${typeName}`, {
-    value: function(node, state) {
-    	return (new ListMonoid([node])).concat(MonoidalReducer.prototype[`reduce${typeName}`].call(this, node, state));
-    }
+    value(node, state) {
+      return (new ListMonoid([node])).concat(MonoidalReducer.prototype[`reduce${typeName}`].call(this, node, state));
+    },
   });
-}
-
-class ListMonoid {
-	constructor(list) {
-		this.list = list;
-	}
-
-	static empty() {
-		return new ListMonoid([]);
-	}
-
-	concat(b) {
-		return new ListMonoid(this.list.concat(b.list));
-	}
-
-	extract() {
-		return this.list;
-	}
 }

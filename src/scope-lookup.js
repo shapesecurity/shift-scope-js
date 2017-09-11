@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import MultiMap from "multimap";
-import {GlobalScope} from "./scope";
+import MultiMap from 'multimap';
+import { GlobalScope } from './scope';
 
 export default class ScopeLookup {
   constructor(globalScope) {
@@ -48,6 +48,6 @@ export default class ScopeLookup {
   }
 
   isGlobal(node) {
-    return this.scope instanceof GlobalScope && this.scope.has(node);
+    return this.scope instanceof GlobalScope && this.variableMap.has(node);
   }
 }

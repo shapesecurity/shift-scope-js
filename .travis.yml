@@ -4,6 +4,7 @@ script:
   - curl https://raw.githubusercontent.com/shapesecurity/CLA/master/cla-travis.sh | bash
   - npm run build
   - npm test
+  - npm run lint
 node_js:
   - "0.12"
   - "4"

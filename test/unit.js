@@ -14,22 +14,14 @@
  * limitations under the License.
  */
 
-import assert from "assert";
+import assert from 'assert';
 
-import {parseScript, parseModule} from "shift-parser";
-import Map from "es6-map";
-import analyze, {Accessibility, ScopeType, serialize} from "../";
+import { parseScript, parseModule } from 'shift-parser';
+import Map from 'es6-map';
+import analyze, { Accessibility, ScopeType, serialize } from '../';
 
 const NO_REFERENCES = [];
 const NO_DECLARATIONS = [];
-
-function entriesSize(multiMap) {
-  let i = 0;
-  for (let x of multiMap.keys()) {
-    ++i;
-  }
-  return i;
-}
 
 // "variables" parameter is a mapping of variable names from this scope object to the list of their declarations and their references
 function checkScope(scope, scopeNode, scopeType, isDynamic, children, through, variables, referenceTypes) {
@@ -44,7 +36,7 @@ function checkScope(scope, scopeNode, scopeType, isDynamic, children, through, v
     assert(scope.children.indexOf(child) >= 0);
   });
 
-  assert.equal(entriesSize(scope.through), through.length);
+  assert.equal([...scope.through.keys()].length, through.length);
   through.forEach(name => {
     let references = scope.through.get(name);
     assert(references != null);
@@ -79,17 +71,17 @@ function checkScope(scope, scopeNode, scopeType, isDynamic, children, through, v
   });
 }
 
-function checkScopeSerialization(js, serialization, {earlyErrors = true, asScript = true} = {}) {
-    let script = (asScript ? parseScript : parseModule)(js, {earlyErrors});
+function checkScopeSerialization(js, serialization, { earlyErrors = true, asScript = true } = {}) {
+  let script = (asScript ? parseScript : parseModule)(js, { earlyErrors });
 
-    let globalScope = analyze(script);
+  let globalScope = analyze(script);
 
-    assert.equal(serialize(globalScope), serialization);
+  assert.equal(serialize(globalScope), serialization);
 }
 
-suite("unit", () => {
-  test("VariableDeclaration 1", () => {
-    const js = "var v1; var v2 = 0;";
+suite('unit', () => {
+  test('VariableDeclaration 1', () => {
+    const js = 'var v1; var v2 = 0;';
     let script = parseScript(js);
 
     let globalScope = analyze(script);
@@ -103,8 +95,8 @@ suite("unit", () => {
       let through = [];
 
       let variables = new Map;
-      variables.set("v1", [[v1Node1], NO_REFERENCES]);
-      variables.set("v2", [[v2Node1], [v2Node1]]);
+      variables.set('v1', [[v1Node1], NO_REFERENCES]);
+      variables.set('v2', [[v2Node1], [v2Node1]]);
 
       let referenceTypes = new Map;
       referenceTypes.set(v2Node1, Accessibility.WRITE);
@@ -113,8 +105,8 @@ suite("unit", () => {
     }
   });
 
-  test("VariableDeclaration 2", () => {
-    const js = "var v1, v2 = 0;";
+  test('VariableDeclaration 2', () => {
+    const js = 'var v1, v2 = 0;';
     let script = parseScript(js);
 
     let globalScope = analyze(script);
@@ -127,8 +119,8 @@ suite("unit", () => {
       let through = [];
 
       let variables = new Map;
-      variables.set("v1", [[v1Node1], NO_REFERENCES]);
-      variables.set("v2", [[v2Node1], [v2Node1]]);
+      variables.set('v1', [[v1Node1], NO_REFERENCES]);
+      variables.set('v2', [[v2Node1], [v2Node1]]);
 
       let referenceTypes = new Map;
       referenceTypes.set(v2Node1, Accessibility.WRITE);
@@ -137,8 +129,8 @@ suite("unit", () => {
     }
   });
 
-  test("VariableDeclaration 3", () => {
-    const js = "v1 = 0; var v2 = v1;";
+  test('VariableDeclaration 3', () => {
+    const js = 'v1 = 0; var v2 = v1;';
     let script = parseScript(js);
     let globalScope = analyze(script);
     let scriptScope = globalScope.children[0];
@@ -148,11 +140,11 @@ suite("unit", () => {
 
     { // global scope
       let children = [scriptScope];
-      let through = ["v1"];
+      let through = ['v1'];
 
       let variables = new Map;
-      variables.set("v1", [NO_DECLARATIONS, [v1Node1, v1Node2]]);
-      variables.set("v2", [[v2Node1], [v2Node1]]);
+      variables.set('v1', [NO_DECLARATIONS, [v1Node1, v1Node2]]);
+      variables.set('v2', [[v2Node1], [v2Node1]]);
 
       let referenceTypes = new Map;
       referenceTypes.set(v1Node1, Accessibility.WRITE);
@@ -163,8 +155,8 @@ suite("unit", () => {
     }
   });
 
-  test("VariableDeclaration 4", () => {
-    const js = "var v2 = v1 + 0; var v1 = 0; ";
+  test('VariableDeclaration 4', () => {
+    const js = 'var v2 = v1 + 0; var v1 = 0; ';
     let script = parseScript(js);
 
     let globalScope = analyze(script);
@@ -178,8 +170,8 @@ suite("unit", () => {
       let through = [];
 
       let variables = new Map;
-      variables.set("v1", [[v1Node2], [v1Node1, v1Node2]]);
-      variables.set("v2", [[v2Node1], [v2Node1]]);
+      variables.set('v1', [[v1Node2], [v1Node1, v1Node2]]);
+      variables.set('v2', [[v2Node1], [v2Node1]]);
 
       let referenceTypes = new Map;
       referenceTypes.set(v1Node1, Accessibility.READ);
@@ -190,8 +182,8 @@ suite("unit", () => {
     }
   });
 
-  test("VariableDeclaration 5", () => {
-    const js = "var v1; var v1 = 0; var v2 = v1 + 0;";
+  test('VariableDeclaration 5', () => {
+    const js = 'var v1; var v1 = 0; var v2 = v1 + 0;';
     let script = parseScript(js);
 
     let globalScope = analyze(script);
@@ -206,8 +198,8 @@ suite("unit", () => {
       let through = [];
 
       let variables = new Map;
-      variables.set("v1", [[v1Node1, v1Node2], [v1Node2, v1Node3]]);
-      variables.set("v2", [[v2Node1], [v2Node1]]);
+      variables.set('v1', [[v1Node1, v1Node2], [v1Node2, v1Node3]]);
+      variables.set('v2', [[v2Node1], [v2Node1]]);
 
       let referenceTypes = new Map;
       referenceTypes.set(v1Node2, Accessibility.WRITE);
@@ -218,7 +210,7 @@ suite("unit", () => {
     }
   });
 
-  test("FunctionDeclaration 1", () => {
+  test('FunctionDeclaration 1', () => {
     const js =
       `function f1(p1, p2) {
         var v1 = 1;
@@ -258,8 +250,8 @@ suite("unit", () => {
       let through = [];
 
       let variables = new Map;
-      variables.set("f1", [[f1Node1], [f1Node2]]);
-      variables.set("r", [[rNode1], [rNode1]]);
+      variables.set('f1', [[f1Node1], [f1Node2]]);
+      variables.set('r', [[rNode1], [rNode1]]);
 
       let referenceTypes = new Map;
       referenceTypes.set(f1Node2, Accessibility.READ);
@@ -272,11 +264,11 @@ suite("unit", () => {
       let through = [];
 
       let variables = new Map;
-      variables.set("v1", [[v1Node1], [v1Node1, v1Node2]]);
-      variables.set("p1", [[p1Node1], NO_REFERENCES]);
-      variables.set("p2", [[p2Node1], [p2Node2]]);
-      variables.set("f2", [[f2Node1], [f2Node2]]);
-      variables.set("arguments", [NO_DECLARATIONS, NO_REFERENCES]);
+      variables.set('v1', [[v1Node1], [v1Node1, v1Node2]]);
+      variables.set('p1', [[p1Node1], NO_REFERENCES]);
+      variables.set('p2', [[p2Node1], [p2Node2]]);
+      variables.set('f2', [[f2Node1], [f2Node2]]);
+      variables.set('arguments', [NO_DECLARATIONS, NO_REFERENCES]);
 
       let referenceTypes = new Map;
       referenceTypes.set(v1Node1, Accessibility.WRITE);
@@ -288,12 +280,12 @@ suite("unit", () => {
     }
     { // f2 scope
       let children = [];
-      let through = ["v1", "p2"];
+      let through = ['v1', 'p2'];
 
       let variables = new Map;
-      variables.set("p1", [[p1Node2], [p1Node3]]);
-      variables.set("v2", [[v2Node1], [v2Node1, v2Node2]]);
-      variables.set("arguments", [NO_DECLARATIONS, NO_REFERENCES]);
+      variables.set('p1', [[p1Node2], [p1Node3]]);
+      variables.set('v2', [[v2Node1], [v2Node1, v2Node2]]);
+      variables.set('arguments', [NO_DECLARATIONS, NO_REFERENCES]);
 
       let referenceTypes = new Map;
       referenceTypes.set(p1Node3, Accessibility.READ);
@@ -304,8 +296,8 @@ suite("unit", () => {
     }
   });
 
-  test("FunctionDeclaration 2", () => {
-    const js = "function f() { f = 0; } f();";
+  test('FunctionDeclaration 2', () => {
+    const js = 'function f() { f = 0; } f();';
     let script = parseScript(js);
 
     let globalScope = analyze(script);
@@ -322,7 +314,7 @@ suite("unit", () => {
       let through = [];
 
       let variables = new Map;
-      variables.set("f", [[fNode1], [fNode2, fNode3]]);
+      variables.set('f', [[fNode1], [fNode2, fNode3]]);
 
       let referenceTypes = new Map;
       referenceTypes.set(fNode2, Accessibility.WRITE);
@@ -332,10 +324,10 @@ suite("unit", () => {
     }
     { // f scope
       let children = [];
-      let through = ["f"];
+      let through = ['f'];
 
       let variables = new Map;
-      variables.set("arguments", [NO_DECLARATIONS, NO_REFERENCES]);
+      variables.set('arguments', [NO_DECLARATIONS, NO_REFERENCES]);
 
       let referenceTypes = new Map;
 
@@ -343,8 +335,8 @@ suite("unit", () => {
     }
   });
 
-  test("FunctionExpression 1", () => {
-    const js = "var f = function() { f = 0; }; f();";
+  test('FunctionExpression 1', () => {
+    const js = 'var f = function() { f = 0; }; f();';
     let script = parseScript(js);
 
     let globalScope = analyze(script);
@@ -361,7 +353,7 @@ suite("unit", () => {
       let through = [];
 
       let variables = new Map;
-      variables.set("f", [[fNode1], [fNode1, fNode2, fNode3]]);
+      variables.set('f', [[fNode1], [fNode1, fNode2, fNode3]]);
 
       let referenceTypes = new Map;
       referenceTypes.set(fNode1, Accessibility.WRITE);
@@ -372,10 +364,10 @@ suite("unit", () => {
     }
     { // f scope
       let children = [];
-      let through = ["f"];
+      let through = ['f'];
 
       let variables = new Map;
-      variables.set("arguments", [NO_DECLARATIONS, NO_REFERENCES]);
+      variables.set('arguments', [NO_DECLARATIONS, NO_REFERENCES]);
 
       let referenceTypes = new Map;
 
@@ -383,8 +375,8 @@ suite("unit", () => {
     }
   });
 
-  test("FunctionExpression 2", () => {
-    const js = "var f2 = function f1() { f1 = 0; }; f1(); f2();";
+  test('FunctionExpression 2', () => {
+    const js = 'var f2 = function f1() { f1 = 0; }; f1(); f2();';
     let script = parseScript(js);
 
     let globalScope = analyze(script);
@@ -402,11 +394,11 @@ suite("unit", () => {
 
     { // global scope
       let children = [scriptScope];
-      let through = ["f1"];
+      let through = ['f1'];
 
       let variables = new Map;
-      variables.set("f2", [[f2Node1], [f2Node1, f2Node2]]);
-      variables.set("f1", [NO_DECLARATIONS, [f1Node3]]);
+      variables.set('f2', [[f2Node1], [f2Node1, f2Node2]]);
+      variables.set('f1', [NO_DECLARATIONS, [f1Node3]]);
 
       let referenceTypes = new Map;
       referenceTypes.set(f2Node1, Accessibility.WRITE);
@@ -420,7 +412,7 @@ suite("unit", () => {
       let through = [];
 
       let variables = new Map;
-      variables.set("f1", [[f1Node1], [f1Node2]]);
+      variables.set('f1', [[f1Node1], [f1Node2]]);
 
       let referenceTypes = new Map;
       referenceTypes.set(f1Node2, Accessibility.WRITE);
@@ -429,10 +421,10 @@ suite("unit", () => {
     }
     { // function scope
       let children = [];
-      let through = ["f1"];
+      let through = ['f1'];
 
       let variables = new Map;
-      variables.set("arguments", [NO_DECLARATIONS, NO_REFERENCES]);
+      variables.set('arguments', [NO_DECLARATIONS, NO_REFERENCES]);
 
       let referenceTypes = new Map;
       referenceTypes.set(f1Node2, Accessibility.WRITE);
@@ -441,7 +433,7 @@ suite("unit", () => {
     }
   });
 
-  test("HoistDeclaration 1", () => {
+  test('HoistDeclaration 1', () => {
     const js =
       `var foo = 1;
       function bar() {
@@ -467,12 +459,12 @@ suite("unit", () => {
 
     { // global scope
       let children = [scriptScope];
-      let through = ["baz"];
+      let through = ['baz'];
 
       let variables = new Map;
-      variables.set("foo", [[fooNode1], [fooNode1]]);
-      variables.set("bar", [[barNode1], NO_REFERENCES]);
-      variables.set("baz", [NO_DECLARATIONS, [bazNode1]]);
+      variables.set('foo', [[fooNode1], [fooNode1]]);
+      variables.set('bar', [[barNode1], NO_REFERENCES]);
+      variables.set('baz', [NO_DECLARATIONS, [bazNode1]]);
 
       let referenceTypes = new Map;
       referenceTypes.set(fooNode1, Accessibility.WRITE);
@@ -482,11 +474,11 @@ suite("unit", () => {
     }
     { // function scope
       let children = [ifScope];
-      let through = ["baz"];
+      let through = ['baz'];
 
       let variables = new Map;
-      variables.set("foo", [[fooNode3], [fooNode2, fooNode3, fooNode4]]);
-      variables.set("arguments", [NO_DECLARATIONS, NO_REFERENCES]);
+      variables.set('foo', [[fooNode3], [fooNode2, fooNode3, fooNode4]]);
+      variables.set('arguments', [NO_DECLARATIONS, NO_REFERENCES]);
 
       let referenceTypes = new Map;
       referenceTypes.set(fooNode2, Accessibility.READ);
@@ -497,7 +489,7 @@ suite("unit", () => {
     }
   });
 
-  test("HoistDeclaration 2", () => {
+  test('HoistDeclaration 2', () => {
     const js =
       `var a = 1;
       function b() {
@@ -526,12 +518,12 @@ suite("unit", () => {
 
     { // global scope
       let children = [scriptScope];
-      let through = ["c"];
+      let through = ['c'];
 
       let variables = new Map;
-      variables.set("a", [[aNode1], [aNode1, aNode4]]);
-      variables.set("b", [[bNode1], [bNode2]]);
-      variables.set("c", [NO_DECLARATIONS, [cNode1]]);
+      variables.set('a', [[aNode1], [aNode1, aNode4]]);
+      variables.set('b', [[bNode1], [bNode2]]);
+      variables.set('c', [NO_DECLARATIONS, [cNode1]]);
 
       let referenceTypes = new Map;
       referenceTypes.set(aNode1, Accessibility.WRITE);
@@ -546,8 +538,8 @@ suite("unit", () => {
       let through = [];
 
       let variables = new Map;
-      variables.set("a", [[aNode3], [aNode2]]);
-      variables.set("arguments", [NO_DECLARATIONS, NO_REFERENCES]);
+      variables.set('a', [[aNode3], [aNode2]]);
+      variables.set('arguments', [NO_DECLARATIONS, NO_REFERENCES]);
 
       let referenceTypes = new Map;
       referenceTypes.set(aNode2, Accessibility.WRITE);
@@ -559,7 +551,7 @@ suite("unit", () => {
       let through = [];
 
       let variables = new Map;
-      variables.set("arguments", [NO_DECLARATIONS, NO_REFERENCES]);
+      variables.set('arguments', [NO_DECLARATIONS, NO_REFERENCES]);
 
       let referenceTypes = new Map;
 
@@ -567,7 +559,7 @@ suite("unit", () => {
     }
   });
 
-  test("HoistDeclaration 3", () => {
+  test('HoistDeclaration 3', () => {
     const js =
       `function foo() {
         function bar() {
@@ -599,7 +591,7 @@ suite("unit", () => {
       let through = [];
 
       let variables = new Map;
-      variables.set("foo", [[fooNode1], NO_REFERENCES]);
+      variables.set('foo', [[fooNode1], NO_REFERENCES]);
 
       let referenceTypes = new Map;
 
@@ -610,8 +602,8 @@ suite("unit", () => {
       let through = [];
 
       let variables = new Map;
-      variables.set("bar", [[barNode1, barNode3], [barNode2]]);
-      variables.set("arguments", [NO_DECLARATIONS, NO_REFERENCES]);
+      variables.set('bar', [[barNode1, barNode3], [barNode2]]);
+      variables.set('arguments', [NO_DECLARATIONS, NO_REFERENCES]);
 
       let referenceTypes = new Map;
       referenceTypes.set(barNode2, Accessibility.READ);
@@ -623,7 +615,7 @@ suite("unit", () => {
       let through = [];
 
       let variables = new Map;
-      variables.set("arguments", [NO_DECLARATIONS, NO_REFERENCES]);
+      variables.set('arguments', [NO_DECLARATIONS, NO_REFERENCES]);
 
       let referenceTypes = new Map;
 
@@ -634,7 +626,7 @@ suite("unit", () => {
       let through = [];
 
       let variables = new Map;
-      variables.set("arguments", [NO_DECLARATIONS, NO_REFERENCES]);
+      variables.set('arguments', [NO_DECLARATIONS, NO_REFERENCES]);
 
       let referenceTypes = new Map;
 
@@ -642,8 +634,8 @@ suite("unit", () => {
     }
   });
 
-  test("HoistDeclaration 4", () => {
-    const js = "foo(); function foo() {}";
+  test('HoistDeclaration 4', () => {
+    const js = 'foo(); function foo() {}';
     let script = parseScript(js);
 
     let globalScope = analyze(script);
@@ -659,7 +651,7 @@ suite("unit", () => {
       let through = [];
 
       let variables = new Map;
-      variables.set("foo", [[fooNode2], [fooNode1]]);
+      variables.set('foo', [[fooNode2], [fooNode1]]);
 
       let referenceTypes = new Map;
       referenceTypes.set(fooNode1, Accessibility.READ);
@@ -671,7 +663,7 @@ suite("unit", () => {
       let through = [];
 
       let variables = new Map;
-      variables.set("arguments", [NO_DECLARATIONS, NO_REFERENCES]);
+      variables.set('arguments', [NO_DECLARATIONS, NO_REFERENCES]);
 
       let referenceTypes = new Map;
 
@@ -679,7 +671,7 @@ suite("unit", () => {
     }
   });
 
-  test("HoistDeclaration 5", () => {
+  test('HoistDeclaration 5', () => {
     const js =
       `function foo() {
         return bar();
@@ -711,7 +703,7 @@ suite("unit", () => {
       let through = [];
 
       let variables = new Map;
-      variables.set("foo", [[fooNode1], NO_REFERENCES]);
+      variables.set('foo', [[fooNode1], NO_REFERENCES]);
 
       let referenceTypes = new Map;
 
@@ -722,8 +714,8 @@ suite("unit", () => {
       let through = [];
 
       let variables = new Map;
-      variables.set("bar", [[barNode2, barNode3], [barNode1, barNode2, barNode3]]);
-      variables.set("arguments", [NO_DECLARATIONS, NO_REFERENCES]);
+      variables.set('bar', [[barNode2, barNode3], [barNode1, barNode2, barNode3]]);
+      variables.set('arguments', [NO_DECLARATIONS, NO_REFERENCES]);
 
       let referenceTypes = new Map;
       referenceTypes.set(barNode1, Accessibility.READ);
@@ -737,7 +729,7 @@ suite("unit", () => {
       let through = [];
 
       let variables = new Map;
-      variables.set("arguments", [NO_DECLARATIONS, NO_REFERENCES]);
+      variables.set('arguments', [NO_DECLARATIONS, NO_REFERENCES]);
 
       let referenceTypes = new Map;
 
@@ -748,7 +740,7 @@ suite("unit", () => {
       let through = [];
 
       let variables = new Map;
-      variables.set("arguments", [NO_DECLARATIONS, NO_REFERENCES]);
+      variables.set('arguments', [NO_DECLARATIONS, NO_REFERENCES]);
 
       let referenceTypes = new Map;
 
@@ -756,8 +748,8 @@ suite("unit", () => {
     }
   });
 
-  test("Closure 1", () => {
-    const js = "(function() { f1 = 0; f2(f1); });";
+  test('Closure 1', () => {
+    const js = '(function() { f1 = 0; f2(f1); });';
     let script = parseScript(js);
 
     let globalScope = analyze(script);
@@ -771,11 +763,11 @@ suite("unit", () => {
 
     { // global scope
       let children = [scriptScope];
-      let through = ["f1", "f2"];
+      let through = ['f1', 'f2'];
 
       let variables = new Map;
-      variables.set("f1", [NO_DECLARATIONS, [f1Node1, f1Node2]]);
-      variables.set("f2", [NO_DECLARATIONS, [f2Node1]]);
+      variables.set('f1', [NO_DECLARATIONS, [f1Node1, f1Node2]]);
+      variables.set('f2', [NO_DECLARATIONS, [f2Node1]]);
 
       let referenceTypes = new Map;
       referenceTypes.set(f1Node1, Accessibility.WRITE);
@@ -786,10 +778,10 @@ suite("unit", () => {
     }
     { // function scope
       let children = [];
-      let through = ["f1", "f2"];
+      let through = ['f1', 'f2'];
 
       let variables = new Map;
-      variables.set("arguments", [NO_DECLARATIONS, NO_REFERENCES]);
+      variables.set('arguments', [NO_DECLARATIONS, NO_REFERENCES]);
 
       let referenceTypes = new Map;
 
@@ -797,8 +789,8 @@ suite("unit", () => {
     }
   });
 
-  test("Closure 2", () => {
-    const js = "(function() { var f1 = 0; f2(f1); });";
+  test('Closure 2', () => {
+    const js = '(function() { var f1 = 0; f2(f1); });';
     let script = parseScript(js);
 
     let globalScope = analyze(script);
@@ -812,10 +804,10 @@ suite("unit", () => {
 
     { // global scope
       let children = [scriptScope];
-      let through = ["f2"];
+      let through = ['f2'];
 
       let variables = new Map;
-      variables.set("f2", [NO_DECLARATIONS, [f2Node1]]);
+      variables.set('f2', [NO_DECLARATIONS, [f2Node1]]);
 
       let referenceTypes = new Map;
       referenceTypes.set(f2Node1, Accessibility.READ);
@@ -824,11 +816,11 @@ suite("unit", () => {
     }
     { // function scope
       let children = [];
-      let through = ["f2"];
+      let through = ['f2'];
 
       let variables = new Map;
-      variables.set("f1", [[f1Node1], [f1Node1, f1Node2]]);
-      variables.set("arguments", [NO_DECLARATIONS, NO_REFERENCES]);
+      variables.set('f1', [[f1Node1], [f1Node1, f1Node2]]);
+      variables.set('arguments', [NO_DECLARATIONS, NO_REFERENCES]);
 
       let referenceTypes = new Map;
       referenceTypes.set(f1Node1, Accessibility.WRITE);
@@ -838,8 +830,8 @@ suite("unit", () => {
     }
   });
 
-  test("Argument 1", () => {
-    const js = "function f(arg1, arg2) { var v1 = arg1 + arg2; }";
+  test('Argument 1', () => {
+    const js = 'function f(arg1, arg2) { var v1 = arg1 + arg2; }';
     let script = parseScript(js);
 
     let globalScope = analyze(script);
@@ -859,7 +851,7 @@ suite("unit", () => {
       let through = [];
 
       let variables = new Map;
-      variables.set("f", [[fNode1], NO_REFERENCES]);
+      variables.set('f', [[fNode1], NO_REFERENCES]);
 
       let referenceTypes = new Map;
 
@@ -870,10 +862,10 @@ suite("unit", () => {
       let through = [];
 
       let variables = new Map;
-      variables.set("arg1", [[arg1Node1], [arg1Node2]]);
-      variables.set("arg2", [[arg2Node1], [arg2Node2]]);
-      variables.set("v1", [[v1Node1], [v1Node1]]);
-      variables.set("arguments", [NO_DECLARATIONS, NO_REFERENCES]);
+      variables.set('arg1', [[arg1Node1], [arg1Node2]]);
+      variables.set('arg2', [[arg2Node1], [arg2Node2]]);
+      variables.set('v1', [[v1Node1], [v1Node1]]);
+      variables.set('arguments', [NO_DECLARATIONS, NO_REFERENCES]);
 
       let referenceTypes = new Map;
       referenceTypes.set(arg1Node2, Accessibility.READ);
@@ -884,8 +876,8 @@ suite("unit", () => {
     }
   });
 
-  test("Argument 2", () => {
-    const js = "function f() { var v1 = arguments[0]; }";
+  test('Argument 2', () => {
+    const js = 'function f() { var v1 = arguments[0]; }';
     let script = parseScript(js);
 
     let globalScope = analyze(script);
@@ -902,7 +894,7 @@ suite("unit", () => {
       let through = [];
 
       let variables = new Map;
-      variables.set("f", [[fNode1], NO_REFERENCES]);
+      variables.set('f', [[fNode1], NO_REFERENCES]);
 
       let referenceTypes = new Map;
 
@@ -913,8 +905,8 @@ suite("unit", () => {
       let through = [];
 
       let variables = new Map;
-      variables.set("v1", [[v1Node1], [v1Node1]]);
-      variables.set("arguments", [NO_DECLARATIONS, [argumentsNode1]]);
+      variables.set('v1', [[v1Node1], [v1Node1]]);
+      variables.set('arguments', [NO_DECLARATIONS, [argumentsNode1]]);
 
       let referenceTypes = new Map;
       referenceTypes.set(v1Node1, Accessibility.WRITE);
@@ -924,8 +916,8 @@ suite("unit", () => {
     }
   });
 
-  test("WithStatement 1", () => {
-    const js = "with (Math) { var x = cos(1 * PI); f(x); }";
+  test('WithStatement 1', () => {
+    const js = 'with (Math) { var x = cos(1 * PI); f(x); }';
     let script = parseScript(js);
 
     let globalScope = analyze(script);
@@ -943,14 +935,14 @@ suite("unit", () => {
 
     { // global scope
       let children = [scriptScope];
-      let through = ["Math", "cos", "PI", "f"];
+      let through = ['Math', 'cos', 'PI', 'f'];
 
       let variables = new Map;
-      variables.set("Math", [NO_DECLARATIONS, [mathNode1]]);
-      variables.set("cos", [NO_DECLARATIONS, [cosNode1]]);
-      variables.set("PI", [NO_DECLARATIONS, [piNode1]]);
-      variables.set("f", [NO_DECLARATIONS, [fNode1]]);
-      variables.set("x", [[xNode1], [xNode1, xNode2]]);
+      variables.set('Math', [NO_DECLARATIONS, [mathNode1]]);
+      variables.set('cos', [NO_DECLARATIONS, [cosNode1]]);
+      variables.set('PI', [NO_DECLARATIONS, [piNode1]]);
+      variables.set('f', [NO_DECLARATIONS, [fNode1]]);
+      variables.set('x', [[xNode1], [xNode1, xNode2]]);
 
       let referenceTypes = new Map;
       referenceTypes.set(mathNode1, Accessibility.READ);
@@ -964,7 +956,7 @@ suite("unit", () => {
     }
     { // with scope
       let children = [blockScope];
-      let through = ["x", "cos", "PI", "f"];
+      let through = ['x', 'cos', 'PI', 'f'];
 
       let variables = new Map;
 
@@ -974,7 +966,7 @@ suite("unit", () => {
     }
   });
 
-  test("WithStatement 2", () => {
+  test('WithStatement 2', () => {
     const js =
       `var o = {
         a : {
@@ -1005,13 +997,13 @@ suite("unit", () => {
 
     { // global scope
       let children = [scriptScope];
-      let through = ["f", "p1", "p2"];
+      let through = ['f', 'p1', 'p2'];
 
       let variables = new Map;
-      variables.set("f", [NO_DECLARATIONS, [fNode1, fNode2]]);
-      variables.set("p1", [NO_DECLARATIONS, [p1Node1]]);
-      variables.set("p2", [NO_DECLARATIONS, [p2Node1]]);
-      variables.set("o", [[oNode1], [oNode1, oNode2]]);
+      variables.set('f', [NO_DECLARATIONS, [fNode1, fNode2]]);
+      variables.set('p1', [NO_DECLARATIONS, [p1Node1]]);
+      variables.set('p2', [NO_DECLARATIONS, [p2Node1]]);
+      variables.set('o', [[oNode1], [oNode1, oNode2]]);
 
       let referenceTypes = new Map;
       referenceTypes.set(fNode1, Accessibility.READ);
@@ -1025,7 +1017,7 @@ suite("unit", () => {
     }
     { // with scope
       let children = [blockScope];
-      let through = ["f", "p1", "p2"];
+      let through = ['f', 'p1', 'p2'];
 
       let variables = new Map;
 
@@ -1035,7 +1027,7 @@ suite("unit", () => {
     }
   });
 
-  test("TryCatchStatement 1", () => {
+  test('TryCatchStatement 1', () => {
     const js =
       `try {
         f(0);
@@ -1046,7 +1038,6 @@ suite("unit", () => {
 
     let globalScope = analyze(script);
     let scriptScope = globalScope.children[0];
-    let tryScope = scriptScope.children[0];
     let catchScope = scriptScope.children[1];
     let catchScopeNode = script.statements[0].catchClause;
     let catchBlockScope = catchScope.children[0];
@@ -1058,10 +1049,10 @@ suite("unit", () => {
 
     { // global scope
       let children = [scriptScope];
-      let through = ["f"];
+      let through = ['f'];
 
       let variables = new Map;
-      variables.set("f", [NO_DECLARATIONS, [fNode1, fNode2]]);
+      variables.set('f', [NO_DECLARATIONS, [fNode1, fNode2]]);
 
       let referenceTypes = new Map;
       referenceTypes.set(fNode1, Accessibility.READ);
@@ -1071,10 +1062,10 @@ suite("unit", () => {
     }
     { // catch scope
       let children = [catchBlockScope];
-      let through = ["f"];
+      let through = ['f'];
 
       let variables = new Map;
-      variables.set("err", [[errNode1], [errNode2]]);
+      variables.set('err', [[errNode1], [errNode2]]);
 
       let referenceTypes = new Map;
       referenceTypes.set(errNode2, Accessibility.READ);
@@ -1083,7 +1074,7 @@ suite("unit", () => {
     }
   });
 
-  test("TryCatchStatement 2", () => {
+  test('TryCatchStatement 2', () => {
     const js =
       `try {
         f(0);
@@ -1099,11 +1090,9 @@ suite("unit", () => {
 
     let globalScope = analyze(script);
     let scriptScope = globalScope.children[0];
-    let tryScope1 = scriptScope.children[0];
     let catchScope1 = scriptScope.children[1];
     let catchScope1Node = script.statements[0].catchClause;
     let catchBlockScope1 = catchScope1.children[0];
-    let tryScope2 = catchBlockScope1.children[0];
     let catchScope2 = catchBlockScope1.children[1];
     let catchScope2Node = script.statements[0].catchClause.body.statements[0].catchClause;
     let catchBlockScope2 = catchScope2.children[0];
@@ -1119,10 +1108,10 @@ suite("unit", () => {
 
     { // global scope
       let children = [scriptScope];
-      let through = ["f"];
+      let through = ['f'];
 
       let variables = new Map;
-      variables.set("f", [NO_DECLARATIONS, [fNode1, fNode2, fNode3]]);
+      variables.set('f', [NO_DECLARATIONS, [fNode1, fNode2, fNode3]]);
 
       let referenceTypes = new Map;
       referenceTypes.set(fNode1, Accessibility.READ);
@@ -1133,10 +1122,10 @@ suite("unit", () => {
     }
     { // catch scope 1
       let children = [catchBlockScope1];
-      let through = ["f"];
+      let through = ['f'];
 
       let variables = new Map;
-      variables.set("err1", [[err1Node1], [err1Node2, err1Node3]]);
+      variables.set('err1', [[err1Node1], [err1Node2, err1Node3]]);
 
       let referenceTypes = new Map;
       referenceTypes.set(err1Node2, Accessibility.READ);
@@ -1146,10 +1135,10 @@ suite("unit", () => {
     }
     { // catch scope 2
       let children = [catchBlockScope2];
-      let through = ["f", "err1"];
+      let through = ['f', 'err1'];
 
       let variables = new Map;
-      variables.set("err2", [[err2Node1], [err2Node2]]);
+      variables.set('err2', [[err2Node1], [err2Node2]]);
 
       let referenceTypes = new Map;
       referenceTypes.set(err2Node2, Accessibility.READ);
@@ -1158,7 +1147,7 @@ suite("unit", () => {
     }
   });
 
-  test("TryCatchStatement 3", () => {
+  test('TryCatchStatement 3', () => {
     const js =
       `try {
         f(0);
@@ -1169,7 +1158,6 @@ suite("unit", () => {
 
     let globalScope = analyze(script);
     let scriptScope = globalScope.children[0];
-    let tryScope = scriptScope.children[0];
     let catchScope = scriptScope.children[1];
     let catchScopeNode = script.statements[0].catchClause;
     let catchBlockScope = catchScope.children[0];
@@ -1180,11 +1168,11 @@ suite("unit", () => {
 
     { // global scope
       let children = [scriptScope];
-      let through = ["f"];
+      let through = ['f'];
 
       let variables = new Map;
-      variables.set("err", [[errNode2], NO_REFERENCES]);
-      variables.set("f", [NO_DECLARATIONS, [fNode1]]);
+      variables.set('err', [[errNode2], NO_REFERENCES]);
+      variables.set('f', [NO_DECLARATIONS, [fNode1]]);
 
       let referenceTypes = new Map;
       referenceTypes.set(fNode1, Accessibility.READ);
@@ -1196,7 +1184,7 @@ suite("unit", () => {
       let through = [];
 
       let variables = new Map;
-      variables.set("err", [[errNode1], [errNode2]]);
+      variables.set('err', [[errNode1], [errNode2]]);
 
       let referenceTypes = new Map;
       referenceTypes.set(errNode2, Accessibility.WRITE);
@@ -1205,7 +1193,7 @@ suite("unit", () => {
     }
   });
 
-  test("block-scoped declaration in CatchClause", () => {
+  test('block-scoped declaration in CatchClause', () => {
     const js =
       `try { throw 0; } catch (e) { e; }
       try { throw 0; } catch (f) { let a; f }
@@ -1214,7 +1202,7 @@ suite("unit", () => {
 
     let globalScope = analyze(script);
     let scriptScope = globalScope.children[0];
-    let [tryScope0, catchScope0, tryScope1, catchScope1, tryScope2, catchScope2]  = scriptScope.children;
+    let [, catchScope0, , catchScope1, , catchScope2] = scriptScope.children;
 
     let catchScope0Node = script.statements[0].catchClause;
     let catchBlockScope0 = catchScope0.children[0];
@@ -1252,7 +1240,7 @@ suite("unit", () => {
       let through = [];
 
       let variables = new Map;
-      variables.set("e", [[eNode1], [eNode2]]);
+      variables.set('e', [[eNode1], [eNode2]]);
 
       let referenceTypes = new Map;
       referenceTypes.set(eNode2, Accessibility.READ);
@@ -1264,7 +1252,7 @@ suite("unit", () => {
       let through = [];
 
       let variables = new Map;
-      variables.set("f", [[fNode1], [fNode2]]);
+      variables.set('f', [[fNode1], [fNode2]]);
 
       let referenceTypes = new Map;
       referenceTypes.set(fNode2, Accessibility.READ);
@@ -1273,10 +1261,10 @@ suite("unit", () => {
     }
     { // second catch scope's block
       let children = [];
-      let through = ["f"];
+      let through = ['f'];
 
       let variables = new Map;
-      variables.set("a", [[aNode1], NO_REFERENCES]);
+      variables.set('a', [[aNode1], NO_REFERENCES]);
 
       let referenceTypes = new Map;
 
@@ -1287,7 +1275,7 @@ suite("unit", () => {
       let through = [];
 
       let variables = new Map;
-      variables.set("g", [[gNode1], [gNode2]]);
+      variables.set('g', [[gNode1], [gNode2]]);
 
       let referenceTypes = new Map;
       referenceTypes.set(gNode2, Accessibility.READ);
@@ -1296,7 +1284,7 @@ suite("unit", () => {
     }
     { // third catch scope's block
       let children = [];
-      let through = ["g"];
+      let through = ['g'];
 
       let variables = new Map;
 
@@ -1306,7 +1294,9 @@ suite("unit", () => {
     }
   });
 
-  test("block-scoped declaration in ForInStatement", () => {return; // todo I believe this test is wrong: 13.7.5.12 seems to say that the expr is evaluated in a context where the names in the LHS are visible.
+  test('block-scoped declaration in ForInStatement', () => {
+    // todo I believe this test is wrong: 13.7.5.12 seems to say that the expr is evaluated in a context where the names in the LHS are visible.
+    /*
     const js =
       `for(let a in a) { a; }
       for(let b in b) b;
@@ -1339,12 +1329,12 @@ suite("unit", () => {
 
     { // global scope
       let children = [scriptScope];
-      let through = ["a", "b", "c"];
+      let through = ['a', 'b', 'c'];
 
       let variables = new Map;
-      variables.set("a", [NO_DECLARATIONS, [aNode2]]);
-      variables.set("b", [NO_DECLARATIONS, [bNode2]]);
-      variables.set("c", [NO_DECLARATIONS, [cNode2]]);
+      variables.set('a', [NO_DECLARATIONS, [aNode2]]);
+      variables.set('b', [NO_DECLARATIONS, [bNode2]]);
+      variables.set('c', [NO_DECLARATIONS, [cNode2]]);
 
       let referenceTypes = new Map;
       referenceTypes.set(aNode2, Accessibility.READ);
@@ -1358,7 +1348,7 @@ suite("unit", () => {
       let through = [];
 
       let variables = new Map;
-      variables.set("a", [[aNode1], [aNode1, aNode3]]);
+      variables.set('a', [[aNode1], [aNode1, aNode3]]);
 
       let referenceTypes = new Map;
       referenceTypes.set(aNode1, Accessibility.WRITE);
@@ -1371,7 +1361,7 @@ suite("unit", () => {
       let through = [];
 
       let variables = new Map;
-      variables.set("b", [[bNode1], [bNode1, bNode3]]);
+      variables.set('b', [[bNode1], [bNode1, bNode3]]);
 
       let referenceTypes = new Map;
       referenceTypes.set(bNode1, Accessibility.WRITE);
@@ -1384,7 +1374,7 @@ suite("unit", () => {
       let through = [];
 
       let variables = new Map;
-      variables.set("c", [[cNode1], [cNode1]]);
+      variables.set('c', [[cNode1], [cNode1]]);
 
       let referenceTypes = new Map;
       referenceTypes.set(cNode1, Accessibility.WRITE);
@@ -1396,16 +1386,17 @@ suite("unit", () => {
       let through = [];
 
       let variables = new Map;
-      variables.set("c", [[cNode3], [cNode4]]);
+      variables.set('c', [[cNode3], [cNode4]]);
 
       let referenceTypes = new Map;
       referenceTypes.set(cNode4, Accessibility.READ);
 
       checkScope(blockScope, blockScopeNode, ScopeType.BLOCK, false, children, through, variables, referenceTypes);
     }
+    */
   });
 
-  test("block-scoped declaration in ForStatement", () => {
+  test('block-scoped declaration in ForStatement', () => {
     const js =
       `for(let a; d; e) { a; }
       for(let b; f; g) b;
@@ -1420,7 +1411,6 @@ suite("unit", () => {
     let forScope1Node = script.statements[1];
     let forScope2Node = script.statements[2];
     let blockScope0 = forScope0.children[0];
-    let blockScope0Node = script.statements[0].body.block;
     let blockScope2 = forScope2.children[0];
     let blockScope2Node = script.statements[2].body.block;
 
@@ -1442,15 +1432,15 @@ suite("unit", () => {
 
     { // global scope
       let children = [scriptScope];
-      let through = ["d", "e", "f", "g", "h", "i"];
+      let through = ['d', 'e', 'f', 'g', 'h', 'i'];
 
       let variables = new Map;
-      variables.set("d", [NO_DECLARATIONS, [dNode]]);
-      variables.set("e", [NO_DECLARATIONS, [eNode]]);
-      variables.set("f", [NO_DECLARATIONS, [fNode]]);
-      variables.set("g", [NO_DECLARATIONS, [gNode]]);
-      variables.set("h", [NO_DECLARATIONS, [hNode]]);
-      variables.set("i", [NO_DECLARATIONS, [iNode]]);
+      variables.set('d', [NO_DECLARATIONS, [dNode]]);
+      variables.set('e', [NO_DECLARATIONS, [eNode]]);
+      variables.set('f', [NO_DECLARATIONS, [fNode]]);
+      variables.set('g', [NO_DECLARATIONS, [gNode]]);
+      variables.set('h', [NO_DECLARATIONS, [hNode]]);
+      variables.set('i', [NO_DECLARATIONS, [iNode]]);
 
       let referenceTypes = new Map;
       referenceTypes.set(dNode, Accessibility.READ);
@@ -1464,10 +1454,10 @@ suite("unit", () => {
     }
     { // first for scope
       let children = [blockScope0];
-      let through = ["d", "e"];
+      let through = ['d', 'e'];
 
       let variables = new Map;
-      variables.set("a", [[aNode1], [aNode2]]);
+      variables.set('a', [[aNode1], [aNode2]]);
 
       let referenceTypes = new Map;
       referenceTypes.set(aNode2, Accessibility.READ);
@@ -1476,10 +1466,10 @@ suite("unit", () => {
     }
     { // second for scope
       let children = [];
-      let through = ["f", "g"];
+      let through = ['f', 'g'];
 
       let variables = new Map;
-      variables.set("b", [[bNode1], [bNode2]]);
+      variables.set('b', [[bNode1], [bNode2]]);
 
       let referenceTypes = new Map;
       referenceTypes.set(bNode2, Accessibility.READ);
@@ -1488,10 +1478,10 @@ suite("unit", () => {
     }
     { // third for scope
       let children = [blockScope2];
-      let through = ["h", "i"];
+      let through = ['h', 'i'];
 
       let variables = new Map;
-      variables.set("c", [[cNode1], NO_REFERENCES]);
+      variables.set('c', [[cNode1], NO_REFERENCES]);
 
       let referenceTypes = new Map;
 
@@ -1502,7 +1492,7 @@ suite("unit", () => {
       let through = [];
 
       let variables = new Map;
-      variables.set("c", [[cNode2], [cNode3]]);
+      variables.set('c', [[cNode2], [cNode3]]);
 
       let referenceTypes = new Map;
       referenceTypes.set(cNode3, Accessibility.READ);
@@ -1511,7 +1501,7 @@ suite("unit", () => {
     }
   });
 
-  test("direct/indirect call to eval", () => {
+  test('direct/indirect call to eval', () => {
     const js =
       `function f() {
         eval(s);
@@ -1537,12 +1527,12 @@ suite("unit", () => {
 
     { // global scope
       let children = [scriptScope];
-      let through = ["eval", "s"];
+      let through = ['eval', 's'];
 
       let variables = new Map;
-      variables.set("eval", [NO_DECLARATIONS, [evalNode1, evalNode2]]);
-      variables.set("s", [NO_DECLARATIONS, [sNode1, sNode2]]);
-      variables.set("f", [[fNode], NO_REFERENCES]);
+      variables.set('eval', [NO_DECLARATIONS, [evalNode1, evalNode2]]);
+      variables.set('s', [NO_DECLARATIONS, [sNode1, sNode2]]);
+      variables.set('f', [[fNode], NO_REFERENCES]);
 
       let referenceTypes = new Map;
       referenceTypes.set(evalNode1, Accessibility.READ);
@@ -1554,11 +1544,11 @@ suite("unit", () => {
     }
     { // f scope
       let children = [gScope];
-      let through = ["eval", "s"];
+      let through = ['eval', 's'];
 
       let variables = new Map;
-      variables.set("arguments", [NO_DECLARATIONS, NO_REFERENCES]);
-      variables.set("g", [[gNode], NO_REFERENCES]);
+      variables.set('arguments', [NO_DECLARATIONS, NO_REFERENCES]);
+      variables.set('g', [[gNode], NO_REFERENCES]);
 
       let referenceTypes = new Map;
 
@@ -1566,10 +1556,10 @@ suite("unit", () => {
     }
     { // g scope
       let children = [];
-      let through = ["eval", "s"];
+      let through = ['eval', 's'];
 
       let variables = new Map;
-      variables.set("arguments", [NO_DECLARATIONS, NO_REFERENCES]);
+      variables.set('arguments', [NO_DECLARATIONS, NO_REFERENCES]);
 
       let referenceTypes = new Map;
 
@@ -1577,9 +1567,9 @@ suite("unit", () => {
     }
   });
 
-  test("arrow", () => {
+  test('arrow', () => {
     const js =
-      `var x = x => ++x`;
+      'var x = x => ++x';
     let script = parseScript(js);
 
     let globalScope = analyze(script);
@@ -1596,7 +1586,7 @@ suite("unit", () => {
       let through = [];
 
       let variables = new Map;
-      variables.set("x", [[xNode1], [xNode1]]);
+      variables.set('x', [[xNode1], [xNode1]]);
 
       let referenceTypes = new Map;
       referenceTypes.set(xNode1, Accessibility.WRITE);
@@ -1608,7 +1598,7 @@ suite("unit", () => {
       let through = [];
 
       let variables = new Map;
-      variables.set("x", [[xNode2], [xNode3]]);
+      variables.set('x', [[xNode2], [xNode3]]);
 
       let referenceTypes = new Map;
       referenceTypes.set(xNode3, Accessibility.READWRITE);
@@ -1617,9 +1607,9 @@ suite("unit", () => {
     }
   });
 
-  test("arrow arguments", () => {
+  test('arrow arguments', () => {
     const js =
-      `() => arguments`;
+      '() => arguments';
     let script = parseScript(js);
 
     let globalScope = analyze(script);
@@ -1631,10 +1621,10 @@ suite("unit", () => {
 
     { // global scope
       let children = [scriptScope];
-      let through = ["arguments"];
+      let through = ['arguments'];
 
       let variables = new Map;
-      variables.set("arguments", [NO_DECLARATIONS, [argumentsNode]]);
+      variables.set('arguments', [NO_DECLARATIONS, [argumentsNode]]);
 
       let referenceTypes = new Map;
       referenceTypes.set(argumentsNode, Accessibility.READ);
@@ -1643,7 +1633,7 @@ suite("unit", () => {
     }
     { // arrow scope
       let children = [];
-      let through = ["arguments"];
+      let through = ['arguments'];
 
       let variables = new Map;
 
@@ -1653,68 +1643,68 @@ suite("unit", () => {
     }
   });
 
-  test("destructuring", () => {
+  test('destructuring', () => {
     checkScopeSerialization(
-      "var {x, a:{b:y = z}} = null; var [z] = y;",
-      "{\"node\": \"Script_0\", \"type\": \"Global\", \"isDynamic\": true, \"through\": [], \"variables\": [{\"name\": \"x\", \"references\": [{\"node\": \"BindingIdentifier(x)_6\", \"accessibility\": \"Write\"}], \"declarations\": [{\"node\": \"BindingIdentifier(x)_6\", \"kind\": \"Var\"}]}, {\"name\": \"y\", \"references\": [{\"node\": \"BindingIdentifier(y)_13\", \"accessibility\": \"Write\"}, {\"node\": \"IdentifierExpression(y)_21\", \"accessibility\": \"Read\"}], \"declarations\": [{\"node\": \"BindingIdentifier(y)_13\", \"kind\": \"Var\"}]}, {\"name\": \"z\", \"references\": [{\"node\": \"IdentifierExpression(z)_14\", \"accessibility\": \"Read\"}, {\"node\": \"BindingIdentifier(z)_20\", \"accessibility\": \"Write\"}], \"declarations\": [{\"node\": \"BindingIdentifier(z)_20\", \"kind\": \"Var\"}]}], \"children\": [{\"node\": \"Script_0\", \"type\": \"Script\", \"isDynamic\": false, \"through\": [{\"node\": \"IdentifierExpression(z)_14\", \"accessibility\": \"Read\"}, {\"node\": \"IdentifierExpression(y)_21\", \"accessibility\": \"Read\"}, {\"node\": \"BindingIdentifier(x)_6\", \"accessibility\": \"Write\"}, {\"node\": \"BindingIdentifier(y)_13\", \"accessibility\": \"Write\"}, {\"node\": \"BindingIdentifier(z)_20\", \"accessibility\": \"Write\"}], \"variables\": [], \"children\": []}]}"
+      'var {x, a:{b:y = z}} = null; var [z] = y;',
+      '{"node": "Script_0", "type": "Global", "isDynamic": true, "through": [], "variables": [{"name": "x", "references": [{"node": "BindingIdentifier(x)_6", "accessibility": "Write"}], "declarations": [{"node": "BindingIdentifier(x)_6", "kind": "Var"}]}, {"name": "y", "references": [{"node": "BindingIdentifier(y)_13", "accessibility": "Write"}, {"node": "IdentifierExpression(y)_21", "accessibility": "Read"}], "declarations": [{"node": "BindingIdentifier(y)_13", "kind": "Var"}]}, {"name": "z", "references": [{"node": "IdentifierExpression(z)_14", "accessibility": "Read"}, {"node": "BindingIdentifier(z)_20", "accessibility": "Write"}], "declarations": [{"node": "BindingIdentifier(z)_20", "kind": "Var"}]}], "children": [{"node": "Script_0", "type": "Script", "isDynamic": false, "through": [{"node": "IdentifierExpression(z)_14", "accessibility": "Read"}, {"node": "IdentifierExpression(y)_21", "accessibility": "Read"}, {"node": "BindingIdentifier(x)_6", "accessibility": "Write"}, {"node": "BindingIdentifier(y)_13", "accessibility": "Write"}, {"node": "BindingIdentifier(z)_20", "accessibility": "Write"}], "variables": [], "children": []}]}'
     );
   });
 
-  test("binding", () => {
+  test('binding', () => {
     checkScopeSerialization(
-      `function foo(b){function r(){for(var b=0;;);}}`,
-      "{\"node\": \"Script_0\", \"type\": \"Global\", \"isDynamic\": true, \"through\": [], \"variables\": [{\"name\": \"foo\", \"references\": [], \"declarations\": [{\"node\": \"BindingIdentifier(foo)_2\", \"kind\": \"FunctionDeclaration\"}]}], \"children\": [{\"node\": \"Script_0\", \"type\": \"Script\", \"isDynamic\": false, \"through\": [], \"variables\": [], \"children\": [{\"node\": \"FunctionDeclaration_1\", \"type\": \"Function\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"arguments\", \"references\": [], \"declarations\": []}, {\"name\": \"b\", \"references\": [], \"declarations\": [{\"node\": \"BindingIdentifier(b)_4\", \"kind\": \"Parameter\"}]}, {\"name\": \"r\", \"references\": [], \"declarations\": [{\"node\": \"BindingIdentifier(r)_7\", \"kind\": \"FunctionDeclaration\"}]}], \"children\": [{\"node\": \"FunctionDeclaration_6\", \"type\": \"Function\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"arguments\", \"references\": [], \"declarations\": []}, {\"name\": \"b\", \"references\": [{\"node\": \"BindingIdentifier(b)_13\", \"accessibility\": \"Write\"}], \"declarations\": [{\"node\": \"BindingIdentifier(b)_13\", \"kind\": \"Var\"}]}], \"children\": [{\"node\": \"ForStatement_10\", \"type\": \"Block\", \"isDynamic\": false, \"through\": [{\"node\": \"BindingIdentifier(b)_13\", \"accessibility\": \"Write\"}], \"variables\": [], \"children\": []}]}]}]}]}"
+      'function foo(b){function r(){for(var b=0;;);}}',
+      '{"node": "Script_0", "type": "Global", "isDynamic": true, "through": [], "variables": [{"name": "foo", "references": [], "declarations": [{"node": "BindingIdentifier(foo)_2", "kind": "FunctionDeclaration"}]}], "children": [{"node": "Script_0", "type": "Script", "isDynamic": false, "through": [], "variables": [], "children": [{"node": "FunctionDeclaration_1", "type": "Function", "isDynamic": false, "through": [], "variables": [{"name": "arguments", "references": [], "declarations": []}, {"name": "b", "references": [], "declarations": [{"node": "BindingIdentifier(b)_4", "kind": "Parameter"}]}, {"name": "r", "references": [], "declarations": [{"node": "BindingIdentifier(r)_7", "kind": "FunctionDeclaration"}]}], "children": [{"node": "FunctionDeclaration_6", "type": "Function", "isDynamic": false, "through": [], "variables": [{"name": "arguments", "references": [], "declarations": []}, {"name": "b", "references": [{"node": "BindingIdentifier(b)_13", "accessibility": "Write"}], "declarations": [{"node": "BindingIdentifier(b)_13", "kind": "Var"}]}], "children": [{"node": "ForStatement_10", "type": "Block", "isDynamic": false, "through": [{"node": "BindingIdentifier(b)_13", "accessibility": "Write"}], "variables": [], "children": []}]}]}]}]}'
     );
   });
 
-  test("function double declaration", () => {
+  test('function double declaration', () => {
     checkScopeSerialization(
-      `{let x; function x(){}}`,
-      "{\"node\": \"Script_0\", \"type\": \"Global\", \"isDynamic\": true, \"through\": [], \"variables\": [], \"children\": [{\"node\": \"Script_0\", \"type\": \"Script\", \"isDynamic\": false, \"through\": [], \"variables\": [], \"children\": [{\"node\": \"Block_2\", \"type\": \"Block\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"x\", \"references\": [], \"declarations\": [{\"node\": \"BindingIdentifier(x)_6\", \"kind\": \"Let\"}, {\"node\": \"BindingIdentifier(x)_8\", \"kind\": \"FunctionDeclaration\"}]}], \"children\": [{\"node\": \"FunctionDeclaration_7\", \"type\": \"Function\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"arguments\", \"references\": [], \"declarations\": []}], \"children\": []}]}]}]}",
-      {earlyErrors: false}
+      '{let x; function x(){}}',
+      '{"node": "Script_0", "type": "Global", "isDynamic": true, "through": [], "variables": [], "children": [{"node": "Script_0", "type": "Script", "isDynamic": false, "through": [], "variables": [], "children": [{"node": "Block_2", "type": "Block", "isDynamic": false, "through": [], "variables": [{"name": "x", "references": [], "declarations": [{"node": "BindingIdentifier(x)_6", "kind": "Let"}, {"node": "BindingIdentifier(x)_8", "kind": "FunctionDeclaration"}]}], "children": [{"node": "FunctionDeclaration_7", "type": "Function", "isDynamic": false, "through": [], "variables": [{"name": "arguments", "references": [], "declarations": []}], "children": []}]}]}]}',
+      { earlyErrors: false }
     );
 
     checkScopeSerialization(
-      "function f1(x){return x; function x(){}}",
-      "{\"node\": \"Script_0\", \"type\": \"Global\", \"isDynamic\": true, \"through\": [], \"variables\": [{\"name\": \"f1\", \"references\": [], \"declarations\": [{\"node\": \"BindingIdentifier(f1)_2\", \"kind\": \"FunctionDeclaration\"}]}], \"children\": [{\"node\": \"Script_0\", \"type\": \"Script\", \"isDynamic\": false, \"through\": [], \"variables\": [], \"children\": [{\"node\": \"FunctionDeclaration_1\", \"type\": \"Function\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"arguments\", \"references\": [], \"declarations\": []}, {\"name\": \"x\", \"references\": [{\"node\": \"IdentifierExpression(x)_7\", \"accessibility\": \"Read\"}], \"declarations\": [{\"node\": \"BindingIdentifier(x)_4\", \"kind\": \"Parameter\"}, {\"node\": \"BindingIdentifier(x)_9\", \"kind\": \"FunctionDeclaration\"}]}], \"children\": [{\"node\": \"FunctionDeclaration_8\", \"type\": \"Function\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"arguments\", \"references\": [], \"declarations\": []}], \"children\": []}]}]}]}"
+      'function f1(x){return x; function x(){}}',
+      '{"node": "Script_0", "type": "Global", "isDynamic": true, "through": [], "variables": [{"name": "f1", "references": [], "declarations": [{"node": "BindingIdentifier(f1)_2", "kind": "FunctionDeclaration"}]}], "children": [{"node": "Script_0", "type": "Script", "isDynamic": false, "through": [], "variables": [], "children": [{"node": "FunctionDeclaration_1", "type": "Function", "isDynamic": false, "through": [], "variables": [{"name": "arguments", "references": [], "declarations": []}, {"name": "x", "references": [{"node": "IdentifierExpression(x)_7", "accessibility": "Read"}], "declarations": [{"node": "BindingIdentifier(x)_4", "kind": "Parameter"}, {"node": "BindingIdentifier(x)_9", "kind": "FunctionDeclaration"}]}], "children": [{"node": "FunctionDeclaration_8", "type": "Function", "isDynamic": false, "through": [], "variables": [{"name": "arguments", "references": [], "declarations": []}], "children": []}]}]}]}'
     );
 
     checkScopeSerialization(
-      "function x(){}; var x = 1; function x(){}",
-      "{\"node\": \"Script_0\", \"type\": \"Global\", \"isDynamic\": true, \"through\": [], \"variables\": [{\"name\": \"x\", \"references\": [{\"node\": \"BindingIdentifier(x)_9\", \"accessibility\": \"Write\"}], \"declarations\": [{\"node\": \"BindingIdentifier(x)_9\", \"kind\": \"Var\"}, {\"node\": \"BindingIdentifier(x)_2\", \"kind\": \"FunctionDeclaration\"}, {\"node\": \"BindingIdentifier(x)_12\", \"kind\": \"FunctionDeclaration\"}]}], \"children\": [{\"node\": \"Script_0\", \"type\": \"Script\", \"isDynamic\": false, \"through\": [{\"node\": \"BindingIdentifier(x)_9\", \"accessibility\": \"Write\"}], \"variables\": [], \"children\": [{\"node\": \"FunctionDeclaration_1\", \"type\": \"Function\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"arguments\", \"references\": [], \"declarations\": []}], \"children\": []}, {\"node\": \"FunctionDeclaration_11\", \"type\": \"Function\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"arguments\", \"references\": [], \"declarations\": []}], \"children\": []}]}]}"
+      'function x(){}; var x = 1; function x(){}',
+      '{"node": "Script_0", "type": "Global", "isDynamic": true, "through": [], "variables": [{"name": "x", "references": [{"node": "BindingIdentifier(x)_9", "accessibility": "Write"}], "declarations": [{"node": "BindingIdentifier(x)_9", "kind": "Var"}, {"node": "BindingIdentifier(x)_2", "kind": "FunctionDeclaration"}, {"node": "BindingIdentifier(x)_12", "kind": "FunctionDeclaration"}]}], "children": [{"node": "Script_0", "type": "Script", "isDynamic": false, "through": [{"node": "BindingIdentifier(x)_9", "accessibility": "Write"}], "variables": [], "children": [{"node": "FunctionDeclaration_1", "type": "Function", "isDynamic": false, "through": [], "variables": [{"name": "arguments", "references": [], "declarations": []}], "children": []}, {"node": "FunctionDeclaration_11", "type": "Function", "isDynamic": false, "through": [], "variables": [{"name": "arguments", "references": [], "declarations": []}], "children": []}]}]}'
     );
 
     checkScopeSerialization(
-      "function f3() {return arguments; function arguments(){}}",
-      "{\"node\": \"Script_0\", \"type\": \"Global\", \"isDynamic\": true, \"through\": [], \"variables\": [{\"name\": \"f3\", \"references\": [], \"declarations\": [{\"node\": \"BindingIdentifier(f3)_2\", \"kind\": \"FunctionDeclaration\"}]}], \"children\": [{\"node\": \"Script_0\", \"type\": \"Script\", \"isDynamic\": false, \"through\": [], \"variables\": [], \"children\": [{\"node\": \"FunctionDeclaration_1\", \"type\": \"Function\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"arguments\", \"references\": [{\"node\": \"IdentifierExpression(arguments)_6\", \"accessibility\": \"Read\"}], \"declarations\": [{\"node\": \"BindingIdentifier(arguments)_8\", \"kind\": \"FunctionDeclaration\"}]}], \"children\": [{\"node\": \"FunctionDeclaration_7\", \"type\": \"Function\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"arguments\", \"references\": [], \"declarations\": []}], \"children\": []}]}]}]}"
-    );
-  });
-
-  test("parameter scope", () => {
-    checkScopeSerialization(
-      "!function(x){let y;};",
-      "{\"node\": \"Script_0\", \"type\": \"Global\", \"isDynamic\": true, \"through\": [], \"variables\": [], \"children\": [{\"node\": \"Script_0\", \"type\": \"Script\", \"isDynamic\": false, \"through\": [], \"variables\": [], \"children\": [{\"node\": \"FunctionExpression_3\", \"type\": \"Function\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"arguments\", \"references\": [], \"declarations\": []}, {\"name\": \"x\", \"references\": [], \"declarations\": [{\"node\": \"BindingIdentifier(x)_5\", \"kind\": \"Parameter\"}]}, {\"name\": \"y\", \"references\": [], \"declarations\": [{\"node\": \"BindingIdentifier(y)_10\", \"kind\": \"Let\"}]}], \"children\": []}]}]}"
-    );
-
-    checkScopeSerialization(
-      "!function(x = 1){let y;};",
-      "{\"node\": \"Script_0\", \"type\": \"Global\", \"isDynamic\": true, \"through\": [], \"variables\": [], \"children\": [{\"node\": \"Script_0\", \"type\": \"Script\", \"isDynamic\": false, \"through\": [], \"variables\": [], \"children\": [{\"node\": \"FunctionExpression_3\", \"type\": \"Parameters\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"x\", \"references\": [], \"declarations\": [{\"node\": \"BindingIdentifier(x)_6\", \"kind\": \"Parameter\"}]}], \"children\": [{\"node\": \"BindingWithDefault_5\", \"type\": \"ParameterExpression\", \"isDynamic\": false, \"through\": [], \"variables\": [], \"children\": []}, {\"node\": \"FunctionExpression_3\", \"type\": \"Function\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"arguments\", \"references\": [], \"declarations\": []}, {\"name\": \"y\", \"references\": [], \"declarations\": [{\"node\": \"BindingIdentifier(y)_12\", \"kind\": \"Let\"}]}], \"children\": []}]}]}]}"
-    );
-
-    checkScopeSerialization(
-      "!function(x, y = () => (x,y,z)){let z;};",
-      "{\"node\": \"Script_0\", \"type\": \"Global\", \"isDynamic\": true, \"through\": [{\"node\": \"IdentifierExpression(z)_14\", \"accessibility\": \"Read\"}], \"variables\": [{\"name\": \"z\", \"references\": [{\"node\": \"IdentifierExpression(z)_14\", \"accessibility\": \"Read\"}], \"declarations\": []}], \"children\": [{\"node\": \"Script_0\", \"type\": \"Script\", \"isDynamic\": false, \"through\": [{\"node\": \"IdentifierExpression(z)_14\", \"accessibility\": \"Read\"}], \"variables\": [], \"children\": [{\"node\": \"FunctionExpression_3\", \"type\": \"Parameters\", \"isDynamic\": false, \"through\": [{\"node\": \"IdentifierExpression(z)_14\", \"accessibility\": \"Read\"}], \"variables\": [{\"name\": \"x\", \"references\": [{\"node\": \"IdentifierExpression(x)_12\", \"accessibility\": \"Read\"}], \"declarations\": [{\"node\": \"BindingIdentifier(x)_5\", \"kind\": \"Parameter\"}]}, {\"name\": \"y\", \"references\": [{\"node\": \"IdentifierExpression(y)_13\", \"accessibility\": \"Read\"}], \"declarations\": [{\"node\": \"BindingIdentifier(y)_7\", \"kind\": \"Parameter\"}]}], \"children\": [{\"node\": \"BindingWithDefault_6\", \"type\": \"ParameterExpression\", \"isDynamic\": false, \"through\": [{\"node\": \"IdentifierExpression(x)_12\", \"accessibility\": \"Read\"}, {\"node\": \"IdentifierExpression(y)_13\", \"accessibility\": \"Read\"}, {\"node\": \"IdentifierExpression(z)_14\", \"accessibility\": \"Read\"}], \"variables\": [], \"children\": [{\"node\": \"ArrowExpression_8\", \"type\": \"ArrowFunction\", \"isDynamic\": false, \"through\": [{\"node\": \"IdentifierExpression(x)_12\", \"accessibility\": \"Read\"}, {\"node\": \"IdentifierExpression(y)_13\", \"accessibility\": \"Read\"}, {\"node\": \"IdentifierExpression(z)_14\", \"accessibility\": \"Read\"}], \"variables\": [], \"children\": []}]}, {\"node\": \"FunctionExpression_3\", \"type\": \"Function\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"arguments\", \"references\": [], \"declarations\": []}, {\"name\": \"z\", \"references\": [], \"declarations\": [{\"node\": \"BindingIdentifier(z)_19\", \"kind\": \"Let\"}]}], \"children\": []}]}]}]}"
+      'function f3() {return arguments; function arguments(){}}',
+      '{"node": "Script_0", "type": "Global", "isDynamic": true, "through": [], "variables": [{"name": "f3", "references": [], "declarations": [{"node": "BindingIdentifier(f3)_2", "kind": "FunctionDeclaration"}]}], "children": [{"node": "Script_0", "type": "Script", "isDynamic": false, "through": [], "variables": [], "children": [{"node": "FunctionDeclaration_1", "type": "Function", "isDynamic": false, "through": [], "variables": [{"name": "arguments", "references": [{"node": "IdentifierExpression(arguments)_6", "accessibility": "Read"}], "declarations": [{"node": "BindingIdentifier(arguments)_8", "kind": "FunctionDeclaration"}]}], "children": [{"node": "FunctionDeclaration_7", "type": "Function", "isDynamic": false, "through": [], "variables": [{"name": "arguments", "references": [], "declarations": []}], "children": []}]}]}]}'
     );
   });
 
-  test("shorthand properties", () => {
+  test('parameter scope', () => {
     checkScopeSerialization(
-      "({a});",
-      "{\"node\": \"Script_0\", \"type\": \"Global\", \"isDynamic\": true, \"through\": [{\"node\": \"IdentifierExpression(a)_4\", \"accessibility\": \"Read\"}], \"variables\": [{\"name\": \"a\", \"references\": [{\"node\": \"IdentifierExpression(a)_4\", \"accessibility\": \"Read\"}], \"declarations\": []}], \"children\": [{\"node\": \"Script_0\", \"type\": \"Script\", \"isDynamic\": false, \"through\": [{\"node\": \"IdentifierExpression(a)_4\", \"accessibility\": \"Read\"}], \"variables\": [], \"children\": []}]}"
+      '!function(x){let y;};',
+      '{"node": "Script_0", "type": "Global", "isDynamic": true, "through": [], "variables": [], "children": [{"node": "Script_0", "type": "Script", "isDynamic": false, "through": [], "variables": [], "children": [{"node": "FunctionExpression_3", "type": "Function", "isDynamic": false, "through": [], "variables": [{"name": "arguments", "references": [], "declarations": []}, {"name": "x", "references": [], "declarations": [{"node": "BindingIdentifier(x)_5", "kind": "Parameter"}]}, {"name": "y", "references": [], "declarations": [{"node": "BindingIdentifier(y)_10", "kind": "Let"}]}], "children": []}]}]}'
+    );
+
+    checkScopeSerialization(
+      '!function(x = 1){let y;};',
+      '{"node": "Script_0", "type": "Global", "isDynamic": true, "through": [], "variables": [], "children": [{"node": "Script_0", "type": "Script", "isDynamic": false, "through": [], "variables": [], "children": [{"node": "FunctionExpression_3", "type": "Parameters", "isDynamic": false, "through": [], "variables": [{"name": "x", "references": [], "declarations": [{"node": "BindingIdentifier(x)_6", "kind": "Parameter"}]}], "children": [{"node": "BindingWithDefault_5", "type": "ParameterExpression", "isDynamic": false, "through": [], "variables": [], "children": []}, {"node": "FunctionExpression_3", "type": "Function", "isDynamic": false, "through": [], "variables": [{"name": "arguments", "references": [], "declarations": []}, {"name": "y", "references": [], "declarations": [{"node": "BindingIdentifier(y)_12", "kind": "Let"}]}], "children": []}]}]}]}'
+    );
+
+    checkScopeSerialization(
+      '!function(x, y = () => (x,y,z)){let z;};',
+      '{"node": "Script_0", "type": "Global", "isDynamic": true, "through": [{"node": "IdentifierExpression(z)_14", "accessibility": "Read"}], "variables": [{"name": "z", "references": [{"node": "IdentifierExpression(z)_14", "accessibility": "Read"}], "declarations": []}], "children": [{"node": "Script_0", "type": "Script", "isDynamic": false, "through": [{"node": "IdentifierExpression(z)_14", "accessibility": "Read"}], "variables": [], "children": [{"node": "FunctionExpression_3", "type": "Parameters", "isDynamic": false, "through": [{"node": "IdentifierExpression(z)_14", "accessibility": "Read"}], "variables": [{"name": "x", "references": [{"node": "IdentifierExpression(x)_12", "accessibility": "Read"}], "declarations": [{"node": "BindingIdentifier(x)_5", "kind": "Parameter"}]}, {"name": "y", "references": [{"node": "IdentifierExpression(y)_13", "accessibility": "Read"}], "declarations": [{"node": "BindingIdentifier(y)_7", "kind": "Parameter"}]}], "children": [{"node": "BindingWithDefault_6", "type": "ParameterExpression", "isDynamic": false, "through": [{"node": "IdentifierExpression(x)_12", "accessibility": "Read"}, {"node": "IdentifierExpression(y)_13", "accessibility": "Read"}, {"node": "IdentifierExpression(z)_14", "accessibility": "Read"}], "variables": [], "children": [{"node": "ArrowExpression_8", "type": "ArrowFunction", "isDynamic": false, "through": [{"node": "IdentifierExpression(x)_12", "accessibility": "Read"}, {"node": "IdentifierExpression(y)_13", "accessibility": "Read"}, {"node": "IdentifierExpression(z)_14", "accessibility": "Read"}], "variables": [], "children": []}]}, {"node": "FunctionExpression_3", "type": "Function", "isDynamic": false, "through": [], "variables": [{"name": "arguments", "references": [], "declarations": []}, {"name": "z", "references": [], "declarations": [{"node": "BindingIdentifier(z)_19", "kind": "Let"}]}], "children": []}]}]}]}'
     );
   });
 
-  test("B.3.3", () => {
+  test('shorthand properties', () => {
+    checkScopeSerialization(
+      '({a});',
+      '{"node": "Script_0", "type": "Global", "isDynamic": true, "through": [{"node": "IdentifierExpression(a)_4", "accessibility": "Read"}], "variables": [{"name": "a", "references": [{"node": "IdentifierExpression(a)_4", "accessibility": "Read"}], "declarations": []}], "children": [{"node": "Script_0", "type": "Script", "isDynamic": false, "through": [{"node": "IdentifierExpression(a)_4", "accessibility": "Read"}], "variables": [], "children": []}]}'
+    );
+  });
+
+  test('B.3.3', () => {
     checkScopeSerialization(
       `(function() {
         function getOuter(){return f;}
@@ -1725,9 +1715,9 @@ suite("unit", () => {
            g = f;
         }
       })();`,
-      "{\"node\": \"Script_0\", \"type\": \"Global\", \"isDynamic\": true, \"through\": [], \"variables\": [], \"children\": [{\"node\": \"Script_0\", \"type\": \"Script\", \"isDynamic\": false, \"through\": [], \"variables\": [], \"children\": [{\"node\": \"FunctionExpression_3\", \"type\": \"Function\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"arguments\", \"references\": [], \"declarations\": []}, {\"name\": \"f\", \"references\": [{\"node\": \"IdentifierExpression(f)_11\", \"accessibility\": \"Read\"}], \"declarations\": [{\"node\": \"BindingIdentifier(f)_23\", \"kind\": \"FunctionB33\"}]}, {\"name\": \"g\", \"references\": [{\"node\": \"AssignmentTargetIdentifier(g)_28\", \"accessibility\": \"Write\"}], \"declarations\": [{\"node\": \"BindingIdentifier(g)_15\", \"kind\": \"Var\"}]}, {\"name\": \"getOuter\", \"references\": [], \"declarations\": [{\"node\": \"BindingIdentifier(getOuter)_7\", \"kind\": \"FunctionDeclaration\"}]}], \"children\": [{\"node\": \"FunctionDeclaration_6\", \"type\": \"Function\", \"isDynamic\": false, \"through\": [{\"node\": \"IdentifierExpression(f)_11\", \"accessibility\": \"Read\"}], \"variables\": [{\"name\": \"arguments\", \"references\": [], \"declarations\": []}], \"children\": []}, {\"node\": \"Block_17\", \"type\": \"Block\", \"isDynamic\": false, \"through\": [{\"node\": \"AssignmentTargetIdentifier(g)_28\", \"accessibility\": \"Write\"}], \"variables\": [{\"name\": \"f\", \"references\": [{\"node\": \"AssignmentTargetIdentifier(f)_20\", \"accessibility\": \"Write\"}, {\"node\": \"IdentifierExpression(f)_29\", \"accessibility\": \"Read\"}], \"declarations\": [{\"node\": \"BindingIdentifier(f)_23\", \"kind\": \"FunctionDeclaration\"}]}], \"children\": [{\"node\": \"FunctionDeclaration_22\", \"type\": \"Function\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"arguments\", \"references\": [], \"declarations\": []}], \"children\": []}]}]}]}]}"
+      '{"node": "Script_0", "type": "Global", "isDynamic": true, "through": [], "variables": [], "children": [{"node": "Script_0", "type": "Script", "isDynamic": false, "through": [], "variables": [], "children": [{"node": "FunctionExpression_3", "type": "Function", "isDynamic": false, "through": [], "variables": [{"name": "arguments", "references": [], "declarations": []}, {"name": "f", "references": [{"node": "IdentifierExpression(f)_11", "accessibility": "Read"}], "declarations": [{"node": "BindingIdentifier(f)_23", "kind": "FunctionB33"}]}, {"name": "g", "references": [{"node": "AssignmentTargetIdentifier(g)_28", "accessibility": "Write"}], "declarations": [{"node": "BindingIdentifier(g)_15", "kind": "Var"}]}, {"name": "getOuter", "references": [], "declarations": [{"node": "BindingIdentifier(getOuter)_7", "kind": "FunctionDeclaration"}]}], "children": [{"node": "FunctionDeclaration_6", "type": "Function", "isDynamic": false, "through": [{"node": "IdentifierExpression(f)_11", "accessibility": "Read"}], "variables": [{"name": "arguments", "references": [], "declarations": []}], "children": []}, {"node": "Block_17", "type": "Block", "isDynamic": false, "through": [{"node": "AssignmentTargetIdentifier(g)_28", "accessibility": "Write"}], "variables": [{"name": "f", "references": [{"node": "AssignmentTargetIdentifier(f)_20", "accessibility": "Write"}, {"node": "IdentifierExpression(f)_29", "accessibility": "Read"}], "declarations": [{"node": "BindingIdentifier(f)_23", "kind": "FunctionDeclaration"}]}], "children": [{"node": "FunctionDeclaration_22", "type": "Function", "isDynamic": false, "through": [], "variables": [{"name": "arguments", "references": [], "declarations": []}], "children": []}]}]}]}]}'
     );
-    
+
     checkScopeSerialization(
       `!function f() {
         {
@@ -1738,7 +1728,7 @@ suite("unit", () => {
         }
         f;
       }`,
-      "{\"node\": \"Script_0\", \"type\": \"Global\", \"isDynamic\": true, \"through\": [], \"variables\": [], \"children\": [{\"node\": \"Script_0\", \"type\": \"Script\", \"isDynamic\": false, \"through\": [], \"variables\": [], \"children\": [{\"node\": \"FunctionExpression_3\", \"type\": \"FunctionName\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"f\", \"references\": [], \"declarations\": [{\"node\": \"BindingIdentifier(f)_4\", \"kind\": \"FunctionExpressionName\"}]}], \"children\": [{\"node\": \"FunctionExpression_3\", \"type\": \"Function\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"arguments\", \"references\": [], \"declarations\": []}, {\"name\": \"f\", \"references\": [{\"node\": \"IdentifierExpression(f)_20\", \"accessibility\": \"Read\"}], \"declarations\": [{\"node\": \"BindingIdentifier(f)_10\", \"kind\": \"FunctionB33\"}, {\"node\": \"BindingIdentifier(f)_16\", \"kind\": \"FunctionB33\"}]}], \"children\": [{\"node\": \"Block_8\", \"type\": \"Block\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"f\", \"references\": [], \"declarations\": [{\"node\": \"BindingIdentifier(f)_10\", \"kind\": \"FunctionDeclaration\"}]}], \"children\": [{\"node\": \"FunctionDeclaration_9\", \"type\": \"Function\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"arguments\", \"references\": [], \"declarations\": []}], \"children\": []}]}, {\"node\": \"Block_14\", \"type\": \"Block\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"f\", \"references\": [], \"declarations\": [{\"node\": \"BindingIdentifier(f)_16\", \"kind\": \"FunctionDeclaration\"}]}], \"children\": [{\"node\": \"FunctionDeclaration_15\", \"type\": \"Function\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"arguments\", \"references\": [], \"declarations\": []}], \"children\": []}]}]}]}]}]}"
+      '{"node": "Script_0", "type": "Global", "isDynamic": true, "through": [], "variables": [], "children": [{"node": "Script_0", "type": "Script", "isDynamic": false, "through": [], "variables": [], "children": [{"node": "FunctionExpression_3", "type": "FunctionName", "isDynamic": false, "through": [], "variables": [{"name": "f", "references": [], "declarations": [{"node": "BindingIdentifier(f)_4", "kind": "FunctionExpressionName"}]}], "children": [{"node": "FunctionExpression_3", "type": "Function", "isDynamic": false, "through": [], "variables": [{"name": "arguments", "references": [], "declarations": []}, {"name": "f", "references": [{"node": "IdentifierExpression(f)_20", "accessibility": "Read"}], "declarations": [{"node": "BindingIdentifier(f)_10", "kind": "FunctionB33"}, {"node": "BindingIdentifier(f)_16", "kind": "FunctionB33"}]}], "children": [{"node": "Block_8", "type": "Block", "isDynamic": false, "through": [], "variables": [{"name": "f", "references": [], "declarations": [{"node": "BindingIdentifier(f)_10", "kind": "FunctionDeclaration"}]}], "children": [{"node": "FunctionDeclaration_9", "type": "Function", "isDynamic": false, "through": [], "variables": [{"name": "arguments", "references": [], "declarations": []}], "children": []}]}, {"node": "Block_14", "type": "Block", "isDynamic": false, "through": [], "variables": [{"name": "f", "references": [], "declarations": [{"node": "BindingIdentifier(f)_16", "kind": "FunctionDeclaration"}]}], "children": [{"node": "FunctionDeclaration_15", "type": "Function", "isDynamic": false, "through": [], "variables": [{"name": "arguments", "references": [], "declarations": []}], "children": []}]}]}]}]}]}'
     );
 
     checkScopeSerialization( // As above, but as a module. Because B.3.3 only applies in strict mode, this case is substantially different from the previous.
@@ -1751,8 +1741,8 @@ suite("unit", () => {
         }
         f;
       }`,
-      "{\"node\": \"Module_0\", \"type\": \"Global\", \"isDynamic\": true, \"through\": [], \"variables\": [], \"children\": [{\"node\": \"Module_0\", \"type\": \"Module\", \"isDynamic\": false, \"through\": [], \"variables\": [], \"children\": [{\"node\": \"FunctionExpression_3\", \"type\": \"FunctionName\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"f\", \"references\": [{\"node\": \"IdentifierExpression(f)_20\", \"accessibility\": \"Read\"}], \"declarations\": [{\"node\": \"BindingIdentifier(f)_4\", \"kind\": \"FunctionExpressionName\"}]}], \"children\": [{\"node\": \"FunctionExpression_3\", \"type\": \"Function\", \"isDynamic\": false, \"through\": [{\"node\": \"IdentifierExpression(f)_20\", \"accessibility\": \"Read\"}], \"variables\": [{\"name\": \"arguments\", \"references\": [], \"declarations\": []}], \"children\": [{\"node\": \"Block_8\", \"type\": \"Block\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"f\", \"references\": [], \"declarations\": [{\"node\": \"BindingIdentifier(f)_10\", \"kind\": \"FunctionDeclaration\"}]}], \"children\": [{\"node\": \"FunctionDeclaration_9\", \"type\": \"Function\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"arguments\", \"references\": [], \"declarations\": []}], \"children\": []}]}, {\"node\": \"Block_14\", \"type\": \"Block\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"f\", \"references\": [], \"declarations\": [{\"node\": \"BindingIdentifier(f)_16\", \"kind\": \"FunctionDeclaration\"}]}], \"children\": [{\"node\": \"FunctionDeclaration_15\", \"type\": \"Function\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"arguments\", \"references\": [], \"declarations\": []}], \"children\": []}]}]}]}]}]}",
-      {asScript: false}
+      '{"node": "Module_0", "type": "Global", "isDynamic": true, "through": [], "variables": [], "children": [{"node": "Module_0", "type": "Module", "isDynamic": false, "through": [], "variables": [], "children": [{"node": "FunctionExpression_3", "type": "FunctionName", "isDynamic": false, "through": [], "variables": [{"name": "f", "references": [{"node": "IdentifierExpression(f)_20", "accessibility": "Read"}], "declarations": [{"node": "BindingIdentifier(f)_4", "kind": "FunctionExpressionName"}]}], "children": [{"node": "FunctionExpression_3", "type": "Function", "isDynamic": false, "through": [{"node": "IdentifierExpression(f)_20", "accessibility": "Read"}], "variables": [{"name": "arguments", "references": [], "declarations": []}], "children": [{"node": "Block_8", "type": "Block", "isDynamic": false, "through": [], "variables": [{"name": "f", "references": [], "declarations": [{"node": "BindingIdentifier(f)_10", "kind": "FunctionDeclaration"}]}], "children": [{"node": "FunctionDeclaration_9", "type": "Function", "isDynamic": false, "through": [], "variables": [{"name": "arguments", "references": [], "declarations": []}], "children": []}]}, {"node": "Block_14", "type": "Block", "isDynamic": false, "through": [], "variables": [{"name": "f", "references": [], "declarations": [{"node": "BindingIdentifier(f)_16", "kind": "FunctionDeclaration"}]}], "children": [{"node": "FunctionDeclaration_15", "type": "Function", "isDynamic": false, "through": [], "variables": [{"name": "arguments", "references": [], "declarations": []}], "children": []}]}]}]}]}]}',
+      { asScript: false }
     );
 
     checkScopeSerialization(
@@ -1763,7 +1753,7 @@ suite("unit", () => {
           function f(){}
         f;
       }`,
-      "{\"node\": \"Script_0\", \"type\": \"Global\", \"isDynamic\": true, \"through\": [], \"variables\": [], \"children\": [{\"node\": \"Script_0\", \"type\": \"Script\", \"isDynamic\": false, \"through\": [], \"variables\": [], \"children\": [{\"node\": \"FunctionExpression_3\", \"type\": \"FunctionName\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"f\", \"references\": [], \"declarations\": [{\"node\": \"BindingIdentifier(f)_4\", \"kind\": \"FunctionExpressionName\"}]}], \"children\": [{\"node\": \"FunctionExpression_3\", \"type\": \"Function\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"arguments\", \"references\": [], \"declarations\": []}, {\"name\": \"f\", \"references\": [{\"node\": \"IdentifierExpression(f)_18\", \"accessibility\": \"Read\"}], \"declarations\": [{\"node\": \"BindingIdentifier(f)_10\", \"kind\": \"FunctionDeclaration\"}, {\"node\": \"BindingIdentifier(f)_14\", \"kind\": \"FunctionDeclaration\"}]}], \"children\": [{\"node\": \"FunctionDeclaration_9\", \"type\": \"Function\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"arguments\", \"references\": [], \"declarations\": []}], \"children\": []}, {\"node\": \"FunctionDeclaration_13\", \"type\": \"Function\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"arguments\", \"references\": [], \"declarations\": []}], \"children\": []}]}]}]}]}"
+      '{"node": "Script_0", "type": "Global", "isDynamic": true, "through": [], "variables": [], "children": [{"node": "Script_0", "type": "Script", "isDynamic": false, "through": [], "variables": [], "children": [{"node": "FunctionExpression_3", "type": "FunctionName", "isDynamic": false, "through": [], "variables": [{"name": "f", "references": [], "declarations": [{"node": "BindingIdentifier(f)_4", "kind": "FunctionExpressionName"}]}], "children": [{"node": "FunctionExpression_3", "type": "Function", "isDynamic": false, "through": [], "variables": [{"name": "arguments", "references": [], "declarations": []}, {"name": "f", "references": [{"node": "IdentifierExpression(f)_18", "accessibility": "Read"}], "declarations": [{"node": "BindingIdentifier(f)_10", "kind": "FunctionDeclaration"}, {"node": "BindingIdentifier(f)_14", "kind": "FunctionDeclaration"}]}], "children": [{"node": "FunctionDeclaration_9", "type": "Function", "isDynamic": false, "through": [], "variables": [{"name": "arguments", "references": [], "declarations": []}], "children": []}, {"node": "FunctionDeclaration_13", "type": "Function", "isDynamic": false, "through": [], "variables": [{"name": "arguments", "references": [], "declarations": []}], "children": []}]}]}]}]}'
     );
 
     checkScopeSerialization(
@@ -1779,93 +1769,93 @@ suite("unit", () => {
         }
         f;
       }`,
-      "{\"node\": \"Script_0\", \"type\": \"Global\", \"isDynamic\": true, \"through\": [], \"variables\": [], \"children\": [{\"node\": \"Script_0\", \"type\": \"Script\", \"isDynamic\": false, \"through\": [], \"variables\": [], \"children\": [{\"node\": \"FunctionExpression_3\", \"type\": \"Function\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"arguments\", \"references\": [], \"declarations\": []}, {\"name\": \"f\", \"references\": [{\"node\": \"IdentifierExpression(f)_25\", \"accessibility\": \"Read\"}], \"declarations\": [{\"node\": \"BindingIdentifier(f)_21\", \"kind\": \"FunctionB33\"}]}], \"children\": [{\"node\": \"Block_7\", \"type\": \"Block\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"f\", \"references\": [], \"declarations\": [{\"node\": \"BindingIdentifier(f)_21\", \"kind\": \"FunctionDeclaration\"}]}], \"children\": [{\"node\": \"Block_9\", \"type\": \"Block\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"f\", \"references\": [], \"declarations\": [{\"node\": \"BindingIdentifier(f)_13\", \"kind\": \"Let\"}]}], \"children\": [{\"node\": \"Block_15\", \"type\": \"Block\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"f\", \"references\": [], \"declarations\": [{\"node\": \"BindingIdentifier(f)_17\", \"kind\": \"FunctionDeclaration\"}]}], \"children\": [{\"node\": \"FunctionDeclaration_16\", \"type\": \"Function\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"arguments\", \"references\": [], \"declarations\": []}], \"children\": []}]}]}, {\"node\": \"FunctionDeclaration_20\", \"type\": \"Function\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"arguments\", \"references\": [], \"declarations\": []}], \"children\": []}]}]}]}]}"
+      '{"node": "Script_0", "type": "Global", "isDynamic": true, "through": [], "variables": [], "children": [{"node": "Script_0", "type": "Script", "isDynamic": false, "through": [], "variables": [], "children": [{"node": "FunctionExpression_3", "type": "Function", "isDynamic": false, "through": [], "variables": [{"name": "arguments", "references": [], "declarations": []}, {"name": "f", "references": [{"node": "IdentifierExpression(f)_25", "accessibility": "Read"}], "declarations": [{"node": "BindingIdentifier(f)_21", "kind": "FunctionB33"}]}], "children": [{"node": "Block_7", "type": "Block", "isDynamic": false, "through": [], "variables": [{"name": "f", "references": [], "declarations": [{"node": "BindingIdentifier(f)_21", "kind": "FunctionDeclaration"}]}], "children": [{"node": "Block_9", "type": "Block", "isDynamic": false, "through": [], "variables": [{"name": "f", "references": [], "declarations": [{"node": "BindingIdentifier(f)_13", "kind": "Let"}]}], "children": [{"node": "Block_15", "type": "Block", "isDynamic": false, "through": [], "variables": [{"name": "f", "references": [], "declarations": [{"node": "BindingIdentifier(f)_17", "kind": "FunctionDeclaration"}]}], "children": [{"node": "FunctionDeclaration_16", "type": "Function", "isDynamic": false, "through": [], "variables": [{"name": "arguments", "references": [], "declarations": []}], "children": []}]}]}, {"node": "FunctionDeclaration_20", "type": "Function", "isDynamic": false, "through": [], "variables": [{"name": "arguments", "references": [], "declarations": []}], "children": []}]}]}]}]}'
     );
   });
 
-  test("import", () => {
+  test('import', () => {
     checkScopeSerialization(
-      `import a, {b} from ""`,
-      "{\"node\": \"Module_0\", \"type\": \"Global\", \"isDynamic\": true, \"through\": [], \"variables\": [], \"children\": [{\"node\": \"Module_0\", \"type\": \"Module\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"a\", \"references\": [], \"declarations\": [{\"node\": \"BindingIdentifier(a)_2\", \"kind\": \"Import\"}]}, {\"name\": \"b\", \"references\": [], \"declarations\": [{\"node\": \"BindingIdentifier(b)_4\", \"kind\": \"Import\"}]}], \"children\": []}]}",
-      {asScript: false}
+      'import a, {b} from ""',
+      '{"node": "Module_0", "type": "Global", "isDynamic": true, "through": [], "variables": [], "children": [{"node": "Module_0", "type": "Module", "isDynamic": false, "through": [], "variables": [{"name": "a", "references": [], "declarations": [{"node": "BindingIdentifier(a)_2", "kind": "Import"}]}, {"name": "b", "references": [], "declarations": [{"node": "BindingIdentifier(b)_4", "kind": "Import"}]}], "children": []}]}',
+      { asScript: false }
     );
   });
 
-  test("class", () => {
+  test('class', () => {
     checkScopeSerialization(
-      "class C{}",
-      "{\"node\": \"Module_0\", \"type\": \"Global\", \"isDynamic\": true, \"through\": [], \"variables\": [], \"children\": [{\"node\": \"Module_0\", \"type\": \"Module\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"C\", \"references\": [], \"declarations\": [{\"node\": \"BindingIdentifier(C)_2\", \"kind\": \"ClassDeclaration\"}]}], \"children\": [{\"node\": \"ClassDeclaration_1\", \"type\": \"ClassName\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"C\", \"references\": [], \"declarations\": [{\"node\": \"BindingIdentifier(C)_2\", \"kind\": \"ClassName\"}]}], \"children\": []}]}]}",
-      {asScript: false}
+      'class C{}',
+      '{"node": "Module_0", "type": "Global", "isDynamic": true, "through": [], "variables": [], "children": [{"node": "Module_0", "type": "Module", "isDynamic": false, "through": [], "variables": [{"name": "C", "references": [], "declarations": [{"node": "BindingIdentifier(C)_2", "kind": "ClassDeclaration"}]}], "children": [{"node": "ClassDeclaration_1", "type": "ClassName", "isDynamic": false, "through": [], "variables": [{"name": "C", "references": [], "declarations": [{"node": "BindingIdentifier(C)_2", "kind": "ClassName"}]}], "children": []}]}]}',
+      { asScript: false }
     );
 
     checkScopeSerialization(
-      "class C extends (()=>C, C, null) {f(){return C;}} C;",
-      "{\"node\": \"Module_0\", \"type\": \"Global\", \"isDynamic\": true, \"through\": [], \"variables\": [], \"children\": [{\"node\": \"Module_0\", \"type\": \"Module\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"C\", \"references\": [{\"node\": \"IdentifierExpression(C)_18\", \"accessibility\": \"Read\"}], \"declarations\": [{\"node\": \"BindingIdentifier(C)_2\", \"kind\": \"ClassDeclaration\"}]}], \"children\": [{\"node\": \"ClassDeclaration_1\", \"type\": \"ClassName\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"C\", \"references\": [{\"node\": \"IdentifierExpression(C)_7\", \"accessibility\": \"Read\"}, {\"node\": \"IdentifierExpression(C)_8\", \"accessibility\": \"Read\"}, {\"node\": \"IdentifierExpression(C)_16\", \"accessibility\": \"Read\"}], \"declarations\": [{\"node\": \"BindingIdentifier(C)_2\", \"kind\": \"ClassName\"}]}], \"children\": [{\"node\": \"ArrowExpression_5\", \"type\": \"ArrowFunction\", \"isDynamic\": false, \"through\": [{\"node\": \"IdentifierExpression(C)_7\", \"accessibility\": \"Read\"}], \"variables\": [], \"children\": []}, {\"node\": \"Method_11\", \"type\": \"Function\", \"isDynamic\": false, \"through\": [{\"node\": \"IdentifierExpression(C)_16\", \"accessibility\": \"Read\"}], \"variables\": [{\"name\": \"arguments\", \"references\": [], \"declarations\": []}], \"children\": []}]}]}]}",
-      {asScript: false}
+      'class C extends (()=>C, C, null) {f(){return C;}} C;',
+      '{"node": "Module_0", "type": "Global", "isDynamic": true, "through": [], "variables": [], "children": [{"node": "Module_0", "type": "Module", "isDynamic": false, "through": [], "variables": [{"name": "C", "references": [{"node": "IdentifierExpression(C)_18", "accessibility": "Read"}], "declarations": [{"node": "BindingIdentifier(C)_2", "kind": "ClassDeclaration"}]}], "children": [{"node": "ClassDeclaration_1", "type": "ClassName", "isDynamic": false, "through": [], "variables": [{"name": "C", "references": [{"node": "IdentifierExpression(C)_7", "accessibility": "Read"}, {"node": "IdentifierExpression(C)_8", "accessibility": "Read"}, {"node": "IdentifierExpression(C)_16", "accessibility": "Read"}], "declarations": [{"node": "BindingIdentifier(C)_2", "kind": "ClassName"}]}], "children": [{"node": "ArrowExpression_5", "type": "ArrowFunction", "isDynamic": false, "through": [{"node": "IdentifierExpression(C)_7", "accessibility": "Read"}], "variables": [], "children": []}, {"node": "Method_11", "type": "Function", "isDynamic": false, "through": [{"node": "IdentifierExpression(C)_16", "accessibility": "Read"}], "variables": [{"name": "arguments", "references": [], "declarations": []}], "children": []}]}]}]}',
+      { asScript: false }
     );
 
     checkScopeSerialization(
-      "(class{})",
-      "{\"node\": \"Module_0\", \"type\": \"Global\", \"isDynamic\": true, \"through\": [], \"variables\": [], \"children\": [{\"node\": \"Module_0\", \"type\": \"Module\", \"isDynamic\": false, \"through\": [], \"variables\": [], \"children\": [{\"node\": \"ClassExpression_2\", \"type\": \"ClassName\", \"isDynamic\": false, \"through\": [], \"variables\": [], \"children\": []}]}]}",
-      {asScript: false}
+      '(class{})',
+      '{"node": "Module_0", "type": "Global", "isDynamic": true, "through": [], "variables": [], "children": [{"node": "Module_0", "type": "Module", "isDynamic": false, "through": [], "variables": [], "children": [{"node": "ClassExpression_2", "type": "ClassName", "isDynamic": false, "through": [], "variables": [], "children": []}]}]}',
+      { asScript: false }
     );
 
     checkScopeSerialization(
-      "(class C{})",
-      "{\"node\": \"Module_0\", \"type\": \"Global\", \"isDynamic\": true, \"through\": [], \"variables\": [], \"children\": [{\"node\": \"Module_0\", \"type\": \"Module\", \"isDynamic\": false, \"through\": [], \"variables\": [], \"children\": [{\"node\": \"ClassExpression_2\", \"type\": \"ClassName\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"C\", \"references\": [], \"declarations\": [{\"node\": \"BindingIdentifier(C)_3\", \"kind\": \"ClassName\"}]}], \"children\": []}]}]}",
-      {asScript: false}
+      '(class C{})',
+      '{"node": "Module_0", "type": "Global", "isDynamic": true, "through": [], "variables": [], "children": [{"node": "Module_0", "type": "Module", "isDynamic": false, "through": [], "variables": [], "children": [{"node": "ClassExpression_2", "type": "ClassName", "isDynamic": false, "through": [], "variables": [{"name": "C", "references": [], "declarations": [{"node": "BindingIdentifier(C)_3", "kind": "ClassName"}]}], "children": []}]}]}',
+      { asScript: false }
     );
 
     checkScopeSerialization(
-      "(class C extends (()=>C, C, null) {f(){return C;}}); C;",
-      "{\"node\": \"Module_0\", \"type\": \"Global\", \"isDynamic\": true, \"through\": [{\"node\": \"IdentifierExpression(C)_19\", \"accessibility\": \"Read\"}], \"variables\": [{\"name\": \"C\", \"references\": [{\"node\": \"IdentifierExpression(C)_19\", \"accessibility\": \"Read\"}], \"declarations\": []}], \"children\": [{\"node\": \"Module_0\", \"type\": \"Module\", \"isDynamic\": false, \"through\": [{\"node\": \"IdentifierExpression(C)_19\", \"accessibility\": \"Read\"}], \"variables\": [], \"children\": [{\"node\": \"ClassExpression_2\", \"type\": \"ClassName\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"C\", \"references\": [{\"node\": \"IdentifierExpression(C)_8\", \"accessibility\": \"Read\"}, {\"node\": \"IdentifierExpression(C)_9\", \"accessibility\": \"Read\"}, {\"node\": \"IdentifierExpression(C)_17\", \"accessibility\": \"Read\"}], \"declarations\": [{\"node\": \"BindingIdentifier(C)_3\", \"kind\": \"ClassName\"}]}], \"children\": [{\"node\": \"ArrowExpression_6\", \"type\": \"ArrowFunction\", \"isDynamic\": false, \"through\": [{\"node\": \"IdentifierExpression(C)_8\", \"accessibility\": \"Read\"}], \"variables\": [], \"children\": []}, {\"node\": \"Method_12\", \"type\": \"Function\", \"isDynamic\": false, \"through\": [{\"node\": \"IdentifierExpression(C)_17\", \"accessibility\": \"Read\"}], \"variables\": [{\"name\": \"arguments\", \"references\": [], \"declarations\": []}], \"children\": []}]}]}]}",
-      {asScript: false}
-    );
-  });
-
-  test("export default", () => {
-    checkScopeSerialization(
-      "export default class {}",
-      "{\"node\": \"Module_0\", \"type\": \"Global\", \"isDynamic\": true, \"through\": [], \"variables\": [], \"children\": [{\"node\": \"Module_0\", \"type\": \"Module\", \"isDynamic\": false, \"through\": [], \"variables\": [], \"children\": [{\"node\": \"ClassDeclaration_2\", \"type\": \"ClassName\", \"isDynamic\": false, \"through\": [], \"variables\": [], \"children\": []}]}]}",
-      {asScript: false}
-    );
-
-    checkScopeSerialization(
-      "export default class C extends (()=>C, C, null) {f(){return C;}} C;",
-      "{\"node\": \"Module_0\", \"type\": \"Global\", \"isDynamic\": true, \"through\": [], \"variables\": [], \"children\": [{\"node\": \"Module_0\", \"type\": \"Module\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"C\", \"references\": [{\"node\": \"IdentifierExpression(C)_19\", \"accessibility\": \"Read\"}], \"declarations\": [{\"node\": \"BindingIdentifier(C)_3\", \"kind\": \"ClassDeclaration\"}]}], \"children\": [{\"node\": \"ClassDeclaration_2\", \"type\": \"ClassName\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"C\", \"references\": [{\"node\": \"IdentifierExpression(C)_8\", \"accessibility\": \"Read\"}, {\"node\": \"IdentifierExpression(C)_9\", \"accessibility\": \"Read\"}, {\"node\": \"IdentifierExpression(C)_17\", \"accessibility\": \"Read\"}], \"declarations\": [{\"node\": \"BindingIdentifier(C)_3\", \"kind\": \"ClassName\"}]}], \"children\": [{\"node\": \"ArrowExpression_6\", \"type\": \"ArrowFunction\", \"isDynamic\": false, \"through\": [{\"node\": \"IdentifierExpression(C)_8\", \"accessibility\": \"Read\"}], \"variables\": [], \"children\": []}, {\"node\": \"Method_12\", \"type\": \"Function\", \"isDynamic\": false, \"through\": [{\"node\": \"IdentifierExpression(C)_17\", \"accessibility\": \"Read\"}], \"variables\": [{\"name\": \"arguments\", \"references\": [], \"declarations\": []}], \"children\": []}]}]}]}",
-      {asScript: false}
-    );
-
-    checkScopeSerialization(
-      "export default function() {}",
-      "{\"node\": \"Module_0\", \"type\": \"Global\", \"isDynamic\": true, \"through\": [], \"variables\": [], \"children\": [{\"node\": \"Module_0\", \"type\": \"Module\", \"isDynamic\": false, \"through\": [], \"variables\": [], \"children\": [{\"node\": \"FunctionDeclaration_2\", \"type\": \"Function\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"arguments\", \"references\": [], \"declarations\": []}], \"children\": []}]}]}",
-      {asScript: false}
-    );
-
-    checkScopeSerialization(
-      "export default function f() {}",
-      "{\"node\": \"Module_0\", \"type\": \"Global\", \"isDynamic\": true, \"through\": [], \"variables\": [], \"children\": [{\"node\": \"Module_0\", \"type\": \"Module\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"f\", \"references\": [], \"declarations\": [{\"node\": \"BindingIdentifier(f)_3\", \"kind\": \"FunctionDeclaration\"}]}], \"children\": [{\"node\": \"FunctionDeclaration_2\", \"type\": \"Function\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"arguments\", \"references\": [], \"declarations\": []}], \"children\": []}]}]}",
-      {asScript: false}
+      '(class C extends (()=>C, C, null) {f(){return C;}}); C;',
+      '{"node": "Module_0", "type": "Global", "isDynamic": true, "through": [{"node": "IdentifierExpression(C)_19", "accessibility": "Read"}], "variables": [{"name": "C", "references": [{"node": "IdentifierExpression(C)_19", "accessibility": "Read"}], "declarations": []}], "children": [{"node": "Module_0", "type": "Module", "isDynamic": false, "through": [{"node": "IdentifierExpression(C)_19", "accessibility": "Read"}], "variables": [], "children": [{"node": "ClassExpression_2", "type": "ClassName", "isDynamic": false, "through": [], "variables": [{"name": "C", "references": [{"node": "IdentifierExpression(C)_8", "accessibility": "Read"}, {"node": "IdentifierExpression(C)_9", "accessibility": "Read"}, {"node": "IdentifierExpression(C)_17", "accessibility": "Read"}], "declarations": [{"node": "BindingIdentifier(C)_3", "kind": "ClassName"}]}], "children": [{"node": "ArrowExpression_6", "type": "ArrowFunction", "isDynamic": false, "through": [{"node": "IdentifierExpression(C)_8", "accessibility": "Read"}], "variables": [], "children": []}, {"node": "Method_12", "type": "Function", "isDynamic": false, "through": [{"node": "IdentifierExpression(C)_17", "accessibility": "Read"}], "variables": [{"name": "arguments", "references": [], "declarations": []}], "children": []}]}]}]}',
+      { asScript: false }
     );
   });
 
-  test("export local/from", () => {
+  test('export default', () => {
     checkScopeSerialization(
-      "let a; export {a} from 'm'",
-      "{\"node\": \"Module_0\", \"type\": \"Global\", \"isDynamic\": true, \"through\": [], \"variables\": [], \"children\": [{\"node\": \"Module_0\", \"type\": \"Module\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"a\", \"references\": [], \"declarations\": [{\"node\": \"BindingIdentifier(a)_4\", \"kind\": \"Let\"}]}], \"children\": []}]}",
-      {asScript: false}
+      'export default class {}',
+      '{"node": "Module_0", "type": "Global", "isDynamic": true, "through": [], "variables": [], "children": [{"node": "Module_0", "type": "Module", "isDynamic": false, "through": [], "variables": [], "children": [{"node": "ClassDeclaration_2", "type": "ClassName", "isDynamic": false, "through": [], "variables": [], "children": []}]}]}',
+      { asScript: false }
     );
 
     checkScopeSerialization(
-      "let a; export {a}",
-      "{\"node\": \"Module_0\", \"type\": \"Global\", \"isDynamic\": true, \"through\": [], \"variables\": [], \"children\": [{\"node\": \"Module_0\", \"type\": \"Module\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"a\", \"references\": [{\"node\": \"IdentifierExpression(a)_7\", \"accessibility\": \"Read\"}], \"declarations\": [{\"node\": \"BindingIdentifier(a)_4\", \"kind\": \"Let\"}]}], \"children\": []}]}",
-      {asScript: false}
+      'export default class C extends (()=>C, C, null) {f(){return C;}} C;',
+      '{"node": "Module_0", "type": "Global", "isDynamic": true, "through": [], "variables": [], "children": [{"node": "Module_0", "type": "Module", "isDynamic": false, "through": [], "variables": [{"name": "C", "references": [{"node": "IdentifierExpression(C)_19", "accessibility": "Read"}], "declarations": [{"node": "BindingIdentifier(C)_3", "kind": "ClassDeclaration"}]}], "children": [{"node": "ClassDeclaration_2", "type": "ClassName", "isDynamic": false, "through": [], "variables": [{"name": "C", "references": [{"node": "IdentifierExpression(C)_8", "accessibility": "Read"}, {"node": "IdentifierExpression(C)_9", "accessibility": "Read"}, {"node": "IdentifierExpression(C)_17", "accessibility": "Read"}], "declarations": [{"node": "BindingIdentifier(C)_3", "kind": "ClassName"}]}], "children": [{"node": "ArrowExpression_6", "type": "ArrowFunction", "isDynamic": false, "through": [{"node": "IdentifierExpression(C)_8", "accessibility": "Read"}], "variables": [], "children": []}, {"node": "Method_12", "type": "Function", "isDynamic": false, "through": [{"node": "IdentifierExpression(C)_17", "accessibility": "Read"}], "variables": [{"name": "arguments", "references": [], "declarations": []}], "children": []}]}]}]}',
+      { asScript: false }
     );
 
     checkScopeSerialization(
-      "let a; export {a as b}",
-      "{\"node\": \"Module_0\", \"type\": \"Global\", \"isDynamic\": true, \"through\": [], \"variables\": [], \"children\": [{\"node\": \"Module_0\", \"type\": \"Module\", \"isDynamic\": false, \"through\": [], \"variables\": [{\"name\": \"a\", \"references\": [{\"node\": \"IdentifierExpression(a)_7\", \"accessibility\": \"Read\"}], \"declarations\": [{\"node\": \"BindingIdentifier(a)_4\", \"kind\": \"Let\"}]}], \"children\": []}]}",
-      {asScript: false}
+      'export default function() {}',
+      '{"node": "Module_0", "type": "Global", "isDynamic": true, "through": [], "variables": [], "children": [{"node": "Module_0", "type": "Module", "isDynamic": false, "through": [], "variables": [], "children": [{"node": "FunctionDeclaration_2", "type": "Function", "isDynamic": false, "through": [], "variables": [{"name": "arguments", "references": [], "declarations": []}], "children": []}]}]}',
+      { asScript: false }
+    );
+
+    checkScopeSerialization(
+      'export default function f() {}',
+      '{"node": "Module_0", "type": "Global", "isDynamic": true, "through": [], "variables": [], "children": [{"node": "Module_0", "type": "Module", "isDynamic": false, "through": [], "variables": [{"name": "f", "references": [], "declarations": [{"node": "BindingIdentifier(f)_3", "kind": "FunctionDeclaration"}]}], "children": [{"node": "FunctionDeclaration_2", "type": "Function", "isDynamic": false, "through": [], "variables": [{"name": "arguments", "references": [], "declarations": []}], "children": []}]}]}',
+      { asScript: false }
+    );
+  });
+
+  test('export local/from', () => {
+    checkScopeSerialization(
+      'let a; export {a} from \'m\'',
+      '{"node": "Module_0", "type": "Global", "isDynamic": true, "through": [], "variables": [], "children": [{"node": "Module_0", "type": "Module", "isDynamic": false, "through": [], "variables": [{"name": "a", "references": [], "declarations": [{"node": "BindingIdentifier(a)_4", "kind": "Let"}]}], "children": []}]}',
+      { asScript: false }
+    );
+
+    checkScopeSerialization(
+      'let a; export {a}',
+      '{"node": "Module_0", "type": "Global", "isDynamic": true, "through": [], "variables": [], "children": [{"node": "Module_0", "type": "Module", "isDynamic": false, "through": [], "variables": [{"name": "a", "references": [{"node": "IdentifierExpression(a)_7", "accessibility": "Read"}], "declarations": [{"node": "BindingIdentifier(a)_4", "kind": "Let"}]}], "children": []}]}',
+      { asScript: false }
+    );
+
+    checkScopeSerialization(
+      'let a; export {a as b}',
+      '{"node": "Module_0", "type": "Global", "isDynamic": true, "through": [], "variables": [], "children": [{"node": "Module_0", "type": "Module", "isDynamic": false, "through": [], "variables": [{"name": "a", "references": [{"node": "IdentifierExpression(a)_7", "accessibility": "Read"}], "declarations": [{"node": "BindingIdentifier(a)_4", "kind": "Let"}]}], "children": []}]}',
+      { asScript: false }
     );
   });
 });
