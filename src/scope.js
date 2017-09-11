@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import Map from "es6-map";
-import Variable from "./variable";
+import Map from 'es6-map';
+import Variable from './variable';
 
 export class ScopeType {
   constructor(name) {
@@ -23,18 +23,18 @@ export class ScopeType {
   }
 }
 
-ScopeType.GLOBAL = new ScopeType("Global");
-ScopeType.MODULE = new ScopeType("Module");
-ScopeType.SCRIPT = new ScopeType("Script");
-ScopeType.ARROW_FUNCTION = new ScopeType("ArrowFunction");
-ScopeType.FUNCTION = new ScopeType("Function");
-ScopeType.FUNCTION_NAME = new ScopeType("FunctionName"); // named function expressions
-ScopeType.CLASS_NAME = new ScopeType("ClassName"); // named class expressions
-ScopeType.PARAMETERS = new ScopeType("Parameters");
-ScopeType.PARAMETER_EXPRESSION = new ScopeType("ParameterExpression");
-ScopeType.WITH = new ScopeType("With");
-ScopeType.CATCH = new ScopeType("Catch");
-ScopeType.BLOCK = new ScopeType("Block");
+ScopeType.GLOBAL = new ScopeType('Global');
+ScopeType.MODULE = new ScopeType('Module');
+ScopeType.SCRIPT = new ScopeType('Script');
+ScopeType.ARROW_FUNCTION = new ScopeType('ArrowFunction');
+ScopeType.FUNCTION = new ScopeType('Function');
+ScopeType.FUNCTION_NAME = new ScopeType('FunctionName'); // named function expressions
+ScopeType.CLASS_NAME = new ScopeType('ClassName'); // named class expressions
+ScopeType.PARAMETERS = new ScopeType('Parameters');
+ScopeType.PARAMETER_EXPRESSION = new ScopeType('ParameterExpression');
+ScopeType.WITH = new ScopeType('With');
+ScopeType.CATCH = new ScopeType('Catch');
+ScopeType.BLOCK = new ScopeType('Block');
 
 export class Scope {
   constructor(children, variables, through, type, isDynamic, astNode) {
@@ -47,7 +47,7 @@ export class Scope {
     variables.forEach(v => this.variables.set(v.name, v));
 
     this.variableList = [];
-    for(let x of this.variables.values()) {
+    for (let x of this.variables.values()) {
       this.variableList.push(x);
     }
 
@@ -70,7 +70,7 @@ export class GlobalScope extends Scope {
       this.variables.set(k, new Variable(k, v, []));
     });
     this.variableList = [];
-    for(let x of this.variables.values()) {
+    for (let x of this.variables.values()) {
       this.variableList.push(x);
     }
   }

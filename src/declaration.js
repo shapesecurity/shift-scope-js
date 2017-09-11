@@ -34,30 +34,30 @@ export class FunctionScopedDeclaration extends DeclarationType {
   }
 }
 
-DeclarationType.VAR = new FunctionScopedDeclaration("Var");
-DeclarationType.CONST = new BlockScopedDeclaration("Const");
-DeclarationType.LET = new BlockScopedDeclaration("Let");
-DeclarationType.FUNCTION_DECLARATION = new BlockScopedDeclaration("FunctionDeclaration"); // potentially also `FunctionScoped` versions of this, for functions at top of functions/etc?
-DeclarationType.FUNCTION_VAR_DECLARATION = new FunctionScopedDeclaration("FunctionB33"); // The additional variable created by B.3.3.
-DeclarationType.FUNCTION_NAME = new BlockScopedDeclaration("FunctionExpressionName");
-DeclarationType.CLASS_DECLARATION = new BlockScopedDeclaration("ClassDeclaration");
-DeclarationType.CLASS_NAME = new BlockScopedDeclaration("ClassName");
-DeclarationType.PARAMETER = new FunctionScopedDeclaration("Parameter");
-DeclarationType.CATCH_PARAMETER = new BlockScopedDeclaration("CatchParam");
-DeclarationType.IMPORT = new BlockScopedDeclaration("Import");
+DeclarationType.VAR = new FunctionScopedDeclaration('Var');
+DeclarationType.CONST = new BlockScopedDeclaration('Const');
+DeclarationType.LET = new BlockScopedDeclaration('Let');
+DeclarationType.FUNCTION_DECLARATION = new BlockScopedDeclaration('FunctionDeclaration'); // potentially also `FunctionScoped` versions of this, for functions at top of functions/etc?
+DeclarationType.FUNCTION_VAR_DECLARATION = new FunctionScopedDeclaration('FunctionB33'); // The additional variable created by B.3.3.
+DeclarationType.FUNCTION_NAME = new BlockScopedDeclaration('FunctionExpressionName');
+DeclarationType.CLASS_DECLARATION = new BlockScopedDeclaration('ClassDeclaration');
+DeclarationType.CLASS_NAME = new BlockScopedDeclaration('ClassName');
+DeclarationType.PARAMETER = new FunctionScopedDeclaration('Parameter');
+DeclarationType.CATCH_PARAMETER = new BlockScopedDeclaration('CatchParam');
+DeclarationType.IMPORT = new BlockScopedDeclaration('Import');
 
-DeclarationType.fromVarDeclKind = function(variableDeclarationKind) {
+DeclarationType.fromVarDeclKind = function (variableDeclarationKind) {
   switch (variableDeclarationKind) {
-  case "var":
-    return DeclarationType.VAR;
-  case "const":
-    return DeclarationType.CONST;
-  case "let":
-    return DeclarationType.LET;
-  default:
-    throw new Error("Invalid VariableDeclarationKind: " + JSON.stringify(variableDeclarationKind));
+    case 'var':
+      return DeclarationType.VAR;
+    case 'const':
+      return DeclarationType.CONST;
+    case 'let':
+      return DeclarationType.LET;
+    default:
+      throw new Error('Invalid VariableDeclarationKind: ' + JSON.stringify(variableDeclarationKind));
   }
-}
+};
 
 export class Declaration {
   constructor(node, type) {

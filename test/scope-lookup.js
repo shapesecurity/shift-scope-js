@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-import assert from "assert";
+import assert from 'assert';
 
-import {parseScript, parseModule} from "shift-parser";
-import Map from "es6-map";
-import MultiMap from "multimap";
-import analyze, {ScopeLookup} from "../";
+import { parseScript } from 'shift-parser';
+import Map from 'es6-map';
+import MultiMap from 'multimap';
+import analyze, { ScopeLookup } from '../';
 
-function setup(js) {
+function parseAndAnalyze(js) {
   const script = parseScript(js);
   const globalScope = analyze(script);
   const scopeLookup = new ScopeLookup(globalScope);
-  return [parseScript(js), globalScope, scopeLookup];
+  return [script, globalScope, scopeLookup];
 }
 
 function multiMapEquals(a, b) { // shallow
@@ -53,20 +53,19 @@ function multiMapEquals(a, b) { // shallow
 
 function checkLookup(lookup, varMap, globals) {
   assert(multiMapEquals(varMap, lookup.variableMap));
-  globals.forEach((v, k) => lookup.isGlobal(v) == k);
+  globals.forEach((v, k) => lookup.isGlobal(v) === k);
 }
 
-suite("ScopeLookup", () => {
-  test("nesting", () => {
-    return; // I believe this test is failing due to node, or compilation issues. Equivalent code works on Chrome.
-    let js = "let x; {let x; x;}";
-    let [script, globalScope, scopeLookup] = setup(js);
+suite('ScopeLookup', () => {
+  test('nesting', () => {
+    let js = 'let x; {let x; x;}';
+    let [script, globalScope, scopeLookup] = parseAndAnalyze(js);
     let xNode1 = script.statements[0].declaration.declarators[0].binding;
     let xNode2 = script.statements[1].block.statements[0].declaration.declarators[0].binding;
     let xNode3 = script.statements[1].block.statements[1].expression;
-    
-    let xVar1 = globalScope.children[0].variables.get("x");
-    let xVar2 = globalScope.children[0].children[0].variables.get("x");
+
+    let xVar1 = globalScope.children[0].variables.get('x');
+    let xVar2 = globalScope.children[0].children[0].variables.get('x');
 
     let varMap = new MultiMap([[xNode1, xVar1], [xNode2, xVar2], [xNode3, xVar2]]);
 

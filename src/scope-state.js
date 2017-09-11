@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import MultiMap from "multimap";
-import {Declaration, DeclarationType} from "./declaration";
-import {Reference} from "./reference";
-import {Scope, GlobalScope, ScopeType} from "./scope";
-import Variable from "./variable";
+import MultiMap from 'multimap';
+import { Declaration, DeclarationType } from './declaration';
+import { Reference } from './reference';
+import { Scope, GlobalScope, ScopeType } from './scope';
+import Variable from './variable';
 
 function merge(multiMap, otherMultiMap) {
   otherMultiMap.forEachEntry((v, k) => {
@@ -79,8 +79,8 @@ export default class ScopeState {
       functionDeclarations: merge(merge(new MultiMap, this.functionDeclarations), b.functionDeclarations),
       children: this.children.concat(b.children),
       dynamic: this.dynamic || b.dynamic,
-      bindingsForParent : this.bindingsForParent.concat(b.bindingsForParent),
-      atsForParent : this.atsForParent.concat(b.atsForParent),
+      bindingsForParent: this.bindingsForParent.concat(b.bindingsForParent),
+      atsForParent: this.atsForParent.concat(b.atsForParent),
       potentiallyVarScopedFunctionDeclarations: merge(merge(new MultiMap, this.potentiallyVarScopedFunctionDeclarations), b.potentiallyVarScopedFunctionDeclarations),
       hasParameterExpressions: this.hasParameterExpressions || b.hasParameterExpressions,
     });
@@ -107,7 +107,7 @@ export default class ScopeState {
   }
 
   addFunctionDeclaration() {
-    if (this.bindingsForParent.length == 0) {
+    if (this.bindingsForParent.length === 0) {
       return this; // i.e., this function declaration is `export default function () {...}`
     }
     const binding = this.bindingsForParent[0];
@@ -171,7 +171,7 @@ export default class ScopeState {
    * and declarations into variable objects. Any free identifiers remaining are
    * carried forward into the new state object.
    */
-  finish(astNode, scopeType, {shouldResolveArguments = false, shouldB33 = false} = {}) {
+  finish(astNode, scopeType, { shouldResolveArguments = false, shouldB33 = false } = {}) {
     let variables = [];
     let functionScoped = new MultiMap;
     let freeIdentifiers = merge(new MultiMap, this.freeIdentifiers);
@@ -187,7 +187,7 @@ export default class ScopeState {
         pvsfd.delete(k);
       }
     });
-    
+
     let declarations = new MultiMap;
 
     switch (scopeType) {
@@ -217,7 +217,7 @@ export default class ScopeState {
         } else {
           merge(declarations, this.blockScopedDeclarations);
         }
-        
+
         if (shouldResolveArguments) {
           declarations.set('arguments');
         }
@@ -238,20 +238,20 @@ export default class ScopeState {
         }
         break;
       default:
-        throw new Error("not reached");
+        throw new Error('not reached');
     }
 
-    const scope = (scopeType === ScopeType.SCRIPT || scopeType === ScopeType.MODULE)
+    const scope = scopeType === ScopeType.SCRIPT || scopeType === ScopeType.MODULE
       ? new GlobalScope(children, variables, freeIdentifiers, astNode)
       : new Scope(children, variables, freeIdentifiers, scopeType, this.dynamic, astNode);
 
     return new ScopeState({
-      freeIdentifiers: freeIdentifiers,
+      freeIdentifiers,
       functionScopedDeclarations: functionScoped,
       children: [scope],
       bindingsForParent: this.bindingsForParent,
       potentiallyVarScopedFunctionDeclarations: pvsfd,
-      hasParameterExpressions: this.hasParameterExpressions
+      hasParameterExpressions: this.hasParameterExpressions,
     });
   }
 }

@@ -15,7 +15,9 @@
   "scripts": {
     "test": "mocha --compilers js:babel-register --inline-diffs --check-leaks --ui tdd --reporter dot test",
     "build": "babel --source-maps-inline --out-dir dist src",
-    "prepublish": "rm -rf dist && npm update && npm run build"
+    "prepare": "rm -rf dist && npm update && npm run build",
+    "prepublishOnly": "npm run lint && npm run test",
+    "lint": "eslint src test"
   },
   "dependencies": {
     "es6-map": "^0.1.1",
@@ -27,8 +29,10 @@
   },
   "devDependencies": {
     "babel-cli": "6.3.13",
-    "babel-register": "6.3.13",
+    "babel-eslint": "7.2.3",
     "babel-preset-es2015": "6.3.13",
+    "babel-register": "6.3.13",
+    "eslint": "4.6.1",
     "mocha": "^2.3.4",
     "shift-parser": "^5.0.0"
   },
