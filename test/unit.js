@@ -16,8 +16,9 @@
 
 import assert from 'assert';
 
-import { parseScript, parseModule } from 'shift-parser';
-import analyze, { Accessibility, ScopeType, serialize } from '../';
+import { parseScript, parseScriptWithLocation, parseModule } from 'shift-parser';
+import analyze, { Accessibility, ScopeType, serialize, annotate } from '../';
+import { stripComments } from './helpers';
 
 const NO_REFERENCES = [];
 const NO_DECLARATIONS = [];
@@ -76,6 +77,13 @@ function checkScopeSerialization(js, serialization, { earlyErrors = true, asScri
   let globalScope = analyze(script);
 
   assert.equal(serialize(globalScope), serialization);
+}
+
+function checkScopeAnnotation(source, { skipUnambiguous = true, skipScopes = true } = {}) {
+  const stripped = stripComments(source);
+  const { tree, locations } = parseScriptWithLocation(stripped, { earlyErrors: false });
+  const globalScope = analyze(tree);
+  assert.equal(annotate({ source: stripped, locations, globalScope, skipUnambiguous, skipScopes }), source);
 }
 
 suite('unit', () => {
@@ -1642,6 +1650,19 @@ suite('unit', () => {
     }
   });
 
+  test('nested functions', () => {
+    checkScopeAnnotation(`
+      function outer(){
+        function f/* declares f#0 */() {}
+        {
+          function f/* declares f#1 */() {}
+          print(f/* reads f#1 */);
+        }
+        return f/* reads f#0 */;
+      }
+    `);
+  });
+
   test('destructuring', () => {
     checkScopeSerialization(
       'var {x, a:{b:y = z}} = null; var [z] = y;',
@@ -1730,7 +1751,7 @@ suite('unit', () => {
       '{"node": "Script_0", "type": "Global", "isDynamic": true, "through": [], "variables": [], "children": [{"node": "Script_0", "type": "Script", "isDynamic": false, "through": [], "variables": [], "children": [{"node": "FunctionExpression_3", "type": "FunctionName", "isDynamic": false, "through": [], "variables": [{"name": "f", "references": [], "declarations": [{"node": "BindingIdentifier(f)_4", "kind": "FunctionExpressionName"}]}], "children": [{"node": "FunctionExpression_3", "type": "Function", "isDynamic": false, "through": [], "variables": [{"name": "arguments", "references": [], "declarations": []}, {"name": "f", "references": [{"node": "IdentifierExpression(f)_20", "accessibility": "Read"}], "declarations": [{"node": "BindingIdentifier(f)_10", "kind": "FunctionB33"}, {"node": "BindingIdentifier(f)_16", "kind": "FunctionB33"}]}], "children": [{"node": "Block_8", "type": "Block", "isDynamic": false, "through": [], "variables": [{"name": "f", "references": [], "declarations": [{"node": "BindingIdentifier(f)_10", "kind": "FunctionDeclaration"}]}], "children": [{"node": "FunctionDeclaration_9", "type": "Function", "isDynamic": false, "through": [], "variables": [{"name": "arguments", "references": [], "declarations": []}], "children": []}]}, {"node": "Block_14", "type": "Block", "isDynamic": false, "through": [], "variables": [{"name": "f", "references": [], "declarations": [{"node": "BindingIdentifier(f)_16", "kind": "FunctionDeclaration"}]}], "children": [{"node": "FunctionDeclaration_15", "type": "Function", "isDynamic": false, "through": [], "variables": [{"name": "arguments", "references": [], "declarations": []}], "children": []}]}]}]}]}]}'
     );
 
-    checkScopeSerialization( // As above, but as a module. Because B.3.3 only applies in strict mode, this case is substantially different from the previous.
+    checkScopeSerialization( // As above, but as a module. Because B.3.3 only applies in sloppy mode, this case is substantially different from the previous.
       `!function f() {
         {
           function f(){}
