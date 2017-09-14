@@ -47,9 +47,9 @@ export function stripComments(src) {
           break;
         } else {
           braceDepthsForEachTemplateInterpolationNesting.shift();
-          // fall through
         }
       }
+      // fall through
       case '`': {
         for (++i; i < src.length; ++i) {
           if (src[i] === '\\') {
