@@ -16,8 +16,10 @@
 
 export function stripComments(src) {
   // This doesn't handle html comments, because don't put html comments in your test code.
+  // This also doesn't handle mismatched braces inside of regex literals. Doing so requires actual parsing (to disambiguate between "division" and "start of regex literal").
   let out = '';
   let lastTextBegun = 0;
+  let braceDepthsForEachTemplateInterpolationNesting = [0];
   for (let i = 0; i < src.length; ++i) {
     let c = src[i];
     switch (c) {
@@ -27,12 +29,38 @@ export function stripComments(src) {
         break;
       }
       case '"':
-      case '\'':
-      case '`': {
+      case '\'': {
         for (++i; i < src.length; ++i) {
           let c1 = src[i];
           if (c1 === '\\') ++i;
           else if (c1 === c) break;
+        }
+        break;
+      }
+      case '{': {
+        ++braceDepthsForEachTemplateInterpolationNesting[0];
+        break;
+      }
+      case '}': {
+        if (braceDepthsForEachTemplateInterpolationNesting[0] > 0) {
+          --braceDepthsForEachTemplateInterpolationNesting[0];
+          break;
+        } else {
+          braceDepthsForEachTemplateInterpolationNesting.shift();
+          // fall through
+        }
+      }
+      case '`': {
+        for (++i; i < src.length; ++i) {
+          if (src[i] === '\\') {
+            ++i;
+          } else if (src[i] === '`') {
+            break;
+          } else if (src[i] === '$' && src[i + 1] === '{') {
+            braceDepthsForEachTemplateInterpolationNesting.unshift(0);
+            ++i;
+            break;
+          }
         }
         break;
       }
