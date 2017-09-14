@@ -16,6 +16,7 @@
 
 import ScopeAnalyzer from './scope-analyzer';
 export { default as ScopeLookup } from './scope-lookup';
+export { default as annotate } from './annotate-source';
 export { ScopeType } from './scope';
 export { DeclarationType } from './declaration';
 export { Accessibility } from './reference';

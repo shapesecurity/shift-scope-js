@@ -184,6 +184,7 @@ export default class ScopeState {
     this.functionDeclarations.forEachEntry((v, k) => {
       const existing = pvsfd.get(k);
       if (existing && (v.length > 1 || v[0].node !== existing[0].node)) {
+        // Note that this is *currently* the spec'd behavior, but is regarded as a bug; see https://github.com/tc39/ecma262/issues/913
         pvsfd.delete(k);
       }
     });

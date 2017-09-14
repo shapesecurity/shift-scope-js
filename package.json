@@ -25,13 +25,13 @@
     "shift-spec": "^2016.0.0"
   },
   "devDependencies": {
-    "babel-cli": "6.3.13",
+    "babel-cli": "6.26.0",
     "babel-eslint": "7.2.3",
-    "babel-preset-es2015": "6.3.13",
-    "babel-register": "6.3.13",
+    "babel-preset-es2015": "6.24.1",
+    "babel-register": "6.26.0",
     "eslint": "4.6.1",
     "mocha": "^2.3.4",
-    "shift-parser": "^5.0.0"
+    "shift-parser": "5.0.7"
   },
   "keywords": [
     "Shift",
