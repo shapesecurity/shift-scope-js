@@ -1663,6 +1663,15 @@ suite('unit', () => {
     `);
   });
 
+  test('template nexting', () => {
+    checkScopeAnnotation(`
+      function a/* declares a#0 */(){
+        \`\${a/* reads a#1 */+ \` \${a/* reads a#1 */} \`  }\`;
+        let a/* declares a#1 */;
+      }
+    `);
+  });
+
   test('destructuring', () => {
     checkScopeSerialization(
       'var {x, a:{b:y = z}} = null; var [z] = y;',
