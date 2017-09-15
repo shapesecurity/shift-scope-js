@@ -18,7 +18,6 @@ import assert from 'assert';
 
 import { parseScript, parseScriptWithLocation, parseModule } from 'shift-parser';
 import analyze, { Accessibility, ScopeType, serialize, annotate } from '../';
-import { stripComments } from './helpers';
 
 const NO_REFERENCES = [];
 const NO_DECLARATIONS = [];
@@ -80,8 +79,19 @@ function checkScopeSerialization(js, serialization, { earlyErrors = true, asScri
 }
 
 function checkScopeAnnotation(source, { skipUnambiguous = true, skipScopes = true } = {}) {
-  const stripped = stripComments(source);
-  const { tree, locations } = parseScriptWithLocation(stripped, { earlyErrors: false });
+  let stripped = '';
+  const comments = parseScriptWithLocation(source, { earlyErrors: false }).comments.filter(c => source[c[0].offset + 1] === '*');
+  if (comments.length === 0) {
+    stripped = source;
+  } else {
+    let previousOffset = 0;
+    for (const [start, end] of comments) {
+      stripped += source.substring(previousOffset, start.offset);
+      previousOffset = end.offset;
+    }
+    stripped += source.substring(comments[comments.length - 1][1].offset);
+  }
+  const { tree, locations } = parseScriptWithLocation(stripped, { earlyErrors: false }); // We can't just reuse the old one because the locations have changed
   const globalScope = analyze(tree);
   assert.equal(annotate({ source: stripped, locations, globalScope, skipUnambiguous, skipScopes }), source);
 }
