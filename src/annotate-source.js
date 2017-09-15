@@ -18,7 +18,7 @@ function insertInto(annotations, index, text, afterExisting) {
   for (let i = 0; i < annotations.length; ++i) {
     if (annotations[i].index >= index) {
       if (afterExisting) {
-        while (annotations[i].index === index) {
+        while (i < annotations.length && annotations[i].index === index) {
           ++i;
         }
       }
@@ -104,14 +104,14 @@ export default function annotate({ source, locations, globalScope, skipUnambiguo
       if (info.declares.length !== 0 || info.reads.length !== 0 || info.writes.length !== 0) {
         throw new Error('unhandled condition: node is scope and reference');
       }
-      for (let scope of [...info.scopes].reverse()) {
+      for (let scope of [...info.scopes]) {
         let scopeVars = [...scope.variables.values()];
         let text = 'Scope (' + scope.type.name + ')';
         if (scopeVars.length > 0) {
           text += ' declaring ' + scopeVars.map(v => v.name + '#' + vars.get(v.name).indexOf(v)).join(', ');
         }
         insertInto(annotations, location.start.offset, '/* ' + text + ' */', true);
-        insertInto(annotations, location.end.offset, '/* end scope */', false);
+        insertInto(annotations, location.end.offset, '/* end scope */', true);
       }
     } else {
       let text = '';
