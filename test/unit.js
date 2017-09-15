@@ -16,7 +16,7 @@
 
 import assert from 'assert';
 
-import { parseScript, parseScriptWithLocation, parseModule } from 'shift-parser';
+import { parseScript, parseScriptWithLocation, parseModule, parseModuleWithLocation } from 'shift-parser';
 import analyze, { Accessibility, ScopeType, serialize, annotate } from '../';
 
 const NO_REFERENCES = [];
@@ -78,22 +78,24 @@ function checkScopeSerialization(js, serialization, { earlyErrors = true, asScri
   assert.equal(serialize(globalScope), serialization);
 }
 
-function checkScopeAnnotation(source, { skipUnambiguous = true, skipScopes = true } = {}) {
+function checkScopeAnnotation(source, { asScript = true, skipUnambiguous = true, skipScopes = true } = {}) {
+  const parse = asScript ? parseScriptWithLocation : parseModuleWithLocation;
   let stripped = '';
-  const comments = parseScriptWithLocation(source, { earlyErrors: false }).comments.filter(c => source[c[0].offset + 1] === '*');
+  const comments = parse(source, { earlyErrors: false }).comments.filter(c => c.type === 'MultiLine');
   if (comments.length === 0) {
     stripped = source;
   } else {
     let previousOffset = 0;
-    for (const [start, end] of comments) {
+    for (const { start, end } of comments) {
       stripped += source.substring(previousOffset, start.offset);
       previousOffset = end.offset;
     }
-    stripped += source.substring(comments[comments.length - 1][1].offset);
+    stripped += source.substring(comments[comments.length - 1].end.offset);
   }
-  const { tree, locations } = parseScriptWithLocation(stripped, { earlyErrors: false }); // We can't just reuse the old one because the locations have changed
+  const { tree, locations } = parse(stripped, { earlyErrors: false }); // We can't just reuse the old one because the locations have changed
   const globalScope = analyze(tree);
-  assert.equal(annotate({ source: stripped, locations, globalScope, skipUnambiguous, skipScopes }), source);
+  const annotated = annotate({ source: stripped, locations, globalScope, skipUnambiguous, skipScopes });
+  assert.equal(annotated, source);
 }
 
 suite('unit', () => {
@@ -1625,39 +1627,10 @@ suite('unit', () => {
   });
 
   test('arrow arguments', () => {
-    const js =
-      '() => arguments';
-    let script = parseScript(js);
-
-    let globalScope = analyze(script);
-    let scriptScope = globalScope.children[0];
-    let aScope = scriptScope.children[0];
-    let aScopeNode = script.statements[0].expression;
-
-    let argumentsNode = script.statements[0].expression.body;
-
-    { // global scope
-      let children = [scriptScope];
-      let through = ['arguments'];
-
-      let variables = new Map;
-      variables.set('arguments', [NO_DECLARATIONS, [argumentsNode]]);
-
-      let referenceTypes = new Map;
-      referenceTypes.set(argumentsNode, Accessibility.READ);
-
-      checkScope(globalScope, script, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
-    }
-    { // arrow scope
-      let children = [];
-      let through = ['arguments'];
-
-      let variables = new Map;
-
-      let referenceTypes = new Map;
-
-      checkScope(aScope, aScopeNode, ScopeType.ARROW_FUNCTION, false, children, through, variables, referenceTypes);
-    }
+    checkScopeAnnotation(
+      '/* Scope (Global) declaring arguments#0 *//* Scope (Script) *//* Scope (ArrowFunction) */() => arguments/* reads arguments#0 *//* end scope *//* end scope *//* end scope */',
+      { skipUnambiguous: false, skipScopes: false },
+    );
   });
 
   test('nested functions', () => {
@@ -1673,7 +1646,7 @@ suite('unit', () => {
     `);
   });
 
-  test('template nexting', () => {
+  test('template nesting', () => {
     checkScopeAnnotation(`
       function a/* declares a#0 */(){
         \`\${a/* reads a#1 */+ \` \${a/* reads a#1 */} \`  }\`;
@@ -1683,139 +1656,199 @@ suite('unit', () => {
   });
 
   test('destructuring', () => {
-    checkScopeSerialization(
-      'var {x, a:{b:y = z}} = null; var [z] = y;',
-      '{"node": "Script_0", "type": "Global", "isDynamic": true, "through": [], "variables": [{"name": "x", "references": [{"node": "BindingIdentifier(x)_6", "accessibility": "Write"}], "declarations": [{"node": "BindingIdentifier(x)_6", "kind": "Var"}]}, {"name": "y", "references": [{"node": "BindingIdentifier(y)_13", "accessibility": "Write"}, {"node": "IdentifierExpression(y)_21", "accessibility": "Read"}], "declarations": [{"node": "BindingIdentifier(y)_13", "kind": "Var"}]}, {"name": "z", "references": [{"node": "IdentifierExpression(z)_14", "accessibility": "Read"}, {"node": "BindingIdentifier(z)_20", "accessibility": "Write"}], "declarations": [{"node": "BindingIdentifier(z)_20", "kind": "Var"}]}], "children": [{"node": "Script_0", "type": "Script", "isDynamic": false, "through": [{"node": "IdentifierExpression(z)_14", "accessibility": "Read"}, {"node": "IdentifierExpression(y)_21", "accessibility": "Read"}, {"node": "BindingIdentifier(x)_6", "accessibility": "Write"}, {"node": "BindingIdentifier(y)_13", "accessibility": "Write"}, {"node": "BindingIdentifier(z)_20", "accessibility": "Write"}], "variables": [], "children": []}]}'
-    );
+    checkScopeAnnotation(`
+      var {x/* declares x#0; writes x#0 */, a:{b:y /* declares y#0; writes y#0 */= z/* reads z#0 */}} = null;
+      var [z/* declares z#0; writes z#0 */] = y/* reads y#0 */;
+      `,
+      { skipUnambiguous: false });
   });
 
   test('binding', () => {
-    checkScopeSerialization(
-      'function foo(b){function r(){for(var b=0;;);}}',
-      '{"node": "Script_0", "type": "Global", "isDynamic": true, "through": [], "variables": [{"name": "foo", "references": [], "declarations": [{"node": "BindingIdentifier(foo)_2", "kind": "FunctionDeclaration"}]}], "children": [{"node": "Script_0", "type": "Script", "isDynamic": false, "through": [], "variables": [], "children": [{"node": "FunctionDeclaration_1", "type": "Function", "isDynamic": false, "through": [], "variables": [{"name": "arguments", "references": [], "declarations": []}, {"name": "b", "references": [], "declarations": [{"node": "BindingIdentifier(b)_4", "kind": "Parameter"}]}, {"name": "r", "references": [], "declarations": [{"node": "BindingIdentifier(r)_7", "kind": "FunctionDeclaration"}]}], "children": [{"node": "FunctionDeclaration_6", "type": "Function", "isDynamic": false, "through": [], "variables": [{"name": "arguments", "references": [], "declarations": []}, {"name": "b", "references": [{"node": "BindingIdentifier(b)_13", "accessibility": "Write"}], "declarations": [{"node": "BindingIdentifier(b)_13", "kind": "Var"}]}], "children": [{"node": "ForStatement_10", "type": "Block", "isDynamic": false, "through": [{"node": "BindingIdentifier(b)_13", "accessibility": "Write"}], "variables": [], "children": []}]}]}]}]}'
+    checkScopeAnnotation(`
+      function foo/* declares foo#0 */(b/* declares b#0 */) {
+        function r/* declares r#0 */() {
+          for(var b/* declares b#1; writes b#1 */=0;;);
+        }
+      }`,
+      { skipUnambiguous: false }
     );
   });
 
   test('function double declaration', () => {
-    checkScopeSerialization(
-      '{let x; function x(){}}',
-      '{"node": "Script_0", "type": "Global", "isDynamic": true, "through": [], "variables": [], "children": [{"node": "Script_0", "type": "Script", "isDynamic": false, "through": [], "variables": [], "children": [{"node": "Block_2", "type": "Block", "isDynamic": false, "through": [], "variables": [{"name": "x", "references": [], "declarations": [{"node": "BindingIdentifier(x)_6", "kind": "Let"}, {"node": "BindingIdentifier(x)_8", "kind": "FunctionDeclaration"}]}], "children": [{"node": "FunctionDeclaration_7", "type": "Function", "isDynamic": false, "through": [], "variables": [{"name": "arguments", "references": [], "declarations": []}], "children": []}]}]}]}',
-      { earlyErrors: false }
+    checkScopeAnnotation(
+      '{let x/* declares x#0 */; function x/* declares x#0 */(){}}',
+      { skipUnambiguous: false }
     );
 
-    checkScopeSerialization(
-      'function f1(x){return x; function x(){}}',
-      '{"node": "Script_0", "type": "Global", "isDynamic": true, "through": [], "variables": [{"name": "f1", "references": [], "declarations": [{"node": "BindingIdentifier(f1)_2", "kind": "FunctionDeclaration"}]}], "children": [{"node": "Script_0", "type": "Script", "isDynamic": false, "through": [], "variables": [], "children": [{"node": "FunctionDeclaration_1", "type": "Function", "isDynamic": false, "through": [], "variables": [{"name": "arguments", "references": [], "declarations": []}, {"name": "x", "references": [{"node": "IdentifierExpression(x)_7", "accessibility": "Read"}], "declarations": [{"node": "BindingIdentifier(x)_4", "kind": "Parameter"}, {"node": "BindingIdentifier(x)_9", "kind": "FunctionDeclaration"}]}], "children": [{"node": "FunctionDeclaration_8", "type": "Function", "isDynamic": false, "through": [], "variables": [{"name": "arguments", "references": [], "declarations": []}], "children": []}]}]}]}'
+    checkScopeAnnotation(`
+      !function (x/* declares x#0 */) {
+        return x/* reads x#0 */;
+        function x/* declares x#0 */(){}
+      }`,
+      { skipUnambiguous: false }
     );
 
-    checkScopeSerialization(
-      'function x(){}; var x = 1; function x(){}',
-      '{"node": "Script_0", "type": "Global", "isDynamic": true, "through": [], "variables": [{"name": "x", "references": [{"node": "BindingIdentifier(x)_9", "accessibility": "Write"}], "declarations": [{"node": "BindingIdentifier(x)_9", "kind": "Var"}, {"node": "BindingIdentifier(x)_2", "kind": "FunctionDeclaration"}, {"node": "BindingIdentifier(x)_12", "kind": "FunctionDeclaration"}]}], "children": [{"node": "Script_0", "type": "Script", "isDynamic": false, "through": [{"node": "BindingIdentifier(x)_9", "accessibility": "Write"}], "variables": [], "children": [{"node": "FunctionDeclaration_1", "type": "Function", "isDynamic": false, "through": [], "variables": [{"name": "arguments", "references": [], "declarations": []}], "children": []}, {"node": "FunctionDeclaration_11", "type": "Function", "isDynamic": false, "through": [], "variables": [{"name": "arguments", "references": [], "declarations": []}], "children": []}]}]}'
+    checkScopeAnnotation(`
+      function x/* declares x#0 */(){}
+      var x /* declares x#0; writes x#0 */= 1;
+      function x/* declares x#0 */(){}`,
+      { skipUnambiguous: false }
     );
 
-    checkScopeSerialization(
-      'function f3() {return arguments; function arguments(){}}',
-      '{"node": "Script_0", "type": "Global", "isDynamic": true, "through": [], "variables": [{"name": "f3", "references": [], "declarations": [{"node": "BindingIdentifier(f3)_2", "kind": "FunctionDeclaration"}]}], "children": [{"node": "Script_0", "type": "Script", "isDynamic": false, "through": [], "variables": [], "children": [{"node": "FunctionDeclaration_1", "type": "Function", "isDynamic": false, "through": [], "variables": [{"name": "arguments", "references": [{"node": "IdentifierExpression(arguments)_6", "accessibility": "Read"}], "declarations": [{"node": "BindingIdentifier(arguments)_8", "kind": "FunctionDeclaration"}]}], "children": [{"node": "FunctionDeclaration_7", "type": "Function", "isDynamic": false, "through": [], "variables": [{"name": "arguments", "references": [], "declarations": []}], "children": []}]}]}]}'
+    // This test might look a little funny, but the '/* Scope (Function) declaring arguments#1 */' is the scope for the body of the inner function; it's not saying that the name of the inner function is what declares arguments#1.
+    checkScopeAnnotation(`
+      /* Scope (Global) declaring outer#0 *//* Scope (Script) *//* Scope (Function) declaring arguments#0 */function outer() {
+        return arguments/* reads arguments#0 */;
+        /* Scope (Function) declaring arguments#1 */function arguments/* declares arguments#0 */(){}
+      /* end scope */}/* end scope *//* end scope *//* end scope */`,
+      { skipScopes: false }
     );
   });
 
   test('parameter scope', () => {
-    checkScopeSerialization(
-      '!function(x){let y;};',
-      '{"node": "Script_0", "type": "Global", "isDynamic": true, "through": [], "variables": [], "children": [{"node": "Script_0", "type": "Script", "isDynamic": false, "through": [], "variables": [], "children": [{"node": "FunctionExpression_3", "type": "Function", "isDynamic": false, "through": [], "variables": [{"name": "arguments", "references": [], "declarations": []}, {"name": "x", "references": [], "declarations": [{"node": "BindingIdentifier(x)_5", "kind": "Parameter"}]}, {"name": "y", "references": [], "declarations": [{"node": "BindingIdentifier(y)_10", "kind": "Let"}]}], "children": []}]}]}'
+    checkScopeAnnotation(`
+      /* Scope (Global) *//* Scope (Script) */!/* Scope (Function) declaring y#0, arguments#0, x#0 */function (x/* declares x#0 */) {
+        let y/* declares y#0 */;
+      }/* end scope */;/* end scope *//* end scope */`,
+      { skipUnambiguous: false, skipScopes: false }
     );
 
-    checkScopeSerialization(
-      '!function(x = 1){let y;};',
-      '{"node": "Script_0", "type": "Global", "isDynamic": true, "through": [], "variables": [], "children": [{"node": "Script_0", "type": "Script", "isDynamic": false, "through": [], "variables": [], "children": [{"node": "FunctionExpression_3", "type": "Parameters", "isDynamic": false, "through": [], "variables": [{"name": "x", "references": [], "declarations": [{"node": "BindingIdentifier(x)_6", "kind": "Parameter"}]}], "children": [{"node": "BindingWithDefault_5", "type": "ParameterExpression", "isDynamic": false, "through": [], "variables": [], "children": []}, {"node": "FunctionExpression_3", "type": "Function", "isDynamic": false, "through": [], "variables": [{"name": "arguments", "references": [], "declarations": []}, {"name": "y", "references": [], "declarations": [{"node": "BindingIdentifier(y)_12", "kind": "Let"}]}], "children": []}]}]}]}'
+    // Note the Parameters and ParametersExpression scopes
+    checkScopeAnnotation(`
+      /* Scope (Global) *//* Scope (Script) */!/* Scope (Parameters) declaring x#0 *//* Scope (Function) declaring y#0, arguments#0 */function(/* Scope (ParameterExpression) */x /* declares x#0 */= 1/* end scope */) {
+        let y/* declares y#0 */;
+      }/* end scope *//* end scope */;/* end scope *//* end scope */`,
+      { skipUnambiguous: false, skipScopes: false }
     );
 
-    checkScopeSerialization(
-      '!function(x, y = () => (x,y,z)){let z;};',
-      '{"node": "Script_0", "type": "Global", "isDynamic": true, "through": [{"node": "IdentifierExpression(z)_14", "accessibility": "Read"}], "variables": [{"name": "z", "references": [{"node": "IdentifierExpression(z)_14", "accessibility": "Read"}], "declarations": []}], "children": [{"node": "Script_0", "type": "Script", "isDynamic": false, "through": [{"node": "IdentifierExpression(z)_14", "accessibility": "Read"}], "variables": [], "children": [{"node": "FunctionExpression_3", "type": "Parameters", "isDynamic": false, "through": [{"node": "IdentifierExpression(z)_14", "accessibility": "Read"}], "variables": [{"name": "x", "references": [{"node": "IdentifierExpression(x)_12", "accessibility": "Read"}], "declarations": [{"node": "BindingIdentifier(x)_5", "kind": "Parameter"}]}, {"name": "y", "references": [{"node": "IdentifierExpression(y)_13", "accessibility": "Read"}], "declarations": [{"node": "BindingIdentifier(y)_7", "kind": "Parameter"}]}], "children": [{"node": "BindingWithDefault_6", "type": "ParameterExpression", "isDynamic": false, "through": [{"node": "IdentifierExpression(x)_12", "accessibility": "Read"}, {"node": "IdentifierExpression(y)_13", "accessibility": "Read"}, {"node": "IdentifierExpression(z)_14", "accessibility": "Read"}], "variables": [], "children": [{"node": "ArrowExpression_8", "type": "ArrowFunction", "isDynamic": false, "through": [{"node": "IdentifierExpression(x)_12", "accessibility": "Read"}, {"node": "IdentifierExpression(y)_13", "accessibility": "Read"}, {"node": "IdentifierExpression(z)_14", "accessibility": "Read"}], "variables": [], "children": []}]}, {"node": "FunctionExpression_3", "type": "Function", "isDynamic": false, "through": [], "variables": [{"name": "arguments", "references": [], "declarations": []}, {"name": "z", "references": [], "declarations": [{"node": "BindingIdentifier(z)_19", "kind": "Let"}]}], "children": []}]}]}]}'
+    checkScopeAnnotation(`
+      /* Scope (Global) declaring z#0 *//* Scope (Script) */!/* Scope (Parameters) declaring x#0, y#0 *//* Scope (Function) declaring z#1, arguments#0 */function(x/* declares x#0 */, /* Scope (ParameterExpression) */y /* declares y#0 */= /* Scope (ArrowFunction) */() => (x/* reads x#0 */, y/* reads y#0 */, z/* reads z#0 */)/* end scope *//* end scope */) {
+        let z/* declares z#1 */;
+      }/* end scope *//* end scope */;/* end scope *//* end scope */`,
+      { skipUnambiguous: false, skipScopes: false }
     );
   });
 
   test('shorthand properties', () => {
-    checkScopeSerialization(
-      '({a});',
-      '{"node": "Script_0", "type": "Global", "isDynamic": true, "through": [{"node": "IdentifierExpression(a)_4", "accessibility": "Read"}], "variables": [{"name": "a", "references": [{"node": "IdentifierExpression(a)_4", "accessibility": "Read"}], "declarations": []}], "children": [{"node": "Script_0", "type": "Script", "isDynamic": false, "through": [{"node": "IdentifierExpression(a)_4", "accessibility": "Read"}], "variables": [], "children": []}]}'
+    checkScopeAnnotation(
+      '({a/* reads a#0 */});',
+      { skipUnambiguous: false },
     );
   });
 
   test('B.3.3', () => {
-    checkScopeSerialization(
+    checkScopeAnnotation(
       `(function() {
-        function getOuter(){return f;}
+        function getOuter(){return f/* reads f#0 */;}
         var g;
         {
-           f = 1;
-           function f(){}
-           g = f;
+           f /* writes f#1 */= 1;
+           function f/* declares f#0, f#1 */(){}
+           g = f/* reads f#1 */;
         }
-      })();`,
-      '{"node": "Script_0", "type": "Global", "isDynamic": true, "through": [], "variables": [], "children": [{"node": "Script_0", "type": "Script", "isDynamic": false, "through": [], "variables": [], "children": [{"node": "FunctionExpression_3", "type": "Function", "isDynamic": false, "through": [], "variables": [{"name": "arguments", "references": [], "declarations": []}, {"name": "f", "references": [{"node": "IdentifierExpression(f)_11", "accessibility": "Read"}], "declarations": [{"node": "BindingIdentifier(f)_23", "kind": "FunctionB33"}]}, {"name": "g", "references": [{"node": "AssignmentTargetIdentifier(g)_28", "accessibility": "Write"}], "declarations": [{"node": "BindingIdentifier(g)_15", "kind": "Var"}]}, {"name": "getOuter", "references": [], "declarations": [{"node": "BindingIdentifier(getOuter)_7", "kind": "FunctionDeclaration"}]}], "children": [{"node": "FunctionDeclaration_6", "type": "Function", "isDynamic": false, "through": [{"node": "IdentifierExpression(f)_11", "accessibility": "Read"}], "variables": [{"name": "arguments", "references": [], "declarations": []}], "children": []}, {"node": "Block_17", "type": "Block", "isDynamic": false, "through": [{"node": "AssignmentTargetIdentifier(g)_28", "accessibility": "Write"}], "variables": [{"name": "f", "references": [{"node": "AssignmentTargetIdentifier(f)_20", "accessibility": "Write"}, {"node": "IdentifierExpression(f)_29", "accessibility": "Read"}], "declarations": [{"node": "BindingIdentifier(f)_23", "kind": "FunctionDeclaration"}]}], "children": [{"node": "FunctionDeclaration_22", "type": "Function", "isDynamic": false, "through": [], "variables": [{"name": "arguments", "references": [], "declarations": []}], "children": []}]}]}]}]}'
+      })();`
     );
 
-    checkScopeSerialization(
-      `!function f() {
+    checkScopeAnnotation(`
+      var f/* declares f#0 */;
+      !function() {
         {
-          function f(){}
+          function f/* declares f#1, f#2 */(){}
         }
         {
-          function f(){}
+          function f/* declares f#1, f#3 */(){}
         }
-        f;
-      }`,
-      '{"node": "Script_0", "type": "Global", "isDynamic": true, "through": [], "variables": [], "children": [{"node": "Script_0", "type": "Script", "isDynamic": false, "through": [], "variables": [], "children": [{"node": "FunctionExpression_3", "type": "FunctionName", "isDynamic": false, "through": [], "variables": [{"name": "f", "references": [], "declarations": [{"node": "BindingIdentifier(f)_4", "kind": "FunctionExpressionName"}]}], "children": [{"node": "FunctionExpression_3", "type": "Function", "isDynamic": false, "through": [], "variables": [{"name": "arguments", "references": [], "declarations": []}, {"name": "f", "references": [{"node": "IdentifierExpression(f)_20", "accessibility": "Read"}], "declarations": [{"node": "BindingIdentifier(f)_10", "kind": "FunctionB33"}, {"node": "BindingIdentifier(f)_16", "kind": "FunctionB33"}]}], "children": [{"node": "Block_8", "type": "Block", "isDynamic": false, "through": [], "variables": [{"name": "f", "references": [], "declarations": [{"node": "BindingIdentifier(f)_10", "kind": "FunctionDeclaration"}]}], "children": [{"node": "FunctionDeclaration_9", "type": "Function", "isDynamic": false, "through": [], "variables": [{"name": "arguments", "references": [], "declarations": []}], "children": []}]}, {"node": "Block_14", "type": "Block", "isDynamic": false, "through": [], "variables": [{"name": "f", "references": [], "declarations": [{"node": "BindingIdentifier(f)_16", "kind": "FunctionDeclaration"}]}], "children": [{"node": "FunctionDeclaration_15", "type": "Function", "isDynamic": false, "through": [], "variables": [{"name": "arguments", "references": [], "declarations": []}], "children": []}]}]}]}]}]}'
+        f/* reads f#1 */;
+      }`
     );
 
-    checkScopeSerialization( // As above, but as a module. Because B.3.3 only applies in sloppy mode, this case is substantially different from the previous.
-      `!function f() {
+    // As above, but as a module. Because B.3.3 only applies in sloppy mode, this case is substantially different from the previous.
+    checkScopeAnnotation(`
+      var f/* declares f#0 */;
+      !function() {
         {
-          function f(){}
+          function f/* declares f#1 */(){}
         }
         {
-          function f(){}
+          function f/* declares f#2 */(){}
         }
-        f;
+        f/* reads f#0 */;
       }`,
-      '{"node": "Module_0", "type": "Global", "isDynamic": true, "through": [], "variables": [], "children": [{"node": "Module_0", "type": "Module", "isDynamic": false, "through": [], "variables": [], "children": [{"node": "FunctionExpression_3", "type": "FunctionName", "isDynamic": false, "through": [], "variables": [{"name": "f", "references": [{"node": "IdentifierExpression(f)_20", "accessibility": "Read"}], "declarations": [{"node": "BindingIdentifier(f)_4", "kind": "FunctionExpressionName"}]}], "children": [{"node": "FunctionExpression_3", "type": "Function", "isDynamic": false, "through": [{"node": "IdentifierExpression(f)_20", "accessibility": "Read"}], "variables": [{"name": "arguments", "references": [], "declarations": []}], "children": [{"node": "Block_8", "type": "Block", "isDynamic": false, "through": [], "variables": [{"name": "f", "references": [], "declarations": [{"node": "BindingIdentifier(f)_10", "kind": "FunctionDeclaration"}]}], "children": [{"node": "FunctionDeclaration_9", "type": "Function", "isDynamic": false, "through": [], "variables": [{"name": "arguments", "references": [], "declarations": []}], "children": []}]}, {"node": "Block_14", "type": "Block", "isDynamic": false, "through": [], "variables": [{"name": "f", "references": [], "declarations": [{"node": "BindingIdentifier(f)_16", "kind": "FunctionDeclaration"}]}], "children": [{"node": "FunctionDeclaration_15", "type": "Function", "isDynamic": false, "through": [], "variables": [{"name": "arguments", "references": [], "declarations": []}], "children": []}]}]}]}]}]}',
       { asScript: false }
     );
 
-    checkScopeSerialization(
-      `!function f() {
+    checkScopeAnnotation(`
+      !function f/* declares f#0 */() {
         if (0)
-          function f(){}
+          function f/* declares f#1 */(){}
         else
-          function f(){}
-        f;
-      }`,
-      '{"node": "Script_0", "type": "Global", "isDynamic": true, "through": [], "variables": [], "children": [{"node": "Script_0", "type": "Script", "isDynamic": false, "through": [], "variables": [], "children": [{"node": "FunctionExpression_3", "type": "FunctionName", "isDynamic": false, "through": [], "variables": [{"name": "f", "references": [], "declarations": [{"node": "BindingIdentifier(f)_4", "kind": "FunctionExpressionName"}]}], "children": [{"node": "FunctionExpression_3", "type": "Function", "isDynamic": false, "through": [], "variables": [{"name": "arguments", "references": [], "declarations": []}, {"name": "f", "references": [{"node": "IdentifierExpression(f)_18", "accessibility": "Read"}], "declarations": [{"node": "BindingIdentifier(f)_10", "kind": "FunctionDeclaration"}, {"node": "BindingIdentifier(f)_14", "kind": "FunctionDeclaration"}]}], "children": [{"node": "FunctionDeclaration_9", "type": "Function", "isDynamic": false, "through": [], "variables": [{"name": "arguments", "references": [], "declarations": []}], "children": []}, {"node": "FunctionDeclaration_13", "type": "Function", "isDynamic": false, "through": [], "variables": [{"name": "arguments", "references": [], "declarations": []}], "children": []}]}]}]}]}'
+          function f/* declares f#1 */(){}
+        f/* reads f#1 */;
+      }`
     );
 
-    checkScopeSerialization(
+    checkScopeAnnotation(
       `!function(){
         {
           {
-            let f;
+            let f/* declares f#2 */;
             {
-              function f(){}
+              function f/* declares f#3 */(){}
             }
           }
-          function f(){}
+          function f/* declares f#0, f#1 */(){}
         }
-        f;
-      }`,
-      '{"node": "Script_0", "type": "Global", "isDynamic": true, "through": [], "variables": [], "children": [{"node": "Script_0", "type": "Script", "isDynamic": false, "through": [], "variables": [], "children": [{"node": "FunctionExpression_3", "type": "Function", "isDynamic": false, "through": [], "variables": [{"name": "arguments", "references": [], "declarations": []}, {"name": "f", "references": [{"node": "IdentifierExpression(f)_25", "accessibility": "Read"}], "declarations": [{"node": "BindingIdentifier(f)_21", "kind": "FunctionB33"}]}], "children": [{"node": "Block_7", "type": "Block", "isDynamic": false, "through": [], "variables": [{"name": "f", "references": [], "declarations": [{"node": "BindingIdentifier(f)_21", "kind": "FunctionDeclaration"}]}], "children": [{"node": "Block_9", "type": "Block", "isDynamic": false, "through": [], "variables": [{"name": "f", "references": [], "declarations": [{"node": "BindingIdentifier(f)_13", "kind": "Let"}]}], "children": [{"node": "Block_15", "type": "Block", "isDynamic": false, "through": [], "variables": [{"name": "f", "references": [], "declarations": [{"node": "BindingIdentifier(f)_17", "kind": "FunctionDeclaration"}]}], "children": [{"node": "FunctionDeclaration_16", "type": "Function", "isDynamic": false, "through": [], "variables": [{"name": "arguments", "references": [], "declarations": []}], "children": []}]}]}, {"node": "FunctionDeclaration_20", "type": "Function", "isDynamic": false, "through": [], "variables": [{"name": "arguments", "references": [], "declarations": []}], "children": []}]}]}]}]}'
+        f/* reads f#0 */;
+      }`
     );
   });
 
   test('import', () => {
+    checkScopeAnnotation(
+      'import a/* declares a#0 */, {b/* declares b#0 */} from ""',
+      { asScript: false, skipUnambiguous: false }
+    );
+  });
+
+  test('export local/from', () => {
+    checkScopeAnnotation(
+      'let a/* declares a#0 */; export {a} from \'m\'',
+      { asScript: false, skipUnambiguous: false }
+    );
+
+    checkScopeAnnotation(
+      'let a/* declares a#0 */; export {a/* reads a#0 */}',
+      { asScript: false, skipUnambiguous: false }
+    );
+
+    checkScopeAnnotation(
+      'let a/* declares a#0 */; export {a /* reads a#0 */as b}',
+      { asScript: false, skipUnambiguous: false }
+    );
+  });
+
+  test('export default', () => {
     checkScopeSerialization(
-      'import a, {b} from ""',
-      '{"node": "Module_0", "type": "Global", "isDynamic": true, "through": [], "variables": [], "children": [{"node": "Module_0", "type": "Module", "isDynamic": false, "through": [], "variables": [{"name": "a", "references": [], "declarations": [{"node": "BindingIdentifier(a)_2", "kind": "Import"}]}, {"name": "b", "references": [], "declarations": [{"node": "BindingIdentifier(b)_4", "kind": "Import"}]}], "children": []}]}',
+      'export default class {}',
+      '{"node": "Module_0", "type": "Global", "isDynamic": true, "through": [], "variables": [], "children": [{"node": "Module_0", "type": "Module", "isDynamic": false, "through": [], "variables": [], "children": [{"node": "ClassDeclaration_2", "type": "ClassName", "isDynamic": false, "through": [], "variables": [], "children": []}]}]}',
+      { asScript: false }
+    );
+
+    checkScopeSerialization(
+      'export default class C extends (()=>C, C, null) {f(){return C;}} C;',
+      '{"node": "Module_0", "type": "Global", "isDynamic": true, "through": [], "variables": [], "children": [{"node": "Module_0", "type": "Module", "isDynamic": false, "through": [], "variables": [{"name": "C", "references": [{"node": "IdentifierExpression(C)_19", "accessibility": "Read"}], "declarations": [{"node": "BindingIdentifier(C)_3", "kind": "ClassDeclaration"}]}], "children": [{"node": "ClassDeclaration_2", "type": "ClassName", "isDynamic": false, "through": [], "variables": [{"name": "C", "references": [{"node": "IdentifierExpression(C)_8", "accessibility": "Read"}, {"node": "IdentifierExpression(C)_9", "accessibility": "Read"}, {"node": "IdentifierExpression(C)_17", "accessibility": "Read"}], "declarations": [{"node": "BindingIdentifier(C)_3", "kind": "ClassName"}]}], "children": [{"node": "ArrowExpression_6", "type": "ArrowFunction", "isDynamic": false, "through": [{"node": "IdentifierExpression(C)_8", "accessibility": "Read"}], "variables": [], "children": []}, {"node": "Method_12", "type": "Function", "isDynamic": false, "through": [{"node": "IdentifierExpression(C)_17", "accessibility": "Read"}], "variables": [{"name": "arguments", "references": [], "declarations": []}], "children": []}]}]}]}',
+      { asScript: false }
+    );
+
+    checkScopeSerialization(
+      'export default function() {}',
+      '{"node": "Module_0", "type": "Global", "isDynamic": true, "through": [], "variables": [], "children": [{"node": "Module_0", "type": "Module", "isDynamic": false, "through": [], "variables": [], "children": [{"node": "FunctionDeclaration_2", "type": "Function", "isDynamic": false, "through": [], "variables": [{"name": "arguments", "references": [], "declarations": []}], "children": []}]}]}',
+      { asScript: false }
+    );
+
+    checkScopeSerialization(
+      'export default function f() {}',
+      '{"node": "Module_0", "type": "Global", "isDynamic": true, "through": [], "variables": [], "children": [{"node": "Module_0", "type": "Module", "isDynamic": false, "through": [], "variables": [{"name": "f", "references": [], "declarations": [{"node": "BindingIdentifier(f)_3", "kind": "FunctionDeclaration"}]}], "children": [{"node": "FunctionDeclaration_2", "type": "Function", "isDynamic": false, "through": [], "variables": [{"name": "arguments", "references": [], "declarations": []}], "children": []}]}]}',
       { asScript: false }
     );
   });
@@ -1848,52 +1881,6 @@ suite('unit', () => {
     checkScopeSerialization(
       '(class C extends (()=>C, C, null) {f(){return C;}}); C;',
       '{"node": "Module_0", "type": "Global", "isDynamic": true, "through": [{"node": "IdentifierExpression(C)_19", "accessibility": "Read"}], "variables": [{"name": "C", "references": [{"node": "IdentifierExpression(C)_19", "accessibility": "Read"}], "declarations": []}], "children": [{"node": "Module_0", "type": "Module", "isDynamic": false, "through": [{"node": "IdentifierExpression(C)_19", "accessibility": "Read"}], "variables": [], "children": [{"node": "ClassExpression_2", "type": "ClassName", "isDynamic": false, "through": [], "variables": [{"name": "C", "references": [{"node": "IdentifierExpression(C)_8", "accessibility": "Read"}, {"node": "IdentifierExpression(C)_9", "accessibility": "Read"}, {"node": "IdentifierExpression(C)_17", "accessibility": "Read"}], "declarations": [{"node": "BindingIdentifier(C)_3", "kind": "ClassName"}]}], "children": [{"node": "ArrowExpression_6", "type": "ArrowFunction", "isDynamic": false, "through": [{"node": "IdentifierExpression(C)_8", "accessibility": "Read"}], "variables": [], "children": []}, {"node": "Method_12", "type": "Function", "isDynamic": false, "through": [{"node": "IdentifierExpression(C)_17", "accessibility": "Read"}], "variables": [{"name": "arguments", "references": [], "declarations": []}], "children": []}]}]}]}',
-      { asScript: false }
-    );
-  });
-
-  test('export default', () => {
-    checkScopeSerialization(
-      'export default class {}',
-      '{"node": "Module_0", "type": "Global", "isDynamic": true, "through": [], "variables": [], "children": [{"node": "Module_0", "type": "Module", "isDynamic": false, "through": [], "variables": [], "children": [{"node": "ClassDeclaration_2", "type": "ClassName", "isDynamic": false, "through": [], "variables": [], "children": []}]}]}',
-      { asScript: false }
-    );
-
-    checkScopeSerialization(
-      'export default class C extends (()=>C, C, null) {f(){return C;}} C;',
-      '{"node": "Module_0", "type": "Global", "isDynamic": true, "through": [], "variables": [], "children": [{"node": "Module_0", "type": "Module", "isDynamic": false, "through": [], "variables": [{"name": "C", "references": [{"node": "IdentifierExpression(C)_19", "accessibility": "Read"}], "declarations": [{"node": "BindingIdentifier(C)_3", "kind": "ClassDeclaration"}]}], "children": [{"node": "ClassDeclaration_2", "type": "ClassName", "isDynamic": false, "through": [], "variables": [{"name": "C", "references": [{"node": "IdentifierExpression(C)_8", "accessibility": "Read"}, {"node": "IdentifierExpression(C)_9", "accessibility": "Read"}, {"node": "IdentifierExpression(C)_17", "accessibility": "Read"}], "declarations": [{"node": "BindingIdentifier(C)_3", "kind": "ClassName"}]}], "children": [{"node": "ArrowExpression_6", "type": "ArrowFunction", "isDynamic": false, "through": [{"node": "IdentifierExpression(C)_8", "accessibility": "Read"}], "variables": [], "children": []}, {"node": "Method_12", "type": "Function", "isDynamic": false, "through": [{"node": "IdentifierExpression(C)_17", "accessibility": "Read"}], "variables": [{"name": "arguments", "references": [], "declarations": []}], "children": []}]}]}]}',
-      { asScript: false }
-    );
-
-    checkScopeSerialization(
-      'export default function() {}',
-      '{"node": "Module_0", "type": "Global", "isDynamic": true, "through": [], "variables": [], "children": [{"node": "Module_0", "type": "Module", "isDynamic": false, "through": [], "variables": [], "children": [{"node": "FunctionDeclaration_2", "type": "Function", "isDynamic": false, "through": [], "variables": [{"name": "arguments", "references": [], "declarations": []}], "children": []}]}]}',
-      { asScript: false }
-    );
-
-    checkScopeSerialization(
-      'export default function f() {}',
-      '{"node": "Module_0", "type": "Global", "isDynamic": true, "through": [], "variables": [], "children": [{"node": "Module_0", "type": "Module", "isDynamic": false, "through": [], "variables": [{"name": "f", "references": [], "declarations": [{"node": "BindingIdentifier(f)_3", "kind": "FunctionDeclaration"}]}], "children": [{"node": "FunctionDeclaration_2", "type": "Function", "isDynamic": false, "through": [], "variables": [{"name": "arguments", "references": [], "declarations": []}], "children": []}]}]}',
-      { asScript: false }
-    );
-  });
-
-  test('export local/from', () => {
-    checkScopeSerialization(
-      'let a; export {a} from \'m\'',
-      '{"node": "Module_0", "type": "Global", "isDynamic": true, "through": [], "variables": [], "children": [{"node": "Module_0", "type": "Module", "isDynamic": false, "through": [], "variables": [{"name": "a", "references": [], "declarations": [{"node": "BindingIdentifier(a)_4", "kind": "Let"}]}], "children": []}]}',
-      { asScript: false }
-    );
-
-    checkScopeSerialization(
-      'let a; export {a}',
-      '{"node": "Module_0", "type": "Global", "isDynamic": true, "through": [], "variables": [], "children": [{"node": "Module_0", "type": "Module", "isDynamic": false, "through": [], "variables": [{"name": "a", "references": [{"node": "IdentifierExpression(a)_7", "accessibility": "Read"}], "declarations": [{"node": "BindingIdentifier(a)_4", "kind": "Let"}]}], "children": []}]}',
-      { asScript: false }
-    );
-
-    checkScopeSerialization(
-      'let a; export {a as b}',
-      '{"node": "Module_0", "type": "Global", "isDynamic": true, "through": [], "variables": [], "children": [{"node": "Module_0", "type": "Module", "isDynamic": false, "through": [], "variables": [{"name": "a", "references": [{"node": "IdentifierExpression(a)_7", "accessibility": "Read"}], "declarations": [{"node": "BindingIdentifier(a)_4", "kind": "Let"}]}], "children": []}]}',
       { asScript: false }
     );
   });
