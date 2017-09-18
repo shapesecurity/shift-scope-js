@@ -1816,7 +1816,7 @@ suite('unit', () => {
       !function(){
         try {} catch(e/* declares e#1 */) {
           {
-            function e/* declares e#2 */() {}
+            function e/* declares e#0, e#2 */() {}
           }
         }
         e/* reads e#0 */;
