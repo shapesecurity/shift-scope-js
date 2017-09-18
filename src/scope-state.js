@@ -37,18 +37,20 @@ function resolveDeclarations(freeIdentifiers, decls, variables) {
 }
 
 export default class ScopeState {
-  constructor({
-    freeIdentifiers = new MultiMap,
-    functionScopedDeclarations = new MultiMap,
-    blockScopedDeclarations = new MultiMap,
-    functionDeclarations = new MultiMap, // function declarations are special: they are lexical in blocks and var-scoped at the top level of functions and scripts.
-    children = [],
-    dynamic = false,
-    bindingsForParent = [], // either references bubbling up to the ForOfStatement, or ForInStatement which writes to them or declarations bubbling up to the VariableDeclaration, FunctionDeclaration, ClassDeclaration, FormalParameters, Setter, Method, or CatchClause which declares them
-    atsForParent = [], // references bubbling up to the AssignmentExpression, ForOfStatement, or ForInStatement which writes to them
-    potentiallyVarScopedFunctionDeclarations = new MultiMap, // for B.3.3
-    hasParameterExpressions = false,
-  } = {}) {
+  constructor(
+    {
+      freeIdentifiers = new MultiMap,
+      functionScopedDeclarations = new MultiMap,
+      blockScopedDeclarations = new MultiMap,
+      functionDeclarations = new MultiMap, // function declarations are special: they are lexical in blocks and var-scoped at the top level of functions and scripts.
+      children = [],
+      dynamic = false,
+      bindingsForParent = [], // either references bubbling up to the ForOfStatement, or ForInStatement which writes to them or declarations bubbling up to the VariableDeclaration, FunctionDeclaration, ClassDeclaration, FormalParameters, Setter, Method, or CatchClause which declares them
+      atsForParent = [], // references bubbling up to the AssignmentExpression, ForOfStatement, or ForInStatement which writes to them
+      potentiallyVarScopedFunctionDeclarations = new MultiMap, // for B.3.3
+      hasParameterExpressions = false,
+    } = {},
+  ) {
     this.freeIdentifiers = freeIdentifiers;
     this.functionScopedDeclarations = functionScopedDeclarations;
     this.blockScopedDeclarations = blockScopedDeclarations;
@@ -74,14 +76,26 @@ export default class ScopeState {
     }
     return new ScopeState({
       freeIdentifiers: merge(merge(new MultiMap, this.freeIdentifiers), b.freeIdentifiers),
-      functionScopedDeclarations: merge(merge(new MultiMap, this.functionScopedDeclarations), b.functionScopedDeclarations),
-      blockScopedDeclarations: merge(merge(new MultiMap, this.blockScopedDeclarations), b.blockScopedDeclarations),
-      functionDeclarations: merge(merge(new MultiMap, this.functionDeclarations), b.functionDeclarations),
+      functionScopedDeclarations: merge(
+        merge(new MultiMap, this.functionScopedDeclarations),
+        b.functionScopedDeclarations,
+      ),
+      blockScopedDeclarations: merge(
+        merge(new MultiMap, this.blockScopedDeclarations),
+        b.blockScopedDeclarations,
+      ),
+      functionDeclarations: merge(
+        merge(new MultiMap, this.functionDeclarations),
+        b.functionDeclarations,
+      ),
       children: this.children.concat(b.children),
       dynamic: this.dynamic || b.dynamic,
       bindingsForParent: this.bindingsForParent.concat(b.bindingsForParent),
       atsForParent: this.atsForParent.concat(b.atsForParent),
-      potentiallyVarScopedFunctionDeclarations: merge(merge(new MultiMap, this.potentiallyVarScopedFunctionDeclarations), b.potentiallyVarScopedFunctionDeclarations),
+      potentiallyVarScopedFunctionDeclarations: merge(
+        merge(new MultiMap, this.potentiallyVarScopedFunctionDeclarations),
+        b.potentiallyVarScopedFunctionDeclarations,
+      ),
       hasParameterExpressions: this.hasParameterExpressions || b.hasParameterExpressions,
     });
   }
@@ -91,8 +105,13 @@ export default class ScopeState {
    */
   addDeclarations(kind, keepBindingsForParent = false) {
     let declMap = new MultiMap;
-    merge(declMap, kind.isBlockScoped ? this.blockScopedDeclarations : this.functionScopedDeclarations);
-    this.bindingsForParent.forEach(binding => declMap.set(binding.name, new Declaration(binding, kind)));
+    merge(
+      declMap,
+      kind.isBlockScoped ? this.blockScopedDeclarations : this.functionScopedDeclarations,
+    );
+    this.bindingsForParent.forEach(binding =>
+      declMap.set(binding.name, new Declaration(binding, kind)),
+    );
     let s = new ScopeState(this);
     if (kind.isBlockScoped) {
       s.blockScopedDeclarations = declMap;
@@ -112,7 +131,12 @@ export default class ScopeState {
     }
     const binding = this.bindingsForParent[0];
     let s = new ScopeState(this);
-    merge(s.functionDeclarations, new MultiMap([[binding.name, new Declaration(binding, DeclarationType.FUNCTION_DECLARATION)]]));
+    merge(
+      s.functionDeclarations,
+      new MultiMap([
+        [binding.name, new Declaration(binding, DeclarationType.FUNCTION_DECLARATION)],
+      ]),
+    );
     s.bindingsForParent = [];
     return s;
   }
@@ -123,8 +147,12 @@ export default class ScopeState {
   addReferences(accessibility, keepBindingsForParent = false) {
     let freeMap = new MultiMap;
     merge(freeMap, this.freeIdentifiers);
-    this.bindingsForParent.forEach(binding => freeMap.set(binding.name, new Reference(binding, accessibility)));
-    this.atsForParent.forEach(binding => freeMap.set(binding.name, new Reference(binding, accessibility)));
+    this.bindingsForParent.forEach(binding =>
+      freeMap.set(binding.name, new Reference(binding, accessibility)),
+    );
+    this.atsForParent.forEach(binding =>
+      freeMap.set(binding.name, new Reference(binding, accessibility)),
+    );
     let s = new ScopeState(this);
     s.freeIdentifiers = freeMap;
     if (!keepBindingsForParent) {
@@ -160,7 +188,9 @@ export default class ScopeState {
 
   withPotentialVarFunctions(functions) {
     let pvsfd = merge(new MultiMap, this.potentiallyVarScopedFunctionDeclarations);
-    functions.forEach(f => pvsfd.set(f.name, new Declaration(f, DeclarationType.FUNCTION_VAR_DECLARATION)));
+    functions.forEach(f =>
+      pvsfd.set(f.name, new Declaration(f, DeclarationType.FUNCTION_VAR_DECLARATION)),
+    );
     let s = new ScopeState(this);
     s.potentiallyVarScopedFunctionDeclarations = pvsfd;
     return s;
@@ -211,10 +241,19 @@ export default class ScopeState {
       case ScopeType.SCRIPT:
         // resolve references to both block-scoped and function-scoped free declarations
 
-        // top-level lexical declarations in scripts are not globals, so create a separate scope for them 
+        // top-level lexical declarations in scripts are not globals, so create a separate scope for them
         // otherwise lexical and variable declarations go in the same scope.
         if (scopeType === ScopeType.SCRIPT) {
-          children = [new Scope(children, resolveDeclarations(freeIdentifiers, this.blockScopedDeclarations, []), merge(new MultiMap, freeIdentifiers), ScopeType.SCRIPT, this.dynamic, astNode)];
+          children = [
+            new Scope({
+              children,
+              variables: resolveDeclarations(freeIdentifiers, this.blockScopedDeclarations, []),
+              through: merge(new MultiMap, freeIdentifiers),
+              type: ScopeType.SCRIPT,
+              isDynamic: this.dynamic,
+              astNode,
+            }),
+          ];
         } else {
           merge(declarations, this.blockScopedDeclarations);
         }
@@ -225,7 +264,8 @@ export default class ScopeState {
         merge(declarations, this.functionScopedDeclarations);
         merge(declarations, this.functionDeclarations);
 
-        if (shouldB33) { // maybe also scripts? spec currently doesn't say to, but that may be a bug.
+        if (shouldB33) {
+          // maybe also scripts? spec currently doesn't say to, but that may be a bug.
           merge(declarations, pvsfd);
         }
         pvsfd = new MultiMap;
@@ -234,7 +274,16 @@ export default class ScopeState {
 
         // no declarations in a module are global
         if (scopeType === ScopeType.MODULE) {
-          children = [new Scope(children, variables, freeIdentifiers, ScopeType.MODULE, this.dynamic, astNode)];
+          children = [
+            new Scope({
+              children,
+              variables,
+              through: freeIdentifiers,
+              type: ScopeType.MODULE,
+              isDynamic: this.dynamic,
+              astNode,
+            }),
+          ];
           variables = [];
         }
         break;
@@ -242,9 +291,17 @@ export default class ScopeState {
         throw new Error('not reached');
     }
 
-    const scope = scopeType === ScopeType.SCRIPT || scopeType === ScopeType.MODULE
-      ? new GlobalScope(children, variables, freeIdentifiers, astNode)
-      : new Scope(children, variables, freeIdentifiers, scopeType, this.dynamic, astNode);
+    const scope =
+      scopeType === ScopeType.SCRIPT || scopeType === ScopeType.MODULE
+        ? new GlobalScope({ children, variables, through: freeIdentifiers, astNode })
+        : new Scope({
+          children,
+          variables,
+          through: freeIdentifiers,
+          type: scopeType,
+          isDynamic: this.dynamic,
+          astNode,
+        });
 
     return new ScopeState({
       freeIdentifiers,

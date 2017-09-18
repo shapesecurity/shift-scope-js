@@ -22,7 +22,6 @@ import { DeclarationType } from './declaration';
 import { ScopeType } from './scope';
 import StrictnessReducer from './strictness-reducer';
 
-
 function getFunctionDeclarations(statements) {
   return statements.filter(s => s.type === 'FunctionDeclaration').map(f => f.name);
 }
@@ -42,23 +41,23 @@ export default class ScopeAnalyzer extends MonoidalReducer {
     const fnType = isArrowFn ? ScopeType.ARROW_FUNCTION : ScopeType.FUNCTION;
     const opts = { shouldResolveArguments: !isArrowFn, shouldB33: this.sloppySet.has(fnNode) };
     if (params.hasParameterExpressions) {
-      return params.withoutParameterExpressions()
+      return params
+        .withoutParameterExpressions()
         .concat(body.finish(fnNode, fnType, opts))
         .finish(fnNode, ScopeType.PARAMETERS);
     }
-    return params
-      .concat(body)
-      .finish(fnNode, fnType, opts);
-
+    return params.concat(body).finish(fnNode, fnType, opts);
   }
-
 
   reduceArrowExpression(node, { params, body }) {
     return this.finishFunction(node, params, body);
   }
 
   reduceAssignmentExpression(node, { binding, expression }) {
-    return super.reduceAssignmentExpression(node, { binding: binding.addReferences(Accessibility.WRITE), expression });
+    return super.reduceAssignmentExpression(node, {
+      binding: binding.addReferences(Accessibility.WRITE),
+      expression,
+    });
   }
 
   reduceAssignmentTargetIdentifier(node) {
@@ -67,7 +66,7 @@ export default class ScopeAnalyzer extends MonoidalReducer {
 
   reduceBindingIdentifier(node) {
     if (node.name === '*default*') {
-      return new ScopeState();
+      return new ScopeState;
     }
     return new ScopeState({ bindingsForParent: [node] });
   }
@@ -85,7 +84,8 @@ export default class ScopeAnalyzer extends MonoidalReducer {
   }
 
   reduceBlock(node, { statements }) {
-    return super.reduceBlock(node, { statements })
+    return super
+      .reduceBlock(node, { statements })
       .withPotentialVarFunctions(getFunctionDeclarations(node.statements))
       .finish(node, ScopeType.BLOCK);
   }
@@ -99,42 +99,73 @@ export default class ScopeAnalyzer extends MonoidalReducer {
   }
 
   reduceCatchClause(node, { binding, body }) {
-    return super.reduceCatchClause(node, { binding: binding.addDeclarations(DeclarationType.CATCH_PARAMETER), body }).finish(node, ScopeType.CATCH);
+    return super
+      .reduceCatchClause(node, {
+        binding: binding.addDeclarations(DeclarationType.CATCH_PARAMETER),
+        body,
+      })
+      .finish(node, ScopeType.CATCH);
   }
 
   reduceClassDeclaration(node, { name, super: _super, elements }) {
-    let s = super.reduceClassDeclaration(node, { name, super: _super, elements }).addDeclarations(DeclarationType.CLASS_NAME).finish(node, ScopeType.CLASS_NAME);
+    let s = super
+      .reduceClassDeclaration(node, { name, super: _super, elements })
+      .addDeclarations(DeclarationType.CLASS_NAME)
+      .finish(node, ScopeType.CLASS_NAME);
     return s.concat(name.addDeclarations(DeclarationType.CLASS_DECLARATION));
   }
 
   reduceClassExpression(node, { name, super: _super, elements }) {
-    return super.reduceClassExpression(node, { name, super: _super, elements }).addDeclarations(DeclarationType.CLASS_NAME).finish(node, ScopeType.CLASS_NAME);
+    return super
+      .reduceClassExpression(node, { name, super: _super, elements })
+      .addDeclarations(DeclarationType.CLASS_NAME)
+      .finish(node, ScopeType.CLASS_NAME);
   }
 
   reduceCompoundAssignmentExpression(node, { binding, expression }) {
-    return super.reduceCompoundAssignmentExpression(node, { binding: binding.addReferences(Accessibility.READWRITE), expression });
+    return super.reduceCompoundAssignmentExpression(node, {
+      binding: binding.addReferences(Accessibility.READWRITE),
+      expression,
+    });
   }
 
   reduceComputedMemberExpression(node, { object, expression }) {
-    return super.reduceComputedMemberExpression(node, { object, expression }).withParameterExpressions();
+    return super
+      .reduceComputedMemberExpression(node, { object, expression })
+      .withParameterExpressions();
   }
 
   reduceForInStatement(node, { left, right, body }) {
-    return super.reduceForInStatement(node, { left: left.addReferences(Accessibility.WRITE), right, body }).finish(node, ScopeType.BLOCK);
+    return super
+      .reduceForInStatement(node, { left: left.addReferences(Accessibility.WRITE), right, body })
+      .finish(node, ScopeType.BLOCK);
   }
 
   reduceForOfStatement(node, { left, right, body }) {
-    return super.reduceForOfStatement(node, { left: left.addReferences(Accessibility.WRITE), right, body }).finish(node, ScopeType.BLOCK);
+    return super
+      .reduceForOfStatement(node, { left: left.addReferences(Accessibility.WRITE), right, body })
+      .finish(node, ScopeType.BLOCK);
   }
 
   reduceForStatement(node, { init, test, update, body }) {
-    return super.reduceForStatement(node, { init: init ? init.withoutBindingsForParent() : init, test, update, body }).finish(node, ScopeType.BLOCK);
+    return super
+      .reduceForStatement(node, {
+        init: init ? init.withoutBindingsForParent() : init,
+        test,
+        update,
+        body,
+      })
+      .finish(node, ScopeType.BLOCK);
   }
 
   reduceFormalParameters(node, { items, rest }) {
-    let s = rest ? rest : new ScopeState();
+    let s = rest ? rest : new ScopeState;
     items.forEach((item, ind) => {
-      s = s.concat(item.hasParameterExpressions ? item.finish(node.items[ind], ScopeType.PARAMETER_EXPRESSION) : item);
+      s = s.concat(
+        item.hasParameterExpressions
+          ? item.finish(node.items[ind], ScopeType.PARAMETER_EXPRESSION)
+          : item,
+      );
     });
     return s.addDeclarations(DeclarationType.PARAMETER);
   }
@@ -146,17 +177,27 @@ export default class ScopeAnalyzer extends MonoidalReducer {
   reduceFunctionExpression(node, { name, params, body }) {
     let s = this.finishFunction(node, params, body);
     if (name) {
-      return name.concat(s).addDeclarations(DeclarationType.FUNCTION_NAME).finish(node, ScopeType.FUNCTION_NAME);
+      return name
+        .concat(s)
+        .addDeclarations(DeclarationType.FUNCTION_NAME)
+        .finish(node, ScopeType.FUNCTION_NAME);
     }
     return s;
   }
 
   reduceGetter(node, { name, body }) {
-    return name.concat(body.finish(node, ScopeType.FUNCTION, { shouldResolveArguments: true, shouldB33: this.sloppySet.has(node) }));
+    return name.concat(
+      body.finish(node, ScopeType.FUNCTION, {
+        shouldResolveArguments: true,
+        shouldB33: this.sloppySet.has(node),
+      }),
+    );
   }
 
   reduceIdentifierExpression(node) {
-    return new ScopeState({ freeIdentifiers: new MultiMap([[node.name, new Reference(node, Accessibility.READ)]]) });
+    return new ScopeState({
+      freeIdentifiers: new MultiMap([[node.name, new Reference(node, Accessibility.READ)]]),
+    });
   }
 
   reduceIfStatement(node, { test, consequent, alternate }) {
@@ -167,11 +208,15 @@ export default class ScopeAnalyzer extends MonoidalReducer {
     if (node.alternate && node.alternate.type === 'FunctionDeclaration') {
       pvsfd.push(node.alternate.name);
     }
-    return super.reduceIfStatement(node, { test, consequent, alternate }).withPotentialVarFunctions(pvsfd);
+    return super
+      .reduceIfStatement(node, { test, consequent, alternate })
+      .withPotentialVarFunctions(pvsfd);
   }
 
   reduceImport(node, { moduleSpecifier, defaultBinding, namedImports }) {
-    return super.reduceImport(node, { moduleSpecifier, defaultBinding, namedImports }).addDeclarations(DeclarationType.IMPORT);
+    return super
+      .reduceImport(node, { moduleSpecifier, defaultBinding, namedImports })
+      .addDeclarations(DeclarationType.IMPORT);
   }
 
   reduceMethod(node, { name, params, body }) {
@@ -190,15 +235,23 @@ export default class ScopeAnalyzer extends MonoidalReducer {
     if (param.hasParameterExpressions) {
       param = param.finish(node, ScopeType.PARAMETER_EXPRESSION);
     }
-    return name.concat(this.finishFunction(node, param.addDeclarations(DeclarationType.PARAMETER), body));
+    return name.concat(
+      this.finishFunction(node, param.addDeclarations(DeclarationType.PARAMETER), body),
+    );
   }
 
   reduceSwitchCase(node, { test, consequent }) {
-    return super.reduceSwitchCase(node, { test, consequent }).finish(node, ScopeType.BLOCK).withPotentialVarFunctions(getFunctionDeclarations(node.consequent));
+    return super
+      .reduceSwitchCase(node, { test, consequent })
+      .finish(node, ScopeType.BLOCK)
+      .withPotentialVarFunctions(getFunctionDeclarations(node.consequent));
   }
 
   reduceSwitchDefault(node, { consequent }) {
-    return super.reduceSwitchDefault(node, { consequent }).finish(node, ScopeType.BLOCK).withPotentialVarFunctions(getFunctionDeclarations(node.consequent));
+    return super
+      .reduceSwitchDefault(node, { consequent })
+      .finish(node, ScopeType.BLOCK)
+      .withPotentialVarFunctions(getFunctionDeclarations(node.consequent));
   }
 
   reduceUpdateExpression(node, { operand }) {
@@ -206,7 +259,9 @@ export default class ScopeAnalyzer extends MonoidalReducer {
   }
 
   reduceVariableDeclaration(node, { declarators }) {
-    return super.reduceVariableDeclaration(node, { declarators }).addDeclarations(DeclarationType.fromVarDeclKind(node.kind), true);
+    return super
+      .reduceVariableDeclaration(node, { declarators })
+      .addDeclarations(DeclarationType.fromVarDeclKind(node.kind), true);
     // passes bindingsForParent up, for for-in and for-of to add their write-references
   }
 
