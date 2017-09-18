@@ -178,7 +178,13 @@ export default class ScopeState {
     let pvsfd = merge(new MultiMap, this.potentiallyVarScopedFunctionDeclarations);
     let children = this.children;
 
+    let hasSimpleCatchBinding = scopeType.name === 'Catch' && astNode.binding.type === 'BindingIdentifier';
     this.blockScopedDeclarations.forEachEntry((v, k) => {
+      if (hasSimpleCatchBinding && v.length === 1 && v[0].node === astNode.binding) {
+        // A simple catch binding is the only type of lexical binding which does *not* block B.3.3 hoisting.
+        // See B.3.5: https://tc39.github.io/ecma262/#sec-variablestatements-in-catch-blocks
+        return;
+      }
       pvsfd.delete(k);
     });
     this.functionDeclarations.forEachEntry((v, k) => {
