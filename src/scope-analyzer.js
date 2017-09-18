@@ -201,6 +201,14 @@ export default class ScopeAnalyzer extends MonoidalReducer {
     return super.reduceSwitchDefault(node, { consequent }).finish(node, ScopeType.BLOCK).withPotentialVarFunctions(getFunctionDeclarations(node.consequent));
   }
 
+  reduceUnaryExpression(node, { operand }) {
+    if (node.operator === 'delete' && node.operand.type === 'IdentifierExpression') {
+      // 'delete x' is a special case: it's the only time that an `IdentifierExpression` appears as a write reference, rather than read or read+write.
+      return new ScopeState({ freeIdentifiers: new MultiMap([[node.operand.name, new Reference(node.operand, Accessibility.WRITE)]]) });
+    }
+    return super.reduceUnaryExpression(node, { operand });
+  }
+
   reduceUpdateExpression(node, { operand }) {
     return operand.addReferences(Accessibility.READWRITE);
   }

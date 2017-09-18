@@ -1884,7 +1884,7 @@ suite('unit', () => {
 
   test('delete', () => {
     checkScopeAnnotation(`
-      delete x/* reads x#0 */;
+      delete x/* writes x#0 */;
       `,
       { skipUnambiguous: false },
     );
