@@ -39,7 +39,6 @@ class Info {
   }
 }
 
-/* This should work, but babel.
 class DefaultMap extends Map {
   constructor(thunk) {
     super();
@@ -52,18 +51,6 @@ class DefaultMap extends Map {
     }
     return super.get(v);
   }
-}
-//*/
-
-function DefaultMap(thunk) {
-  const out = new Map;
-  out.get = function (v) {
-    if (!this.has(v)) {
-      this.set(v, thunk());
-    }
-    return Map.prototype.get.call(this, v);
-  };
-  return out;
 }
 
 export default function annotate({ source, locations, globalScope, skipUnambiguous = false, skipScopes = false }) {

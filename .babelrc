@@ -1,4 +1,11 @@
 {
-  "presets": ["es2015"],
+  "presets": [
+    ["env", {
+      "targets": {
+        "node": "4"
+      },
+      "exclude": ["transform-es2015-classes"]
+    }]
+  ],
   "sourceMaps": "true"
 }
