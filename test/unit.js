@@ -1801,6 +1801,93 @@ suite('unit', () => {
         f/* reads f#0 */;
       }`
     );
+
+    checkScopeAnnotation(`
+      !function(){
+        function f/* declares f#0 */(){}
+        {
+          function f/* declares f#1 */() {}
+        }
+        f/* reads f#0 */;
+      }`
+    );
+
+    checkScopeAnnotation(`
+      !function(){
+        try {} catch(e/* declares e#1 */) {
+          {
+            function e/* declares e#2 */() {}
+          }
+        }
+        e/* reads e#0 */;
+      }`
+    );
+
+    checkScopeAnnotation(`
+      !function(){
+        try {} catch({e/* declares e#1 */}) {
+          {
+            function e/* declares e#2 */() {}
+          }
+        }
+        e/* reads e#0 */;
+      }`
+    );
+
+    checkScopeAnnotation(`
+      !function(e/* declares e#0 */) {
+        {
+          function e/* declares e#0, e#1 */() {}
+        }
+      };`
+    );
+
+    checkScopeAnnotation(`
+      !function(){
+        switch (0) {
+          case 1: {
+            function f/* declares f#0, f#1 */(){}
+          }
+          case 2: {
+            function f/* declares f#0, f#2 */(){}
+          }
+          default: {
+            function f/* declares f#0, f#3 */(){}
+          }
+        }
+      }`
+    );
+
+    checkScopeAnnotation(`
+      {
+        function f/* declares f#1 */() {}
+      }
+      f/* reads f#0 */;
+      `
+    );
+  });
+
+  test('switch', () => {
+    checkScopeAnnotation(`
+      switch (0) {
+        case 1:
+          x/* reads x#0 */;
+        case 2:
+          let x/* declares x#1 */;
+        default:
+          x/* reads x#0 */;
+      }
+      x/* reads x#0 */;
+      `
+    );
+  });
+
+  test('delete', () => {
+    checkScopeAnnotation(`
+      delete x/* reads x#0 */;
+      `,
+      { skipUnambiguous: false },
+    );
   });
 
   test('import', () => {
