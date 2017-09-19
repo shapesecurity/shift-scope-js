@@ -1715,17 +1715,23 @@ suite('unit', () => {
 
     // Note the Parameters and ParametersExpression scopes
     checkScopeAnnotation(`
-      /* Scope (Global) *//* Scope (Script) */!/* Scope (Parameters) declaring x#0 *//* Scope (Function) declaring y#0, arguments#0 */function(/* Scope (ParameterExpression) */x /* declares x#0 */= 1/* end scope */) {
+      /* Scope (Global) *//* Scope (Script) */!/* Scope (Parameters) declaring arguments#0, x#0 *//* Scope (Function) declaring y#0 */function(/* Scope (ParameterExpression) */x /* declares x#0 */= 1/* end scope */) {
         let y/* declares y#0 */;
       }/* end scope *//* end scope */;/* end scope *//* end scope */`,
       { skipUnambiguous: false, skipScopes: false }
     );
 
     checkScopeAnnotation(`
-      /* Scope (Global) declaring z#0 *//* Scope (Script) */!/* Scope (Parameters) declaring x#0, y#0 *//* Scope (Function) declaring z#1, arguments#0 */function(x/* declares x#0 */, /* Scope (ParameterExpression) */y /* declares y#0 */= /* Scope (ArrowFunction) */() => (x/* reads x#0 */, y/* reads y#0 */, z/* reads z#0 */)/* end scope *//* end scope */) {
+      /* Scope (Global) declaring z#0 *//* Scope (Script) */!/* Scope (Parameters) declaring arguments#0, x#0, y#0 *//* Scope (Function) declaring z#1 */function(x/* declares x#0 */, /* Scope (ParameterExpression) */y /* declares y#0 */= /* Scope (ArrowFunction) */() => (x/* reads x#0 */, y/* reads y#0 */, z/* reads z#0 */)/* end scope *//* end scope */) {
         let z/* declares z#1 */;
       }/* end scope *//* end scope */;/* end scope *//* end scope */`,
       { skipUnambiguous: false, skipScopes: false }
+    );
+
+    checkScopeAnnotation(`
+      var arguments/* declares arguments#0 */;
+      !function(a = arguments/* reads arguments#1 */){}
+      `
     );
   });
 
@@ -1837,7 +1843,15 @@ suite('unit', () => {
     checkScopeAnnotation(`
       !function(e/* declares e#0 */) {
         {
-          function e/* declares e#0, e#1 */() {}
+          function e/* declares e#1 */() {}
+        }
+      };`
+    );
+
+    checkScopeAnnotation(`
+      !function(e /* declares e#0 */= 0) {
+        {
+          function e/* declares e#1 */() {}
         }
       };`
     );

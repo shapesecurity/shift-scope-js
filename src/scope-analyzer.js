@@ -43,8 +43,8 @@ export default class ScopeAnalyzer extends MonoidalReducer {
     if (params.hasParameterExpressions) {
       return params
         .withoutParameterExpressions()
-        .concat(body.finish(fnNode, fnType, opts))
-        .finish(fnNode, ScopeType.PARAMETERS);
+        .concat(body.finish(fnNode, fnType, { isFunctionWithParameterExpressions: true }))
+        .finish(fnNode, ScopeType.PARAMETERS, opts);
     }
     return params.concat(body).finish(fnNode, fnType, opts);
   }

@@ -201,7 +201,7 @@ export default class ScopeState {
    * and declarations into variable objects. Any free identifiers remaining are
    * carried forward into the new state object.
    */
-  finish(astNode, scopeType, { shouldResolveArguments = false, shouldB33 = false } = {}) {
+  finish(astNode, scopeType, { shouldResolveArguments = false, shouldB33 = false, isFunctionWithParameterExpressions = false } = {}) {
     let variables = [];
     let functionScoped = new MultiMap;
     let freeIdentifiers = merge(new MultiMap, this.freeIdentifiers);
@@ -221,6 +221,15 @@ export default class ScopeState {
       const existing = pvsfd.get(k);
       if (existing && (v.length > 1 || v[0].node !== existing[0].node)) {
         // Note that this is *currently* the spec'd behavior, but is regarded as a bug; see https://github.com/tc39/ecma262/issues/913
+        pvsfd.delete(k);
+      }
+    });
+    this.functionScopedDeclarations.forEachEntry((v, k) => {
+      const existing = pvsfd.get(k);
+      if (existing && v.some(d => d.type === DeclarationType.PARAMETER)) {
+        // Despite being function scoped, parameters *do* block B.3.3 hoisting.
+        // See B.3.3.1.a.ii: https://tc39.github.io/ecma262/#sec-web-compat-functiondeclarationinstantiation
+        // "If replacing the FunctionDeclaration f with a VariableStatement that has F as a BindingIdentifier would not produce any Early Errors for func and F is not an element of parameterNames, then"
         pvsfd.delete(k);
       }
     });
@@ -274,7 +283,9 @@ export default class ScopeState {
           // maybe also scripts? spec currently doesn't say to, but that may be a bug.
           merge(declarations, pvsfd);
         }
-        pvsfd = new MultiMap;
+        if (!isFunctionWithParameterExpressions) {
+          pvsfd = new MultiMap;
+        }
 
         variables = resolveDeclarations(freeIdentifiers, declarations, variables);
 
