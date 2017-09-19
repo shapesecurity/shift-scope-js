@@ -224,6 +224,15 @@ export default class ScopeState {
         pvsfd.delete(k);
       }
     });
+    this.functionScopedDeclarations.forEachEntry((v, k) => {
+      const existing = pvsfd.get(k);
+      if (existing && v.some(d => d.type === DeclarationType.PARAMETER)) {
+        // Despite being function scoped, parameters *do* block B.3.3 hoisting.
+        // See B.3.3.1.a.ii: https://tc39.github.io/ecma262/#sec-web-compat-functiondeclarationinstantiation
+        // "If replacing the FunctionDeclaration f with a VariableStatement that has F as a BindingIdentifier would not produce any Early Errors for func and F is not an element of parameterNames, then"
+        pvsfd.delete(k);
+      }
+    });
 
     let declarations = new MultiMap;
 

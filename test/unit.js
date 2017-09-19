@@ -1837,7 +1837,7 @@ suite('unit', () => {
     checkScopeAnnotation(`
       !function(e/* declares e#0 */) {
         {
-          function e/* declares e#0, e#1 */() {}
+          function e/* declares e#1 */() {}
         }
       };`
     );
