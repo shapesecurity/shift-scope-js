@@ -1885,11 +1885,22 @@ suite('unit', () => {
     checkScopeAnnotation(`
       switch (x/* reads x#0 */) {
         case 1:
-          x/* reads x#0 */;
+          x/* reads x#1 */;
         case 2:
           let x/* declares x#1 */;
+      }
+      x/* reads x#0 */;
+      `
+    );
+
+    checkScopeAnnotation(`
+      switch (x/* reads x#0 */) {
+        case 1:
+          x/* reads x#1 */;
         default:
-          x/* reads x#0 */;
+          let x/* declares x#1 */;
+        case 2:
+          x/* reads x#1 */;
       }
       x/* reads x#0 */;
       `

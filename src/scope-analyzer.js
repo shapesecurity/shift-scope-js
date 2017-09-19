@@ -240,18 +240,24 @@ export default class ScopeAnalyzer extends MonoidalReducer {
     );
   }
 
-  reduceSwitchCase(node, { test, consequent }) {
-    return super
-      .reduceSwitchCase(node, { test, consequent })
+  reduceSwitchStatement(node, { discriminant, cases }) {
+    return this
+      .fold(cases)
       .finish(node, ScopeType.BLOCK)
-      .withPotentialVarFunctions(getFunctionDeclarations(node.consequent));
+      .withPotentialVarFunctions(getFunctionDeclarations([...node.cases.map(c => c.consequent)]))
+      .concat(discriminant);
   }
 
-  reduceSwitchDefault(node, { consequent }) {
-    return super
-      .reduceSwitchDefault(node, { consequent })
+  reduceSwitchStatementWithDefault(node, { discriminant, preDefaultCases, defaultCase, postDefaultCases }) {
+    const functionDeclarations = getFunctionDeclarations([
+      ...node.preDefaultCases.concat([node.defaultCase], node.postDefaultCases).map(c => c.consequent),
+    ]);
+    const cases = preDefaultCases.concat([defaultCase], postDefaultCases);
+    return this
+      .fold(cases)
       .finish(node, ScopeType.BLOCK)
-      .withPotentialVarFunctions(getFunctionDeclarations(node.consequent));
+      .withPotentialVarFunctions(functionDeclarations)
+      .concat(discriminant);
   }
 
   reduceUnaryExpression(node, { operand }) {
