@@ -35,6 +35,7 @@ class Info {
     this.declares = [];
     this.reads = [];
     this.writes = [];
+    this.deletes = [];
     this.scopes = [];
   }
 }
@@ -66,11 +67,18 @@ export default function annotate({ source, locations, globalScope, skipUnambiguo
     });
     v.references.forEach(r => {
       let info = nodeInfo.get(r.node);
-      if (r.accessibility.isRead) {
-        info.reads.push(v);
-      }
-      if (r.accessibility.isWrite) {
-        info.writes.push(v);
+      if (r.accessibility.isDelete) {
+        if (r.accessibility.isRead || r.accessibility.isWrite) {
+          throw new Error('some reference is a delete *and* something else');
+        }
+        info.deletes.push(v);
+      } else {
+        if (r.accessibility.isRead) {
+          info.reads.push(v);
+        }
+        if (r.accessibility.isWrite) {
+          info.writes.push(v);
+        }
       }
     });
   }
@@ -88,7 +96,7 @@ export default function annotate({ source, locations, globalScope, skipUnambiguo
   for (let [node, info] of nodeInfo.entries()) {
     const location = locations.get(node);
     if (info.scopes.length > 0) {
-      if (info.declares.length !== 0 || info.reads.length !== 0 || info.writes.length !== 0) {
+      if (info.declares.length !== 0 || info.reads.length !== 0 || info.writes.length !== 0 || info.deletes.length !== 0) {
         throw new Error('unhandled condition: node is scope and reference');
       }
       for (let scope of [...info.scopes]) {
@@ -99,6 +107,11 @@ export default function annotate({ source, locations, globalScope, skipUnambiguo
         }
         insertInto(annotations, location.start.offset, '/* ' + text + ' */', true);
         insertInto(annotations, location.end.offset, '/* end scope */', true);
+      }
+    } else if (info.deletes.length > 0) {
+      let deletes = skipUnambiguous ? info.deletes.filter(v => vars.get(v.name).length > 1) : info.deletes;
+      if (deletes.length > 0) {
+        insertInto(annotations, location.end.offset, '/* deletes ' + deletes.map(v => v.name + '#' + vars.get(v.name).indexOf(v)).join(', ') + ' */', false);
       }
     } else {
       let text = '';

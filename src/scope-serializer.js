@@ -62,7 +62,7 @@ class Serializer {
 
   serializeReference(reference) {
     return `{"node": "${this.serializeNode(reference.node)}"`
-   + `, "accessibility": "${reference.accessibility.isRead ? 'Read' : ''}${reference.accessibility.isWrite ? 'Write' : ''}"`
+   + `, "accessibility": "${reference.accessibility.isDelete ? 'Delete' : ''}${reference.accessibility.isRead ? 'Read' : ''}${reference.accessibility.isWrite ? 'Write' : ''}"`
    + '}';
   }
 
@@ -125,8 +125,8 @@ function declarationCompare(ids, d1, d2) {
 }
 
 function referenceCompare(ids, r1, r2) {
-  let comparison = (r1.accessibility.isRead ? 1 : 0) + (r1.accessibility.isWrite ? 2 : 0)
-                    - ((r2.accessibility.isRead ? 1 : 0) + (r2.accessibility.isWrite ? 2 : 0));
+  let comparison = (r1.accessibility.isRead ? 1 : 0) + (r1.accessibility.isWrite ? 2 : 0) + (r1.accessibility.isDelete ? 4 : 0)
+                    - ((r2.accessibility.isRead ? 1 : 0) + (r2.accessibility.isWrite ? 2 : 0) + (r2.accessibility.isDelete ? 4 : 0));
   if (comparison !== 0) {
     return comparison;
   }

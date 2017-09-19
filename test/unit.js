@@ -1884,9 +1884,84 @@ suite('unit', () => {
 
   test('delete', () => {
     checkScopeAnnotation(`
-      delete x/* reads x#0 */;
+      delete x/* deletes x#0 */;
       `,
       { skipUnambiguous: false },
+    );
+
+    checkScopeSerialization(`
+      {
+        let x;
+        {
+          delete x;
+          x;
+        }
+      }
+      `,
+      {
+        'node': 'Script_0',
+        'type': 'Global',
+        'isDynamic': true,
+        'through': [],
+        'variables': [],
+        'children': [
+          {
+            'node': 'Script_0',
+            'type': 'Script',
+            'isDynamic': false,
+            'through': [],
+            'variables': [],
+            'children': [
+              {
+                'node': 'Block_2',
+                'type': 'Block',
+                'isDynamic': false,
+                'through': [],
+                'variables': [
+                  {
+                    'name': 'x',
+                    'references': [
+                      {
+                        'node': 'IdentifierExpression(x)_11',
+                        'accessibility': 'Delete',
+                      },
+                      {
+                        'node': 'IdentifierExpression(x)_13',
+                        'accessibility': 'Read',
+                      },
+                    ],
+                    'declarations': [
+                      {
+                        'node': 'BindingIdentifier(x)_6',
+                        'kind': 'Let',
+                      },
+                    ],
+                  },
+                ],
+                'children': [
+                  {
+                    'node': 'Block_8',
+                    'type': 'Block',
+                    'isDynamic': false,
+                    'through': [
+                      {
+                        'accessibility': 'Read',
+                        'node': 'IdentifierExpression(x)_13',
+                      },
+                      {
+                        'accessibility': 'Delete',
+                        'node': 'IdentifierExpression(x)_11',
+                      },
+                    ],
+                    'variables': [],
+                    'children': [],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }
     );
   });
 
