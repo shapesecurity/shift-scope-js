@@ -36,7 +36,7 @@ ScopeType.CATCH = new ScopeType('Catch');
 ScopeType.BLOCK = new ScopeType('Block');
 
 export class Scope {
-  constructor(children, variables, through, type, isDynamic, astNode) {
+  constructor({ children, variables, through, type, isDynamic, astNode }) {
     this.children = children;
     this.through = through;
     this.type = type;
@@ -63,8 +63,8 @@ export class Scope {
 }
 
 export class GlobalScope extends Scope {
-  constructor(children, variables, through, astNode) {
-    super(children, variables, through, ScopeType.GLOBAL, true, astNode);
+  constructor({ children, variables, through, astNode }) {
+    super({ children, variables, through, type: ScopeType.GLOBAL, isDynamic: true, astNode });
     through.forEachEntry((v, k) => {
       this.variables.set(k, new Variable(k, v, []));
     });
