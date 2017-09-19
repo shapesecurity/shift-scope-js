@@ -201,7 +201,7 @@ export default class ScopeState {
    * and declarations into variable objects. Any free identifiers remaining are
    * carried forward into the new state object.
    */
-  finish(astNode, scopeType, { shouldResolveArguments = false, shouldB33 = false } = {}) {
+  finish(astNode, scopeType, { shouldResolveArguments = false, shouldB33 = false, isFunctionWithParameterExpressions = false } = {}) {
     let variables = [];
     let functionScoped = new MultiMap;
     let freeIdentifiers = merge(new MultiMap, this.freeIdentifiers);
@@ -283,7 +283,9 @@ export default class ScopeState {
           // maybe also scripts? spec currently doesn't say to, but that may be a bug.
           merge(declarations, pvsfd);
         }
-        pvsfd = new MultiMap;
+        if (!isFunctionWithParameterExpressions) {
+          pvsfd = new MultiMap;
+        }
 
         variables = resolveDeclarations(freeIdentifiers, declarations, variables);
 
