@@ -1858,7 +1858,7 @@ suite('unit', () => {
 
     checkScopeAnnotation(`
       !function(){
-        switch (0) {
+        switch (f/* reads f#0 */) {
           case 1: {
             function f/* declares f#0, f#1 */(){}
           }
@@ -1883,7 +1883,7 @@ suite('unit', () => {
 
   test('switch', () => {
     checkScopeAnnotation(`
-      switch (0) {
+      switch (x/* reads x#0 */) {
         case 1:
           x/* reads x#0 */;
         case 2:
