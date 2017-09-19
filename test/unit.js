@@ -1862,7 +1862,7 @@ suite('unit', () => {
           case 1: {
             function f/* declares f#0, f#1 */(){}
           }
-          case 2: {
+          case f/* reads f#0 */: {
             function f/* declares f#0, f#2 */(){}
           }
           default: {
@@ -1886,7 +1886,7 @@ suite('unit', () => {
       switch (x/* reads x#0 */) {
         case 1:
           x/* reads x#1 */;
-        case 2:
+        case x/* reads x#1 */:
           let x/* declares x#1 */;
       }
       x/* reads x#0 */;
@@ -1899,7 +1899,7 @@ suite('unit', () => {
           x/* reads x#1 */;
         default:
           let x/* declares x#1 */;
-        case 2:
+        case x/* reads x#1 */:
           x/* reads x#1 */;
       }
       x/* reads x#0 */;
