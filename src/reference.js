@@ -15,16 +15,18 @@
  */
 
 export class Accessibility {
-  constructor(isRead, isWrite) {
+  constructor(isRead, isWrite, isDelete) {
     this.isRead = !!isRead;
     this.isWrite = !!isWrite;
     this.isReadWrite = !!(isRead && isWrite);
+    this.isDelete = !!isDelete;
   }
 }
 
-Accessibility.READ = new Accessibility(true, false);
-Accessibility.WRITE = new Accessibility(false, true);
-Accessibility.READWRITE = new Accessibility(true, true);
+Accessibility.READ = new Accessibility(true, false, false);
+Accessibility.WRITE = new Accessibility(false, true, false);
+Accessibility.READWRITE = new Accessibility(true, true, false);
+Accessibility.DELETE = new Accessibility(false, false, true);
 
 export class Reference {
   constructor(node, accessibility) {
