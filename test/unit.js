@@ -1793,51 +1793,47 @@ suite('unit', () => {
       }`
     );
 
-    checkScopeAnnotation(
-      `!function(){
+    checkScopeAnnotation(`
+      {
         {
+          let f/* declares f#2 */;
           {
-            let f/* declares f#2 */;
-            {
-              function f/* declares f#3 */(){}
-            }
+            function f/* declares f#3 */(){}
           }
-          function f/* declares f#0, f#1 */(){}
         }
-        f/* reads f#0 */;
-      }`
+        function f/* declares f#0, f#1 */(){}
+      }
+      f/* reads f#0 */;
+      `
     );
 
     checkScopeAnnotation(`
-      !function(){
-        function f/* declares f#0 */(){}
+      function f/* declares f#0 */(){}
+      {
+        function f/* declares f#1 */() {}
+      }
+      f/* reads f#0 */;
+      `
+    );
+
+    checkScopeAnnotation(`
+      try {} catch(e/* declares e#1 */) {
         {
-          function f/* declares f#1 */() {}
+          function e/* declares e#0, e#2 */() {}
         }
-        f/* reads f#0 */;
-      }`
+      }
+      e/* reads e#0 */;
+      `
     );
 
     checkScopeAnnotation(`
-      !function(){
-        try {} catch(e/* declares e#1 */) {
-          {
-            function e/* declares e#0, e#2 */() {}
-          }
+      try {} catch({e/* declares e#1 */}) {
+        {
+          function e/* declares e#2 */() {}
         }
-        e/* reads e#0 */;
-      }`
-    );
-
-    checkScopeAnnotation(`
-      !function(){
-        try {} catch({e/* declares e#1 */}) {
-          {
-            function e/* declares e#2 */() {}
-          }
-        }
-        e/* reads e#0 */;
-      }`
+      }
+      e/* reads e#0 */;
+      `
     );
 
     checkScopeAnnotation(`
@@ -1857,22 +1853,29 @@ suite('unit', () => {
     );
 
     checkScopeAnnotation(`
-      !function(){
-        switch (f/* reads f#0 */) {
-          case 1: {
-            function f/* declares f#0, f#1 */(){}
-          }
-          case f/* reads f#0 */: {
-            function f/* declares f#0, f#2 */(){}
-          }
-          default: {
-            function f/* declares f#0, f#3 */(){}
-          }
+      switch (f/* reads f#0 */) {
+        case 1: {
+          function f/* declares f#0, f#1 */(){}
+        }
+        case f/* reads f#0 */: {
+          function f/* declares f#0, f#2 */(){}
+        }
+        default: {
+          function f/* declares f#0, f#3 */(){}
         }
       }`
     );
 
     checkScopeAnnotation(`
+      {
+        function f/* declares f#0, f#1 */() {}
+      }
+      f/* reads f#0 */;
+      `
+    );
+
+    checkScopeAnnotation(`
+      'use strict';
       {
         function f/* declares f#1 */() {}
       }
