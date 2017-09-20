@@ -1874,6 +1874,15 @@ suite('unit', () => {
 
     checkScopeAnnotation(`
       {
+        function f/* declares f#0, f#1 */() {}
+      }
+      f/* reads f#0 */;
+      `
+    );
+
+    checkScopeAnnotation(`
+      'use strict';
+      {
         function f/* declares f#1 */() {}
       }
       f/* reads f#0 */;

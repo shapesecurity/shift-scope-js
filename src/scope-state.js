@@ -280,7 +280,6 @@ export default class ScopeState {
         merge(declarations, this.functionDeclarations);
 
         if (shouldB33) {
-          // maybe also scripts? spec currently doesn't say to, but that may be a bug.
           merge(declarations, pvsfd);
         }
         if (!isFunctionWithParameterExpressions) {

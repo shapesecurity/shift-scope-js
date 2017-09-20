@@ -228,7 +228,7 @@ export default class ScopeAnalyzer extends MonoidalReducer {
   }
 
   reduceScript(node, { directives, statements }) {
-    return super.reduceScript(node, { directives, statements }).finish(node, ScopeType.SCRIPT);
+    return super.reduceScript(node, { directives, statements }).finish(node, ScopeType.SCRIPT, { shouldB33: !node.directives.some(d => d.rawValue === 'use strict') });
   }
 
   reduceSetter(node, { name, param, body }) {
