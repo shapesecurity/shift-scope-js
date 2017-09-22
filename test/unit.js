@@ -1657,7 +1657,7 @@ suite('unit', () => {
 
   test('destructuring', () => {
     checkScopeAnnotation(`
-      var {x/* declares x#0; writes x#0 */, a:{b:y /* declares y#0; writes y#0 */= z/* reads z#0 */}} = null;
+      var {x/* declares x#0; writes x#0 */, a:{b:y/* declares y#0; writes y#0 */ = z/* reads z#0 */}} = null;
       var [z/* declares z#0; writes z#0 */] = y/* reads y#0 */;
       `,
       { skipUnambiguous: false });
@@ -1690,41 +1690,45 @@ suite('unit', () => {
 
     checkScopeAnnotation(`
       function x/* declares x#0 */(){}
-      var x /* declares x#0; writes x#0 */= 1;
+      var x/* declares x#0; writes x#0 */ = 1;
       function x/* declares x#0 */(){}`,
       { skipUnambiguous: false }
     );
 
     // This test might look a little funny, but the '/* Scope (Function) declaring arguments#1 */' is the scope for the body of the inner function; it's not saying that the name of the inner function is what declares arguments#1.
-    checkScopeAnnotation(`
-      /* Scope (Global) declaring outer#0 *//* Scope (Script) *//* Scope (Function) declaring arguments#0 */function outer() {
+    checkScopeAnnotation(`/* Scope (Global) declaring outer#0 *//* Scope (Script) */
+      /* Scope (Function) declaring arguments#0 */function outer() {
         return arguments/* reads arguments#0 */;
-        /* Scope (Function) declaring arguments#1 */function arguments/* declares arguments#0 */(){}
-      /* end scope */}/* end scope *//* end scope *//* end scope */`,
+        /* Scope (Function) declaring arguments#1 */function arguments/* declares arguments#0 */(){}/* end scope */
+      }/* end scope */
+      /* end scope *//* end scope */`,
       { skipScopes: false }
     );
   });
 
   test('parameter scope', () => {
-    checkScopeAnnotation(`
-      /* Scope (Global) *//* Scope (Script) */!/* Scope (Function) declaring y#0, arguments#0, x#0 */function (x/* declares x#0 */) {
+    checkScopeAnnotation(`/* Scope (Global) *//* Scope (Script) */
+      !/* Scope (Function) declaring y#0, arguments#0, x#0 */function (x/* declares x#0 */) {
         let y/* declares y#0 */;
-      }/* end scope */;/* end scope *//* end scope */`,
+      }/* end scope */;
+      /* end scope *//* end scope */`,
       { skipUnambiguous: false, skipScopes: false }
     );
 
     // Note the Parameters and ParametersExpression scopes
-    checkScopeAnnotation(`
-      /* Scope (Global) *//* Scope (Script) */!/* Scope (Parameters) declaring arguments#0, x#0 *//* Scope (Function) declaring y#0 */function(/* Scope (ParameterExpression) */x /* declares x#0 */= 1/* end scope */) {
+    checkScopeAnnotation(`/* Scope (Global) *//* Scope (Script) */
+      !/* Scope (Parameters) declaring arguments#0, x#0 *//* Scope (Function) declaring y#0 */function(/* Scope (ParameterExpression) */x/* declares x#0 */ = 1/* end scope */) {
         let y/* declares y#0 */;
-      }/* end scope *//* end scope */;/* end scope *//* end scope */`,
+      }/* end scope *//* end scope */;
+      /* end scope *//* end scope */`,
       { skipUnambiguous: false, skipScopes: false }
     );
 
-    checkScopeAnnotation(`
-      /* Scope (Global) declaring z#0 *//* Scope (Script) */!/* Scope (Parameters) declaring arguments#0, x#0, y#0 *//* Scope (Function) declaring z#1 */function(x/* declares x#0 */, /* Scope (ParameterExpression) */y /* declares y#0 */= /* Scope (ArrowFunction) */() => (x/* reads x#0 */, y/* reads y#0 */, z/* reads z#0 */)/* end scope *//* end scope */) {
+    checkScopeAnnotation(`/* Scope (Global) declaring z#0 *//* Scope (Script) */
+      !/* Scope (Parameters) declaring arguments#0, x#0, y#0 *//* Scope (Function) declaring z#1 */function(x/* declares x#0 */, /* Scope (ParameterExpression) */y/* declares y#0 */ = /* Scope (ArrowFunction) */() => (x/* reads x#0 */, y/* reads y#0 */, z/* reads z#0 */)/* end scope *//* end scope */) {
         let z/* declares z#1 */;
-      }/* end scope *//* end scope */;/* end scope *//* end scope */`,
+      }/* end scope *//* end scope */;
+      /* end scope *//* end scope */`,
       { skipUnambiguous: false, skipScopes: false }
     );
 
@@ -1748,7 +1752,7 @@ suite('unit', () => {
         function getOuter(){return f/* reads f#0 */;}
         var g;
         {
-           f /* writes f#1 */= 1;
+           f/* writes f#1 */ = 1;
            function f/* declares f#0, f#1 */(){}
            g = f/* reads f#1 */;
         }
@@ -1845,7 +1849,7 @@ suite('unit', () => {
     );
 
     checkScopeAnnotation(`
-      !function(e /* declares e#0 */= 0) {
+      !function(e/* declares e#0 */ = 0) {
         {
           function e/* declares e#1 */() {}
         }
@@ -2012,7 +2016,7 @@ suite('unit', () => {
     );
 
     checkScopeAnnotation(
-      'let a/* declares a#0 */; export {a /* reads a#0 */as b}',
+      'let a/* declares a#0 */; export {a/* reads a#0 */ as b}',
       { asScript: false, skipUnambiguous: false }
     );
   });
