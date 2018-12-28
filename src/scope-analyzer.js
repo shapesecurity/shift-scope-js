@@ -32,6 +32,10 @@ export default class ScopeAnalyzer extends MonoidalReducer {
     this.sloppySet = program.type === 'Script' ? StrictnessReducer.analyze(program) : new Set;
   }
 
+  fold(list, a) {
+    return list.reduce((memo, x) => this.append(memo, x), a == null ? this.identity : a);
+  }
+
   static analyze(program) {
     return reduce(new this(program), program).children[0];
   }
