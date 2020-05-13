@@ -1638,7 +1638,7 @@ suite('unit', () => {
       function outer(){
         function f/* declares f#0 */() {}
         {
-          function f/* declares f#1 */() {}
+          function f/* declares f#0, f#1 */() {}
           print(f/* reads f#1 */);
         }
         return f/* reads f#0 */;
@@ -1813,8 +1813,10 @@ suite('unit', () => {
 
     checkScopeAnnotation(`
       function f/* declares f#0 */(){}
+      f/* writes f#0 */ = 0;
       {
-        function f/* declares f#1 */() {}
+        f/* writes f#1 */ = 0;
+        function f/* declares f#0, f#1 */() {}
       }
       f/* reads f#0 */;
       `
