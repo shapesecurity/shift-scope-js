@@ -1790,9 +1790,9 @@ suite('unit', () => {
     checkScopeAnnotation(`
       !function f/* declares f#0 */() {
         if (0)
-          function f/* declares f#1 */(){}
+          function f/* declares f#1, f#2 */(){}
         else
-          function f/* declares f#1 */(){}
+          function f/* declares f#1, f#3 */(){}
         f/* reads f#1 */;
       }`
     );

@@ -205,16 +205,17 @@ export default class ScopeAnalyzer extends MonoidalReducer {
   }
 
   reduceIfStatement(node, { test, consequent, alternate }) {
-    let pvsfd = [];
+    // These "blocks" are synthetic; see https://tc39.es/ecma262/#sec-functiondeclarations-in-ifstatement-statement-clauses
     if (node.consequent.type === 'FunctionDeclaration') {
-      pvsfd.push(node.consequent.name);
+      consequent = consequent.withPotentialVarFunctions([node.consequent.name])
+        .finish(node.consequent, ScopeType.BLOCK);
     }
     if (node.alternate && node.alternate.type === 'FunctionDeclaration') {
-      pvsfd.push(node.alternate.name);
+      alternate = alternate.withPotentialVarFunctions([node.alternate.name])
+        .finish(node.alternate, ScopeType.BLOCK);
     }
     return super
-      .reduceIfStatement(node, { test, consequent, alternate })
-      .withPotentialVarFunctions(pvsfd);
+      .reduceIfStatement(node, { test, consequent, alternate });
   }
 
   reduceImport(node, { moduleSpecifier, defaultBinding, namedImports }) {
