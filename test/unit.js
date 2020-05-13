@@ -17,7 +17,11 @@
 import assert from 'assert';
 
 import { parseScript, parseScriptWithLocation, parseModule, parseModuleWithLocation } from 'shift-parser';
-import analyze, { Accessibility, ScopeType, serialize, annotate } from '../';
+import oldAnalyze, { Accessibility, ScopeType, serialize, annotate } from '../';
+
+import ScopeAnalyzer from '../dist/scope-analyzer-two.js';
+
+let analyze = ScopeAnalyzer.analyze;
 
 const NO_REFERENCES = [];
 const NO_DECLARATIONS = [];
@@ -1708,7 +1712,7 @@ suite('unit', () => {
 
   test('parameter scope', () => {
     checkScopeAnnotation(`/* Scope (Global) *//* Scope (Script) */
-      !/* Scope (Function) declaring y#0, arguments#0, x#0 */function (x/* declares x#0 */) {
+      !/* Scope (Function) declaring arguments#0, x#0, y#0 */function (x/* declares x#0 */) {
         let y/* declares y#0 */;
       }/* end scope */;
       /* end scope *//* end scope */`,
@@ -1934,6 +1938,26 @@ suite('unit', () => {
       `
     );
 
+    checkScopeAnnotation(`
+      for (let a/* declares a#0 */; ; ) {
+        function a/* declares a#1 */() {}
+      }
+      `
+    );
+
+    checkScopeAnnotation(`
+      for (let a/* declares a#0; writes a#0 */ in 0) {
+        function a/* declares a#1 */() {}
+      }
+      `
+    );
+
+    checkScopeAnnotation(`
+      for (let a/* declares a#0; writes a#0 */ of 0) {
+        function a/* declares a#1 */() {}
+      }
+      `
+    );
 
     checkScopeAnnotation(`
       {

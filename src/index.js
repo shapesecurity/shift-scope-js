@@ -15,6 +15,8 @@
  */
 
 import ScopeAnalyzer from './scope-analyzer';
+import ScopeAnalyzer2 from './scope-analyzer-two';
+export { default as ScopeAnalyzer2 } from './scope-analyzer-two';
 export { default as ScopeLookup } from './scope-lookup';
 export { default as annotate } from './annotate-source';
 export { ScopeType } from './scope';
@@ -23,5 +25,5 @@ export { Accessibility } from './reference';
 export { serialize } from './scope-serializer';
 
 export default function analyze(script) {
-  return ScopeAnalyzer.analyze(script);
+  return ScopeAnalyzer2.analyze(script);
 }

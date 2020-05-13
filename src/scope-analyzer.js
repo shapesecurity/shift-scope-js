@@ -196,6 +196,9 @@ export default class ScopeAnalyzer extends MonoidalReducer {
   }
 
   reduceFormalParameters(node, { items, rest }) {
+    if (rest && rest.hasParameterExpressions) {
+      rest = rest.finish(node.rest, ScopeType.PARAMETER_EXPRESSION);
+    }
     let s = rest ? rest : new ScopeState;
     items.forEach((item, ind) => {
       s = s.concat(
@@ -275,7 +278,7 @@ export default class ScopeAnalyzer extends MonoidalReducer {
 
   reduceSetter(node, { name, param, body }) {
     if (param.hasParameterExpressions) {
-      param = param.finish(node, ScopeType.PARAMETER_EXPRESSION);
+      param = param.finish(node.param, ScopeType.PARAMETER_EXPRESSION);
     }
     return name.concat(
       this.finishFunction(node, param.addDeclarations(DeclarationType.PARAMETER), body),

@@ -1,6 +1,6 @@
 {
   "name": "shift-scope",
-  "version": "5.0.0",
+  "version": "4.0.0",
   "description": "produce a scope tree for Shift format ASTs",
   "author": "Shape Security",
   "homepage": "https://github.com/shapesecurity/shift-scope-js",
@@ -29,8 +29,11 @@
     "babel-eslint": "7.2.3",
     "babel-preset-env": "1.6.0",
     "babel-register": "6.26.0",
+    "chai": "^4.2.0",
     "eslint": "4.6.1",
     "mocha": "2.3.4",
+    "shift-codegen": "7.0.3",
+    "shift-fuzzer": "2.0.0",
     "shift-parser": "7.0.3"
   },
   "keywords": [
