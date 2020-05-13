@@ -217,13 +217,16 @@ export default class ScopeState {
       }
       pvsfd.delete(k);
     });
-    this.functionDeclarations.forEachEntry((v, k) => {
-      const existing = pvsfd.get(k);
-      if (existing && (v.length > 1 || v[0].node !== existing[0].node)) {
-        // Note that this is *currently* the spec'd behavior, but is regarded as a bug; see https://github.com/tc39/ecma262/issues/913
-        pvsfd.delete(k);
-      }
-    });
+    if (scopeType !== ScopeType.SCRIPT && scopeType !== ScopeType.FUNCTION && scopeType !== ScopeType.ARROW_FUNCTION) {
+      // At the top level of scripts and function bodies, function declarations are not lexical and hence do not block hosting
+      this.functionDeclarations.forEachEntry((v, k) => {
+        const existing = pvsfd.get(k);
+        if (existing && (v.length > 1 || v[0].node !== existing[0].node)) {
+          // Note that this is *currently* the spec'd behavior, but is regarded as a bug; see https://github.com/tc39/ecma262/issues/913
+          pvsfd.delete(k);
+        }
+      });
+    }
     this.functionScopedDeclarations.forEachEntry((v, k) => {
       const existing = pvsfd.get(k);
       if (existing && v.some(d => d.type === DeclarationType.PARAMETER)) {
