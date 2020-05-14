@@ -31,7 +31,10 @@ function asSimpleFunctionDeclarationName(statement) {
 }
 
 function getFunctionDeclarations(statements) {
-  return statements.map(asSimpleFunctionDeclarationName).filter(f => f != null);
+  let names = statements.map(asSimpleFunctionDeclarationName).filter(f => f != null);
+  // if a function declaration occurs twice in the same scope, neither can be B.3.3 hoisted
+  // see https://github.com/tc39/ecma262/issues/913
+  return names.filter(name => names.filter(n => n.name === name.name).length === 1);
 }
 
 export default class ScopeAnalyzer extends MonoidalReducer {
