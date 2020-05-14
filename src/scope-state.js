@@ -227,7 +227,10 @@ export default class ScopeState {
             pvsfd.delete(k);
           } else {
             pvsfd.delete(k);
-            pvsfd.set(k, existing.find(e => e.node === v[0].node));
+            let myPvsfd = existing.find(e => e.node === v[0].node);
+            if (myPvsfd != null) {
+              pvsfd.set(k, myPvsfd);
+            }
           }
         }
       });

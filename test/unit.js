@@ -2016,6 +2016,19 @@ suite('unit', () => {
       `,
       { skipUnambiguous: false }
     );
+
+    // cannot hoist through generators
+    checkScopeAnnotation(`
+      {
+        function* f/* declares f#0 */(){}
+        {
+          function f/* declares f#1 */(){}
+        }
+      }
+      `,
+      { skipUnambiguous: false }
+    );
+
   });
 
   test('switch', () => {
