@@ -1675,9 +1675,8 @@ suite('unit', () => {
   });
 
   test('function double declaration', () => {
-    // note that B.3.3 hoisting still occurs. this is not a legal program, so whatever.
     checkScopeAnnotation(
-      '{let x/* declares x#1 */; function x/* declares x#0, x#1 */(){}}',
+      '{let x/* declares x#0 */; function x/* declares x#0 */(){}}',
       { skipUnambiguous: false }
     );
 

@@ -221,9 +221,14 @@ export default class ScopeState {
       // At the top level of scripts and function bodies, function declarations are not lexical and hence do not block hosting
       this.functionDeclarations.forEachEntry((v, k) => {
         const existing = pvsfd.get(k);
-        if (existing && (v.length > 1 || v[0].node !== existing[0].node)) {
-          // Note that this is *currently* the spec'd behavior, but is regarded as a bug; see https://github.com/tc39/ecma262/issues/913
-          pvsfd.delete(k);
+        if (existing) {
+          if (v.length > 1) {
+            // Note that this is *currently* the spec'd behavior, but is regarded as a bug; see https://github.com/tc39/ecma262/issues/913
+            pvsfd.delete(k);
+          } else {
+            pvsfd.delete(k);
+            pvsfd.set(k, existing.find(e => e.node === v[0].node));
+          }
         }
       });
     }
