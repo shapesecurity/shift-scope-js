@@ -23,7 +23,7 @@ import { ScopeType } from './scope';
 import StrictnessReducer from './strictness-reducer';
 
 function asSimpleFunctionDeclarationName(statement) {
-  return (statement.type === 'FunctionDeclaration' && !statement.isGenerator && !statement.isAsync)
+  return statement.type === 'FunctionDeclaration' && !statement.isGenerator && !statement.isAsync
     ? statement.name
     : statement.type === 'LabeledStatement'
       ? asSimpleFunctionDeclarationName(statement.body)
@@ -101,7 +101,7 @@ export default class ScopeAnalyzer extends MonoidalReducer {
     return super
       .reduceBlock(node, { statements })
       .withPotentialVarFunctions(getFunctionDeclarations(node.statements))
-      .finish(node, ScopeType.BLOCK);      
+      .finish(node, ScopeType.BLOCK);
   }
 
   reduceCallExpression(node, { callee, arguments: _arguments }) {
