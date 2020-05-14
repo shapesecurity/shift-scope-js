@@ -1890,6 +1890,19 @@ suite('unit', () => {
     );
   });
 
+  test.only('binding property', () => {
+    checkScopeAnnotation(`/* Scope (Global) declaring a#0 *//* Scope (Script) */
+      !/* Scope (Parameters) declaring arguments#0, b#0 *//* Scope (Function) declaring a#1 */function (
+        /* Scope (ParameterExpression) */{ [a/* reads a#0 */]: b/* declares b#0 */ }/* end scope */
+       ){
+         var a/* declares a#1 */;
+       }/* end scope *//* end scope */
+      /* end scope *//* end scope */`,
+      { skipUnambiguous: false, skipScopes: false }
+    );
+  });
+
+
   test('switch', () => {
     checkScopeAnnotation(`
       switch (x/* reads x#0 */) {
