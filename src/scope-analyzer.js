@@ -249,14 +249,14 @@ export default class ScopeAnalyzer extends MonoidalReducer {
     return this
       .fold(cases)
       .finish(node, ScopeType.BLOCK)
-      .withPotentialVarFunctions(getFunctionDeclarations([...node.cases.map(c => c.consequent)]))
+      .withPotentialVarFunctions(getFunctionDeclarations([].concat(...node.cases.map(c => c.consequent))))
       .concat(discriminant);
   }
 
   reduceSwitchStatementWithDefault(node, { discriminant, preDefaultCases, defaultCase, postDefaultCases }) {
-    const functionDeclarations = getFunctionDeclarations([
+    const functionDeclarations = getFunctionDeclarations([].concat(
       ...node.preDefaultCases.concat([node.defaultCase], node.postDefaultCases).map(c => c.consequent),
-    ]);
+    ));
     const cases = preDefaultCases.concat([defaultCase], postDefaultCases);
     return this
       .fold(cases)

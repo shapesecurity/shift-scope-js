@@ -1866,9 +1866,40 @@ suite('unit', () => {
         case f/* reads f#0 */: {
           function f/* declares f#0, f#2 */(){}
         }
+      }`
+    );
+
+    checkScopeAnnotation(`
+      switch (f/* reads f#0 */) {
+        case 1: {
+          function f/* declares f#0, f#1 */(){}
+        }
         default: {
+          function f/* declares f#0, f#2 */(){}
+        }
+        case f/* reads f#0 */: {
           function f/* declares f#0, f#3 */(){}
         }
+      }`
+    );
+
+    checkScopeAnnotation(`
+      switch (f/* reads f#0 */) {
+        case 1:
+          function f/* declares f#0, f#1 */(){}
+        case f/* reads f#1 */:
+          function f/* declares f#0, f#1 */(){}
+      }`
+    );
+
+    checkScopeAnnotation(`
+      switch (f/* reads f#0 */) {
+        case 1:
+          function f/* declares f#0, f#1 */(){}
+        default:
+          function f/* declares f#0, f#1 */(){}
+        case f/* reads f#1 */:
+          function f/* declares f#0, f#1 */(){}
       }`
     );
 
