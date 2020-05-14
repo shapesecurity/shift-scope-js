@@ -83,6 +83,14 @@ export default class ScopeAnalyzer extends MonoidalReducer {
     return s;
   }
 
+  reduceBindingPropertyProperty(node, { name, binding }) {
+    const s = super.reduceBindingPropertyProperty(node, { name, binding });
+    if (node.name.type === 'ComputedPropertyName') {
+      return s.withParameterExpressions();
+    }
+    return s;
+  }
+
   reduceBindingWithDefault(node, { binding, init }) {
     return super.reduceBindingWithDefault(node, { binding, init }).withParameterExpressions();
   }
