@@ -1919,6 +1919,40 @@ suite('unit', () => {
       f/* reads f#0 */;
       `
     );
+
+
+    checkScopeAnnotation(`
+      {
+        function f/* declares f#0, f#1 */() {}
+        async function g/* declares g#0 */(){}
+        function* h/* declares h#0 */(){}
+      }
+
+      switch (0) {
+        case 0:
+          function f/* declares f#0, f#2 */() {}
+          async function g/* declares g#1 */(){}
+          function* h/* declares h#1 */(){}
+      }
+
+      switch (0) {
+        default:
+          function f/* declares f#0, f#3 */() {}
+          async function g/* declares g#2 */(){}
+          function* h/* declares h#2 */(){}
+        case 0:
+          function f/* declares f#0, f#3 */() {}
+          async function g/* declares g#2 */(){}
+          function* h/* declares h#2 */(){}
+      }
+
+      if (0) function f/* declares f#0, f#4 */() {}
+      else function f/* declares f#0, f#5 */() {}
+
+      `
+    );
+
+
   });
 
   test('switch', () => {
