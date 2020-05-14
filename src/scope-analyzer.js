@@ -94,8 +94,8 @@ export default class ScopeAnalyzer extends MonoidalReducer {
   reduceBlock(node, { statements }) {
     return super
       .reduceBlock(node, { statements })
-      .withPotentialVarFunctions(getFunctionDeclarations(node.statements))
-      .finish(node, ScopeType.BLOCK);
+      .finish(node, ScopeType.BLOCK)
+      .withPotentialVarFunctions(getFunctionDeclarations(node.statements));
   }
 
   reduceCallExpression(node, { callee, arguments: _arguments }) {
