@@ -22,12 +22,16 @@ import { DeclarationType } from './declaration';
 import { ScopeType } from './scope';
 import StrictnessReducer from './strictness-reducer';
 
-function isSimpleFunctionDeclaration(statement) {
-  return statement.type === 'FunctionDeclaration' && !statement.isGenerator && !statement.isAsync;
+function asSimpleFunctionDeclarationName(statement) {
+  return (statement.type === 'FunctionDeclaration' && !statement.isGenerator && !statement.isAsync)
+    ? statement.name
+    : statement.type === 'LabeledStatement'
+      ? asSimpleFunctionDeclarationName(statement.body)
+      : null;
 }
 
 function getFunctionDeclarations(statements) {
-  return statements.filter(isSimpleFunctionDeclaration).map(f => f.name);
+  return statements.map(asSimpleFunctionDeclarationName).filter(f => f != null);
 }
 
 export default class ScopeAnalyzer extends MonoidalReducer {
@@ -210,12 +214,14 @@ export default class ScopeAnalyzer extends MonoidalReducer {
 
   reduceIfStatement(node, { test, consequent, alternate }) {
     // These "blocks" are synthetic; see https://tc39.es/ecma262/#sec-functiondeclarations-in-ifstatement-statement-clauses
-    if (isSimpleFunctionDeclaration(node.consequent)) {
-      consequent = consequent.withPotentialVarFunctions([node.consequent.name])
+    let consequentFunctionDeclName = asSimpleFunctionDeclarationName(node.consequent);
+    if (consequentFunctionDeclName) {
+      consequent = consequent.withPotentialVarFunctions([consequentFunctionDeclName])
         .finish(node.consequent, ScopeType.BLOCK);
     }
-    if (node.alternate != null && isSimpleFunctionDeclaration(node.alternate)) {
-      alternate = alternate.withPotentialVarFunctions([node.alternate.name])
+    let alternateFunctionDeclName = node.alternate != null && asSimpleFunctionDeclarationName(node.alternate);
+    if (alternateFunctionDeclName) {
+      alternate = alternate.withPotentialVarFunctions([alternateFunctionDeclName])
         .finish(node.alternate, ScopeType.BLOCK);
     }
     return super

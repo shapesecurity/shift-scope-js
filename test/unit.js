@@ -1933,6 +1933,13 @@ suite('unit', () => {
       `
     );
 
+    checkScopeAnnotation(`
+      {
+        l1: l2: l3: function f/* declares f#0, f#1 */() {}
+      }
+      f/* reads f#0 */;
+      `
+    );
 
     checkScopeAnnotation(`
       {
