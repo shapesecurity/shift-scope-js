@@ -1972,6 +1972,41 @@ suite('unit', () => {
       `
     );
 
+    // hoisted functions are not visible in parameter lists
+    checkScopeAnnotation(`
+      !function (a/* declares a#0 */ = f/* reads f#0 */) {
+        {
+          function f/* declares f#1, f#2 */() {
+          }
+        }
+      };
+      `,
+      { skipUnambiguous: false }
+    );
+
+    checkScopeAnnotation(`
+      !function (f/* declares f#0 */) {
+        {
+          function f/* declares f#1 */() {
+          }
+        }
+        f/* reads f#0 */;
+      };
+      `,
+      { skipUnambiguous: false }
+    );
+
+    checkScopeAnnotation(`
+      !function () {
+        {
+          function f/* declares f#0, f#1 */() {
+          }
+        }
+        f/* reads f#0 */;
+      };
+      `,
+      { skipUnambiguous: false }
+    );
 
   });
 

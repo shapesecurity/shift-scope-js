@@ -201,7 +201,7 @@ export default class ScopeState {
    * and declarations into variable objects. Any free identifiers remaining are
    * carried forward into the new state object.
    */
-  finish(astNode, scopeType, { shouldResolveArguments = false, shouldB33 = false, isFunctionWithParameterExpressions = false } = {}) {
+  finish(astNode, scopeType, { shouldResolveArguments = false, shouldB33 = false, paramsToBlockB33Hoisting } = {}) {
     let variables = [];
     let functionScoped = new MultiMap;
     let freeIdentifiers = merge(new MultiMap, this.freeIdentifiers);
@@ -282,12 +282,17 @@ export default class ScopeState {
         merge(declarations, this.functionScopedDeclarations);
         merge(declarations, this.functionDeclarations);
 
+
         if (shouldB33) {
+          if (paramsToBlockB33Hoisting != null) {
+            // parameters are "function scoped", technically
+            paramsToBlockB33Hoisting.functionScopedDeclarations.forEachEntry((v, k) => {
+              pvsfd.delete(k);
+            });
+          }
           merge(declarations, pvsfd);
         }
-        if (!isFunctionWithParameterExpressions) {
-          pvsfd = new MultiMap;
-        }
+        pvsfd = new MultiMap;
 
         variables = resolveDeclarations(freeIdentifiers, declarations, variables);
 

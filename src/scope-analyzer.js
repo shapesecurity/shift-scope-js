@@ -51,14 +51,13 @@ export default class ScopeAnalyzer extends MonoidalReducer {
   finishFunction(fnNode, params, body) {
     const isArrowFn = fnNode.type === 'ArrowExpression';
     const fnType = isArrowFn ? ScopeType.ARROW_FUNCTION : ScopeType.FUNCTION;
-    const opts = { shouldResolveArguments: !isArrowFn, shouldB33: this.sloppySet.has(fnNode) };
     if (params.hasParameterExpressions) {
       return params
         .withoutParameterExpressions()
-        .concat(body.finish(fnNode, fnType, { isFunctionWithParameterExpressions: true }))
-        .finish(fnNode, ScopeType.PARAMETERS, opts);
+        .concat(body.finish(fnNode, fnType, { shouldResolveArguments: false, paramsToBlockB33Hoisting: params, shouldB33: this.sloppySet.has(fnNode) }))
+        .finish(fnNode, ScopeType.PARAMETERS, { shouldResolveArguments: !isArrowFn });
     }
-    return params.concat(body).finish(fnNode, fnType, opts);
+    return params.concat(body).finish(fnNode, fnType, { shouldResolveArguments: !isArrowFn, shouldB33: this.sloppySet.has(fnNode) });
   }
 
   reduceArrowExpression(node, { params, body }) {
