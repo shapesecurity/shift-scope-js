@@ -30,11 +30,20 @@ function asSimpleFunctionDeclarationName(statement) {
       : null;
 }
 
-function getFunctionDeclarations(statements) {
+function getUnnestedSimpleFunctionDeclarationNames(statements) {
   let names = statements.map(asSimpleFunctionDeclarationName).filter(f => f != null);
   // if a function declaration occurs twice in the same scope, neither can be B.3.3 hoisted
   // see https://github.com/tc39/ecma262/issues/913
-  return names.filter(name => names.filter(n => n.name === name.name).length === 1);
+
+  let hist = names.reduce((memo, id) => {
+    if (id.name in memo) {
+      ++memo[id.name];
+    } else {
+      memo[id.name] = 1;
+    }
+    return memo;
+  }, Object.create(null));
+  return names.filter(id => hist[id.name] === 1);
 }
 
 export default class ScopeAnalyzer extends MonoidalReducer {
@@ -100,7 +109,7 @@ export default class ScopeAnalyzer extends MonoidalReducer {
   reduceBlock(node, { statements }) {
     return super
       .reduceBlock(node, { statements })
-      .withPotentialVarFunctions(getFunctionDeclarations(node.statements))
+      .withPotentialVarFunctions(getUnnestedSimpleFunctionDeclarationNames(node.statements))
       .finish(node, ScopeType.BLOCK);
   }
 
@@ -217,14 +226,16 @@ export default class ScopeAnalyzer extends MonoidalReducer {
   reduceIfStatement(node, { test, consequent, alternate }) {
     // These "blocks" are synthetic; see https://tc39.es/ecma262/#sec-functiondeclarations-in-ifstatement-statement-clauses
     let consequentFunctionDeclName = asSimpleFunctionDeclarationName(node.consequent);
-    if (consequentFunctionDeclName) {
+    if (consequentFunctionDeclName != null) {
       consequent = consequent.withPotentialVarFunctions([consequentFunctionDeclName])
         .finish(node.consequent, ScopeType.BLOCK);
     }
-    let alternateFunctionDeclName = node.alternate != null && asSimpleFunctionDeclarationName(node.alternate);
-    if (alternateFunctionDeclName) {
-      alternate = alternate.withPotentialVarFunctions([alternateFunctionDeclName])
-        .finish(node.alternate, ScopeType.BLOCK);
+    if (node.alternate != null) {
+      let alternateFunctionDeclName = asSimpleFunctionDeclarationName(node.alternate);
+      if (alternateFunctionDeclName != null) {
+        alternate = alternate.withPotentialVarFunctions([alternateFunctionDeclName])
+          .finish(node.alternate, ScopeType.BLOCK);
+      }
     }
     return super
       .reduceIfStatement(node, { test, consequent, alternate });
@@ -260,13 +271,13 @@ export default class ScopeAnalyzer extends MonoidalReducer {
   reduceSwitchStatement(node, { discriminant, cases }) {
     return this
       .fold(cases)
-      .withPotentialVarFunctions(getFunctionDeclarations([].concat(...node.cases.map(c => c.consequent))))
+      .withPotentialVarFunctions(getUnnestedSimpleFunctionDeclarationNames([].concat(...node.cases.map(c => c.consequent))))
       .finish(node, ScopeType.BLOCK)
       .concat(discriminant);
   }
 
   reduceSwitchStatementWithDefault(node, { discriminant, preDefaultCases, defaultCase, postDefaultCases }) {
-    const functionDeclarations = getFunctionDeclarations([].concat(
+    const functionDeclarations = getUnnestedSimpleFunctionDeclarationNames([].concat(
       ...node.preDefaultCases.concat([node.defaultCase], node.postDefaultCases).map(c => c.consequent),
     ));
     const cases = preDefaultCases.concat([defaultCase], postDefaultCases);
