@@ -1746,6 +1746,26 @@ suite('unit', () => {
     );
   });
 
+  test('for-of', () => {
+    checkScopeAnnotation(`
+      let x/* declares x#0 */;
+      for (x/* writes x#0 */ of x/* reads x#0 */);
+      for (let x/* declares x#1; writes x#1 */ of x/* reads x#1 */);
+      `
+    );
+  });
+
+  test('for-await', () => {
+    checkScopeAnnotation(`
+      (async () => {
+        let x/* declares x#0 */;
+        for (x/* writes x#0 */ of x/* reads x#0 */);
+        for (let x/* declares x#1; writes x#1 */ of x/* reads x#1 */);
+      });
+      `
+    );
+  });
+
   test('B.3.3', () => {
     checkScopeAnnotation(
       `(function() {

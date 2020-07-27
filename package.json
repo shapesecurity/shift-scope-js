@@ -21,8 +21,8 @@
   },
   "dependencies": {
     "multimap": "1.0.2",
-    "shift-reducer": "5.0.0",
-    "shift-spec": "2017.0.0"
+    "shift-reducer": "6.0.0",
+    "shift-spec": "2018.0.2"
   },
   "devDependencies": {
     "babel-cli": "6.26.0",
@@ -31,7 +31,7 @@
     "babel-register": "6.26.0",
     "eslint": "4.6.1",
     "mocha": "2.3.4",
-    "shift-parser": "6.0.0"
+    "shift-parser": "7.0.3"
   },
   "keywords": [
     "Shift",
