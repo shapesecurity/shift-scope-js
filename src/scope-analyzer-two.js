@@ -12,7 +12,6 @@ let parameterExpressions = wrapped => ({
 });
 
 
-
 export default class ScopeAnalyzer extends MonoidalReducer {
   constructor() {
     super({
@@ -40,7 +39,6 @@ export default class ScopeAnalyzer extends MonoidalReducer {
   }
 
   static analyze(program) {
-    // return synthesize(thunkedReduce(instance, program));
     return synthesize(reduce(new ScopeAnalyzer, program));
   }
 

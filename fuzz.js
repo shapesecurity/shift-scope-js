@@ -104,8 +104,8 @@ let oldTimes = [];
 let newTimes = [];
 
 it('foo', function () {
-  this.timeout(20000);
-  for (let i = 0; i < 1000; ++i) {
+  this.timeout(200000);
+  for (let i = 0; i < 10000; ++i) {
 
     let script = codegen(fuzz());
 
@@ -118,11 +118,13 @@ it('foo', function () {
     try {
       let start = process.hrtime();
       let oldS = analyze(tree);
-      oldTimes.push(process.hrtime(start)[1]);
+      let end = process.hrtime(start);
+      oldTimes.push(end[0] * 1e6 + end[1] / 1e3);
 
       start = process.hrtime()
       let newS = ScopeAnalyzer.analyze(tree);
-      newTimes.push(process.hrtime(start)[1]);
+      end = process.hrtime(start);
+      newTimes.push(end[0] * 1e6 + end[1] / 1e3);
 
       // console.log(require('util').inspect(newS, { depth: null }));
       // return;
@@ -134,6 +136,6 @@ it('foo', function () {
     }
   }
 
-  console.log(JSON.stringify(oldTimes))
-  console.log(JSON.stringify(newTimes))
+  console.log(require('summary-statistics')(oldTimes))
+  console.log(require('summary-statistics')(newTimes))
 });
