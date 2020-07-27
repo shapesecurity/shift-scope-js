@@ -22,8 +22,28 @@ import { DeclarationType } from './declaration';
 import { ScopeType } from './scope';
 import StrictnessReducer from './strictness-reducer';
 
-function getFunctionDeclarations(statements) {
-  return statements.filter(s => s.type === 'FunctionDeclaration').map(f => f.name);
+function asSimpleFunctionDeclarationName(statement) {
+  return statement.type === 'FunctionDeclaration' && !statement.isGenerator && !statement.isAsync
+    ? statement.name
+    : statement.type === 'LabeledStatement'
+      ? asSimpleFunctionDeclarationName(statement.body)
+      : null;
+}
+
+function getUnnestedSimpleFunctionDeclarationNames(statements) {
+  let names = statements.map(asSimpleFunctionDeclarationName).filter(f => f != null);
+  // if a function declaration occurs twice in the same scope, neither can be B.3.3 hoisted
+  // see https://github.com/tc39/ecma262/issues/913
+
+  let hist = names.reduce((memo, id) => {
+    if (id.name in memo) {
+      ++memo[id.name];
+    } else {
+      memo[id.name] = 1;
+    }
+    return memo;
+  }, Object.create(null));
+  return names.filter(id => hist[id.name] === 1);
 }
 
 export default class ScopeAnalyzer extends MonoidalReducer {
@@ -43,14 +63,13 @@ export default class ScopeAnalyzer extends MonoidalReducer {
   finishFunction(fnNode, params, body) {
     const isArrowFn = fnNode.type === 'ArrowExpression';
     const fnType = isArrowFn ? ScopeType.ARROW_FUNCTION : ScopeType.FUNCTION;
-    const opts = { shouldResolveArguments: !isArrowFn, shouldB33: this.sloppySet.has(fnNode) };
     if (params.hasParameterExpressions) {
       return params
         .withoutParameterExpressions()
-        .concat(body.finish(fnNode, fnType, { isFunctionWithParameterExpressions: true }))
-        .finish(fnNode, ScopeType.PARAMETERS, opts);
+        .concat(body.finish(fnNode, fnType, { shouldResolveArguments: false, paramsToBlockB33Hoisting: params, shouldB33: this.sloppySet.has(fnNode) }))
+        .finish(fnNode, ScopeType.PARAMETERS, { shouldResolveArguments: !isArrowFn });
     }
-    return params.concat(body).finish(fnNode, fnType, opts);
+    return params.concat(body).finish(fnNode, fnType, { shouldResolveArguments: !isArrowFn, shouldB33: this.sloppySet.has(fnNode) });
   }
 
   reduceArrowExpression(node, { params, body }) {
@@ -98,7 +117,7 @@ export default class ScopeAnalyzer extends MonoidalReducer {
   reduceBlock(node, { statements }) {
     return super
       .reduceBlock(node, { statements })
-      .withPotentialVarFunctions(getFunctionDeclarations(node.statements))
+      .withPotentialVarFunctions(getUnnestedSimpleFunctionDeclarationNames(node.statements))
       .finish(node, ScopeType.BLOCK);
   }
 
@@ -214,13 +233,17 @@ export default class ScopeAnalyzer extends MonoidalReducer {
 
   reduceIfStatement(node, { test, consequent, alternate }) {
     // These "blocks" are synthetic; see https://tc39.es/ecma262/#sec-functiondeclarations-in-ifstatement-statement-clauses
-    if (node.consequent.type === 'FunctionDeclaration') {
-      consequent = consequent.withPotentialVarFunctions([node.consequent.name])
+    let consequentFunctionDeclName = asSimpleFunctionDeclarationName(node.consequent);
+    if (consequentFunctionDeclName != null) {
+      consequent = consequent.withPotentialVarFunctions([consequentFunctionDeclName])
         .finish(node.consequent, ScopeType.BLOCK);
     }
-    if (node.alternate && node.alternate.type === 'FunctionDeclaration') {
-      alternate = alternate.withPotentialVarFunctions([node.alternate.name])
-        .finish(node.alternate, ScopeType.BLOCK);
+    if (node.alternate != null) {
+      let alternateFunctionDeclName = asSimpleFunctionDeclarationName(node.alternate);
+      if (alternateFunctionDeclName != null) {
+        alternate = alternate.withPotentialVarFunctions([alternateFunctionDeclName])
+          .finish(node.alternate, ScopeType.BLOCK);
+      }
     }
     return super
       .reduceIfStatement(node, { test, consequent, alternate });
@@ -256,20 +279,20 @@ export default class ScopeAnalyzer extends MonoidalReducer {
   reduceSwitchStatement(node, { discriminant, cases }) {
     return this
       .fold(cases)
+      .withPotentialVarFunctions(getUnnestedSimpleFunctionDeclarationNames([].concat(...node.cases.map(c => c.consequent))))
       .finish(node, ScopeType.BLOCK)
-      .withPotentialVarFunctions(getFunctionDeclarations([...node.cases.map(c => c.consequent)]))
       .concat(discriminant);
   }
 
   reduceSwitchStatementWithDefault(node, { discriminant, preDefaultCases, defaultCase, postDefaultCases }) {
-    const functionDeclarations = getFunctionDeclarations([
+    const functionDeclarations = getUnnestedSimpleFunctionDeclarationNames([].concat(
       ...node.preDefaultCases.concat([node.defaultCase], node.postDefaultCases).map(c => c.consequent),
-    ]);
+    ));
     const cases = preDefaultCases.concat([defaultCase], postDefaultCases);
     return this
       .fold(cases)
-      .finish(node, ScopeType.BLOCK)
       .withPotentialVarFunctions(functionDeclarations)
+      .finish(node, ScopeType.BLOCK)
       .concat(discriminant);
   }
 

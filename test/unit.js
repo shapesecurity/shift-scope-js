@@ -1866,11 +1866,54 @@ suite('unit', () => {
         case f/* reads f#0 */: {
           function f/* declares f#0, f#2 */(){}
         }
+      }`
+    );
+
+    checkScopeAnnotation(`
+      switch (f/* reads f#0 */) {
+        case 1: {
+          function f/* declares f#0, f#1 */(){}
+        }
         default: {
+          function f/* declares f#0, f#2 */(){}
+        }
+        case f/* reads f#0 */: {
           function f/* declares f#0, f#3 */(){}
         }
       }`
     );
+
+    checkScopeAnnotation(`
+      switch (f/* reads f#0 */) {
+        case 1:
+          function f/* declares f#1 */(){}
+        case f/* reads f#1 */:
+          function f/* declares f#1 */(){}
+      }`
+    );
+
+    checkScopeAnnotation(`
+      switch (f/* reads f#0 */) {
+        case 1:
+          function f/* declares f#1 */(){}
+        default:
+          function f/* declares f#1 */(){}
+        case f/* reads f#1 */:
+          function f/* declares f#1 */(){}
+      }`
+    );
+
+    checkScopeAnnotation(`
+      {
+        {
+          function f/* declares f#2 */() {}
+        }
+        function f/* declares f#0, f#1 */() {}
+      }
+      f/* reads f#0 */;
+      `
+    );
+
 
     checkScopeAnnotation(`
       {
@@ -1888,6 +1931,104 @@ suite('unit', () => {
       f/* reads f#0 */;
       `
     );
+
+    checkScopeAnnotation(`
+      {
+        l1: l2: l3: function f/* declares f#0, f#1 */() {}
+      }
+      f/* reads f#0 */;
+      `
+    );
+
+    checkScopeAnnotation(`
+      {
+        function f/* declares f#0, f#1 */() {}
+        async function g/* declares g#0 */(){}
+        function* h/* declares h#0 */(){}
+      }
+
+      switch (0) {
+        case 0:
+          function f/* declares f#0, f#2 */() {}
+          async function g/* declares g#1 */(){}
+          function* h/* declares h#1 */(){}
+      }
+
+      switch (0) {
+        default:
+          function f/* declares f#0, f#3 */() {}
+          async function g/* declares g#2 */(){}
+          function* h/* declares h#2 */(){}
+        case 0:
+          function f2/* declares f2#0, f2#1 */() {}
+          async function g/* declares g#2 */(){}
+          function* h/* declares h#2 */(){}
+      }
+
+      if (0) function f/* declares f#0, f#4 */() {}
+      else function f/* declares f#0, f#5 */() {}
+
+      `
+    );
+
+    // hoisted functions are not visible in parameter lists
+    checkScopeAnnotation(`
+      !function (a/* declares a#0 */ = f/* reads f#0 */) {
+        {
+          function f/* declares f#1, f#2 */() {
+          }
+        }
+      };
+      `,
+      { skipUnambiguous: false }
+    );
+
+    checkScopeAnnotation(`
+      !function (f/* declares f#0 */) {
+        {
+          function f/* declares f#1 */() {
+          }
+        }
+        f/* reads f#0 */;
+      };
+      `,
+      { skipUnambiguous: false }
+    );
+
+    checkScopeAnnotation(`
+      !function () {
+        {
+          function f/* declares f#0, f#1 */() {
+          }
+        }
+        f/* reads f#0 */;
+      };
+      `,
+      { skipUnambiguous: false }
+    );
+
+    // cannot hoist if there are duplicates
+    checkScopeAnnotation(`
+      {
+        l: function f/* declares f#0 */() {}
+        function f/* declares f#0 */() {}
+      }
+      `,
+      { skipUnambiguous: false }
+    );
+
+    // cannot hoist through generators
+    checkScopeAnnotation(`
+      {
+        function* f/* declares f#0 */(){}
+        {
+          function f/* declares f#1 */(){}
+        }
+      }
+      `,
+      { skipUnambiguous: false }
+    );
+
   });
 
   test('binding property', () => {
