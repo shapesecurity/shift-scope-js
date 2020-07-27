@@ -6,8 +6,8 @@ const { parseScript } = require('shift-parser');
 const fuzz = require('shift-fuzzer').fuzzScript;
 const codegen = require('shift-codegen').default;
 
-const analyze = require('.').default;
-const ScopeAnalyzer = require('./dist/scope-analyzer-two.js').default;
+const ScopeAnalyzer = require('./dist/scope-analyzer.js').default;
+const ScopeAnalyzer2 = require('./dist/scope-analyzer-two.js').default;
 
 const serialize = require('.').serialize;
 
@@ -117,19 +117,19 @@ it('foo', function () {
 
     try {
       let start = process.hrtime();
-      let oldS = analyze(tree);
+      let oldS = ScopeAnalyzer.analyze(tree);
       let end = process.hrtime(start);
       oldTimes.push(end[0] * 1e6 + end[1] / 1e3);
 
       start = process.hrtime()
-      let newS = ScopeAnalyzer.analyze(tree);
+      let newS = ScopeAnalyzer2.analyze(tree);
       end = process.hrtime(start);
       newTimes.push(end[0] * 1e6 + end[1] / 1e3);
 
       // console.log(require('util').inspect(newS, { depth: null }));
       // return;
 
-      // assertScopeEquals(oldS, newS);
+      assertScopeEquals(oldS, newS);
     } catch (e) {
       require('fs').writeFileSync('fail.js', script, 'utf8');
       throw e;

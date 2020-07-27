@@ -175,6 +175,19 @@ export default class ScopeAnalyzer extends MonoidalReducer {
     };
   }
 
+  reduceForAwaitStatement(node, { left, right, body }) {
+    let decls = [];
+    getBlockDecls(left, false, decls);
+    return {
+      type: 'for-in/of',
+      node,
+      left,
+      right,
+      body,
+      decls,
+    };
+  }
+
   reduceForOfStatement(node, { left, right, body }) {
     let decls = [];
     getBlockDecls(left, false, decls);
