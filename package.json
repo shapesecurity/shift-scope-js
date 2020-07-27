@@ -1,6 +1,6 @@
 {
   "name": "shift-scope",
-  "version": "4.0.0",
+  "version": "5.0.0",
   "description": "produce a scope tree for Shift format ASTs",
   "author": "Shape Security",
   "homepage": "https://github.com/shapesecurity/shift-scope-js",
