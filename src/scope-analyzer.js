@@ -172,6 +172,12 @@ export default class ScopeAnalyzer extends MonoidalReducer {
       .finish(node, ScopeType.BLOCK);
   }
 
+  reduceForAwaitStatement(node, { left, right, body }) {
+    return super
+      .reduceForAwaitStatement(node, { left: left.addReferences(Accessibility.WRITE), right, body })
+      .finish(node, ScopeType.BLOCK);
+  }
+
   reduceForOfStatement(node, { left, right, body }) {
     return super
       .reduceForOfStatement(node, { left: left.addReferences(Accessibility.WRITE), right, body })
