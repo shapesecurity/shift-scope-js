@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-export class Accessibility {
+class Accessibility {
   constructor(isRead, isWrite, isDelete) {
     this.isRead = !!isRead;
     this.isWrite = !!isWrite;
@@ -28,9 +28,11 @@ Accessibility.WRITE = new Accessibility(false, true, false);
 Accessibility.READWRITE = new Accessibility(true, true, false);
 Accessibility.DELETE = new Accessibility(false, false, true);
 
-export class Reference {
+class Reference {
   constructor(node, accessibility) {
     this.node = node;
     this.accessibility = accessibility;
   }
 }
+
+module.exports = { Accessibility, Reference };

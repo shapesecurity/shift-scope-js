@@ -54,7 +54,7 @@ class DefaultMap extends Map {
   }
 }
 
-export default function annotate({ source, locations, globalScope, skipUnambiguous = false, skipScopes = false }) {
+module.exports = function annotate({ source, locations, globalScope, skipUnambiguous = false, skipScopes = false }) {
 
   const nodeInfo = new DefaultMap(() => new Info);
 
@@ -143,4 +143,4 @@ export default function annotate({ source, locations, globalScope, skipUnambiguo
   }
   out += source.substring(previousIndex);
   return out;
-}
+};

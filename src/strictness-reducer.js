@@ -1,4 +1,4 @@
-import reduce, { MonoidalReducer } from 'shift-reducer';
+const { reduce, MonoidalReducer } = require('shift-reducer');
 
 // TODO this file should live elsewhere
 
@@ -40,7 +40,7 @@ function merge(s1, s2) {
 }
 
 // Given a Script, the analyze method returns a set containing all ArrowExpression, FunctionDeclaration, FunctionExpression, and Script nodes which are sloppy mode. All other ArrowExpression, FunctionDeclaration, FunctionExpression, and Script nodes are strict.
-export default class StrictnessReducer extends MonoidalReducer {
+module.exports = class StrictnessReducer extends MonoidalReducer {
   constructor() {
     super(SetMonoid);
   }
@@ -105,4 +105,4 @@ export default class StrictnessReducer extends MonoidalReducer {
     }
     return super.reduceSetter(node, { name, param, body }).add(node);
   }
-}
+};

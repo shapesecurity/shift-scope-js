@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import Flattener from './flattener';
-import { DeclarationType } from './declaration';
+const Flattener = require('./flattener');
+const { DeclarationType } = require('./declaration');
 
 class Serializer {
   constructor(scope) {
@@ -167,6 +167,8 @@ function variableCompare(ids, v1, v2) {
   return 0;
 }
 
-export function serialize(scope) {
+function serialize(scope) {
   return (new Serializer(scope)).serialize();
 }
+
+module.exports = { serialize };

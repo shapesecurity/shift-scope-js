@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import Variable from './variable';
+const Variable = require('./variable');
 
-export class ScopeType {
+class ScopeType {
   constructor(name) {
     this.name = name;
   }
@@ -35,7 +35,7 @@ ScopeType.WITH = new ScopeType('With');
 ScopeType.CATCH = new ScopeType('Catch');
 ScopeType.BLOCK = new ScopeType('Block');
 
-export class Scope {
+class Scope {
   constructor({ children, variables, through, type, isDynamic, astNode }) {
     this.children = children;
     this.through = through;
@@ -62,7 +62,7 @@ export class Scope {
   }
 }
 
-export class GlobalScope extends Scope {
+class GlobalScope extends Scope {
   constructor({ children, variables, through, astNode }) {
     super({ children, variables, through, type: ScopeType.GLOBAL, isDynamic: true, astNode });
     through.forEachEntry((v, k) => {
@@ -74,3 +74,9 @@ export class GlobalScope extends Scope {
     }
   }
 }
+
+module.exports = {
+  ScopeType,
+  Scope,
+  GlobalScope,
+};

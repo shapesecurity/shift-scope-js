@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-export default class Variable {
+module.exports = class Variable {
   constructor(name, references, declarations) {
     this.name = name;
     this.references = references;
     this.declarations = declarations;
   }
-}
+};

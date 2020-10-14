@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-export class DeclarationType {
+class DeclarationType {
   constructor(name, isBlockScoped) {
     this.name = name;
     this.isBlockScoped = !!isBlockScoped;
@@ -22,13 +22,13 @@ export class DeclarationType {
   }
 }
 
-export class BlockScopedDeclaration extends DeclarationType {
+class BlockScopedDeclaration extends DeclarationType {
   constructor(name) {
     super(name, true);
   }
 }
 
-export class FunctionScopedDeclaration extends DeclarationType {
+class FunctionScopedDeclaration extends DeclarationType {
   constructor(name) {
     super(name, false);
   }
@@ -59,9 +59,16 @@ DeclarationType.fromVarDeclKind = function (variableDeclarationKind) {
   }
 };
 
-export class Declaration {
+class Declaration {
   constructor(node, type) {
     this.node = node;
     this.type = type;
   }
 }
+
+module.exports = {
+  DeclarationType,
+  BlockScopedDeclaration,
+  FunctionScopedDeclaration,
+  Declaration,
+};

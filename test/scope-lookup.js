@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import assert from 'assert';
+const assert = require('assert');
 
-import { parseScript } from 'shift-parser';
-import MultiMap from 'multimap';
-import analyze, { ScopeLookup } from '../';
+const { parseScript } = require('shift-parser');
+const MultiMap = require('multimap');
+const { analyze, ScopeLookup } = require('../');
 
 function parseAndAnalyze(js) {
   const script = parseScript(js);

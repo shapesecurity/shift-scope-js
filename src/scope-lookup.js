@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import MultiMap from 'multimap';
-import { GlobalScope } from './scope';
+const MultiMap = require('multimap');
+const { GlobalScope } = require('./scope');
 
-export default class ScopeLookup {
+module.exports = class ScopeLookup {
   constructor(globalScope) {
     this.scope = globalScope;
     this.variableMap = new MultiMap;
@@ -50,4 +50,4 @@ export default class ScopeLookup {
   isGlobal(node) {
     return this.scope instanceof GlobalScope && this.variableMap.has(node);
   }
-}
+};
