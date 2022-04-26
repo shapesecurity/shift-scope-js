@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import reduce, { MonoidalReducer } from 'shift-reducer';
-import ShiftSpec from 'shift-spec';
+const { reduce, MonoidalReducer } = require('shift-reducer');
+const ShiftSpec = require('shift-spec').default;
 
 // TODO this file should live elsewhere
 
@@ -38,7 +38,7 @@ class ListMonoid {
 }
 
 // Gives a flat list of all nodes rooted at the given node, in preorder: that is, a node appears before its children.
-export default class Flattener extends MonoidalReducer { // We explicitly invoke Monoidal.prototype methods so that we can automatically generate methods from the spec.
+class Flattener extends MonoidalReducer { // We explicitly invoke Monoidal.prototype methods so that we can automatically generate methods from the spec.
   constructor() {
     super(ListMonoid);
   }
@@ -55,3 +55,5 @@ for (let typeName of Object.keys(ShiftSpec)) {
     },
   });
 }
+
+module.exports = Flattener;

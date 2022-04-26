@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import assert from 'assert';
+const assert = require('assert');
 
-import { parseScript, parseScriptWithLocation, parseModule, parseModuleWithLocation } from 'shift-parser';
-import analyze, { Accessibility, ScopeType, serialize, annotate } from '../';
+const { parseScript, parseScriptWithLocation, parseModule, parseModuleWithLocation } = require('shift-parser');
+const { analyze, Accessibility, ScopeType, serialize, annotate } = require('../');
 
 const NO_REFERENCES = [];
 const NO_DECLARATIONS = [];
@@ -1629,7 +1629,7 @@ suite('unit', () => {
   test('arrow arguments', () => {
     checkScopeAnnotation(
       '/* Scope (Global) declaring arguments#0 *//* Scope (Script) *//* Scope (ArrowFunction) */() => arguments/* reads arguments#0 *//* end scope *//* end scope *//* end scope */',
-      { skipUnambiguous: false, skipScopes: false },
+      { skipUnambiguous: false, skipScopes: false }
     );
   });
 
@@ -1742,7 +1742,7 @@ suite('unit', () => {
   test('shorthand properties', () => {
     checkScopeAnnotation(
       '({a/* reads a#0 */});',
-      { skipUnambiguous: false },
+      { skipUnambiguous: false }
     );
   });
 
@@ -2094,7 +2094,7 @@ suite('unit', () => {
     checkScopeAnnotation(`
       delete x/* deletes x#0 */;
       `,
-      { skipUnambiguous: false },
+      { skipUnambiguous: false }
     );
 
     checkScopeSerialization(`

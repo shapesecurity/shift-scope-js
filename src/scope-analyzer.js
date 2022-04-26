@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-import MultiMap from 'multimap';
-import reduce, { MonoidalReducer } from 'shift-reducer';
-import ScopeState from './scope-state';
-import { Accessibility, Reference } from './reference';
-import { DeclarationType } from './declaration';
-import { ScopeType } from './scope';
-import StrictnessReducer from './strictness-reducer';
+const MultiMap = require('multimap');
+const { reduce, MonoidalReducer } = require('shift-reducer');
+const ScopeState = require('./scope-state');
+const { Accessibility, Reference } = require('./reference');
+const { DeclarationType } = require('./declaration');
+const { ScopeType } = require('./scope');
+const StrictnessReducer = require('./strictness-reducer');
 
 function asSimpleFunctionDeclarationName(statement) {
   return statement.type === 'FunctionDeclaration' && !statement.isGenerator && !statement.isAsync
@@ -46,7 +46,7 @@ function getUnnestedSimpleFunctionDeclarationNames(statements) {
   return names.filter(id => hist[id.name] === 1);
 }
 
-export default class ScopeAnalyzer extends MonoidalReducer {
+module.exports = class ScopeAnalyzer extends MonoidalReducer {
   constructor(program) {
     super(ScopeState);
     this.sloppySet = program.type === 'Script' ? StrictnessReducer.analyze(program) : new Set;
@@ -201,7 +201,7 @@ export default class ScopeAnalyzer extends MonoidalReducer {
       s = s.concat(
         item.hasParameterExpressions
           ? item.finish(node.items[ind], ScopeType.PARAMETER_EXPRESSION)
-          : item,
+          : item
       );
     });
     return s.addDeclarations(DeclarationType.PARAMETER);
@@ -227,7 +227,7 @@ export default class ScopeAnalyzer extends MonoidalReducer {
       body.finish(node, ScopeType.FUNCTION, {
         shouldResolveArguments: true,
         shouldB33: this.sloppySet.has(node),
-      }),
+      })
     );
   }
 
@@ -278,7 +278,7 @@ export default class ScopeAnalyzer extends MonoidalReducer {
       param = param.finish(node, ScopeType.PARAMETER_EXPRESSION);
     }
     return name.concat(
-      this.finishFunction(node, param.addDeclarations(DeclarationType.PARAMETER), body),
+      this.finishFunction(node, param.addDeclarations(DeclarationType.PARAMETER), body)
     );
   }
 
@@ -292,7 +292,7 @@ export default class ScopeAnalyzer extends MonoidalReducer {
 
   reduceSwitchStatementWithDefault(node, { discriminant, preDefaultCases, defaultCase, postDefaultCases }) {
     const functionDeclarations = getUnnestedSimpleFunctionDeclarationNames([].concat(
-      ...node.preDefaultCases.concat([node.defaultCase], node.postDefaultCases).map(c => c.consequent),
+      ...node.preDefaultCases.concat([node.defaultCase], node.postDefaultCases).map(c => c.consequent)
     ));
     const cases = preDefaultCases.concat([defaultCase], postDefaultCases);
     return this
@@ -336,4 +336,4 @@ export default class ScopeAnalyzer extends MonoidalReducer {
   reduceWithStatement(node, { object, body }) {
     return super.reduceWithStatement(node, { object, body: body.finish(node, ScopeType.WITH) });
   }
-}
+};
