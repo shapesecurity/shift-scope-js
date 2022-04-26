@@ -1212,6 +1212,33 @@ suite('unit', () => {
     }
   });
 
+  test('TryCatchStatement 4', () => {
+    const js =
+      `try {
+        f(0);
+      } catch {
+      }`;
+    let script = parseScript(js);
+
+    let globalScope = analyze(script);
+    let scriptScope = globalScope.children[0];
+
+    let fNode1 = script.statements[0].body.statements[0].expression.callee;
+
+    { // global scope
+      let children = [scriptScope];
+      let through = ['f'];
+
+      let variables = new Map;
+      variables.set('f', [NO_DECLARATIONS, [fNode1]]);
+
+      let referenceTypes = new Map;
+      referenceTypes.set(fNode1, Accessibility.READ);
+
+      checkScope(globalScope, script, ScopeType.GLOBAL, true, children, through, variables, referenceTypes);
+    }
+  });
+
   test('block-scoped declaration in CatchClause', () => {
     const js =
       `try { throw 0; } catch (e) { e; }
