@@ -14,14 +14,25 @@
  * limitations under the License.
  */
 
-import ScopeAnalyzer from './scope-analyzer';
-export { default as ScopeLookup } from './scope-lookup';
-export { default as annotate } from './annotate-source';
-export { ScopeType } from './scope';
-export { DeclarationType } from './declaration';
-export { Accessibility } from './reference';
-export { serialize } from './scope-serializer';
+const ScopeAnalyzer = require('./scope-analyzer');
+const ScopeLookup = require('./scope-lookup');
+const annotate = require('./annotate-source');
+const { ScopeType } = require('./scope');
+const { DeclarationType } = require('./declaration');
+const { Accessibility } = require('./reference');
+const { serialize } = require('./scope-serializer');
 
-export default function analyze(script) {
+function analyze(script) {
   return ScopeAnalyzer.analyze(script);
 }
+
+module.exports = {
+  default: analyze,
+  analyze,
+  ScopeLookup,
+  annotate,
+  ScopeType,
+  DeclarationType,
+  Accessibility,
+  serialize,
+};

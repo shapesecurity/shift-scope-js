@@ -8,15 +8,13 @@
     "type": "git",
     "url": "https://github.com/shapesecurity/shift-scope-js.git"
   },
-  "main": "dist/index.js",
+  "main": "src/index.js",
   "files": [
-    "dist"
+    "src"
   ],
   "scripts": {
-    "test": "mocha --compilers js:babel-register --inline-diffs --check-leaks --ui tdd --reporter dot test",
-    "build": "babel --source-maps-inline --out-dir dist src",
-    "prepare": "rm -rf dist && npm update && npm run build",
-    "prepublishOnly": "npm run lint && npm run test",
+    "build": "echo nothing to do",
+    "test": "mocha --inline-diffs --check-leaks --ui tdd --reporter dot test",
     "lint": "eslint src test"
   },
   "dependencies": {
@@ -25,12 +23,8 @@
     "shift-spec": "2018.0.2"
   },
   "devDependencies": {
-    "babel-cli": "6.26.0",
-    "babel-eslint": "7.2.3",
-    "babel-preset-env": "1.6.0",
-    "babel-register": "6.26.0",
     "eslint": "4.6.1",
-    "mocha": "2.3.4",
+    "mocha": "8.1.3",
     "shift-parser": "7.0.3"
   },
   "keywords": [
