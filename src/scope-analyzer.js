@@ -132,7 +132,7 @@ module.exports = class ScopeAnalyzer extends MonoidalReducer {
   reduceCatchClause(node, { binding, body }) {
     return super
       .reduceCatchClause(node, {
-        binding: binding.addDeclarations(DeclarationType.CATCH_PARAMETER),
+        binding: binding == null ? null : binding.addDeclarations(DeclarationType.CATCH_PARAMETER),
         body,
       })
       .finish(node, ScopeType.CATCH);

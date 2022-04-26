@@ -15,7 +15,7 @@
  */
 
 const { reduce, MonoidalReducer } = require('shift-reducer');
-const ShiftSpec = require('shift-spec').default;
+const ShiftSpec = require('shift-spec');
 
 // TODO this file should live elsewhere
 
